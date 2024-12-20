@@ -88,7 +88,7 @@ class Ui_StatusInfoWindow(object):
         self.label.setText(_translate("StatusInfoWindow", "1. Задание сформировано, разработка заказа не начата."))
         self.label_2.setText(_translate("StatusInfoWindow", "2. Заказ находится в разработке (на исправлении)."))
         self.label_3.setText(_translate("StatusInfoWindow", "4. Заказ проверен и утверждён."))
-        self.label_4.setText(_translate("StatusInfoWindow", "5. Заказ принят на производво."))
+        self.label_4.setText(_translate("StatusInfoWindow", "5. Заказ принят на производство."))
         self.label_5.setText(_translate("StatusInfoWindow", "6. Заказ отменён."))
         self.label_6.setText(_translate("StatusInfoWindow", "3. Заказ отправлен на проверку и утверждение."))
 
