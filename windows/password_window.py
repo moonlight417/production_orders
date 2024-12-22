@@ -1,11 +1,14 @@
 import os
 import django
+import sys
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'base.settings')  # Замените 'base.settings' на путь к вашему файлу настроек
 django.setup()
 from PyQt5 import QtCore, QtWidgets, QtGui
 import requests
 from employees.auth import authenticate
+from pass_change import PasswordChange, Ui_PasswordChange
+from PyQt5.QtWidgets import QMessageBox
 
 class Ui_EnterPassword(object):
     def setupUi(self, EnterPassword):
@@ -55,31 +58,74 @@ class PasswordWindow(QtWidgets.QMainWindow):
         self.ui = Ui_EnterPassword()
         self.ui.setupUi(self)
         self.role = role
+        self.password_change_window = None  # Инициализируем как None
 
+        # Подключаем сигналы
         self.ui.BtnEnter.clicked.connect(self.check_password)
         self.ui.BtnBack.clicked.connect(self.close)
         self.ui.BtnChangePassword.clicked.connect(self.change_password)
 
     def check_password(self):
         entered_password = self.ui.lineEditEnterPassword.text()
-        print(f"Отправляемая роль: {self.role}, Отправляемый пароль: {entered_password}")  # Отладка
+        print(f"Отправляемая роль: {self.role}, Отправляемый пароль: {entered_password}")
 
         try:
             response = requests.post(
                 f"http://127.0.0.1:8000/api/check_password/{self.role}/",
                 data={"password": entered_password},
             )
-            print(f"Ответ сервера: {response.status_code}, {response.json()}")  # Отладка
             if response.status_code == 200 and response.json().get("success"):
-                QtWidgets.QMessageBox.information(self, "Успех", f"Добро пожаловать, {self.role}!")
+                QMessageBox.information(self, "Успех", f"Добро пожаловать, {self.role}!")
                 self.close()
             else:
-                QtWidgets.QMessageBox.warning(self, "Ошибка", "Неверный пароль.")
+                QMessageBox.warning(self, "Ошибка", "Неверный пароль.")
         except requests.RequestException as e:
-            QtWidgets.QMessageBox.critical(self, "Ошибка", f"Не удалось подключиться к серверу: {e}")
+            QMessageBox.critical(self, "Ошибка", f"Не удалось подключиться к серверу: {e}")
 
     def change_password(self):
-        # Заглушка для функции смены пароля
-        QtWidgets.QMessageBox.information(self, "Смена пароля", "Функция смены пароля пока не реализована.")
+        if self.password_change_window is None:  # Проверяем, создано ли окно
+            self.password_change_window = PasswordChange()  # Создаем новое окно
+        self.password_change_window.show()  # Показываем окно
 
 
+class PasswordChange(QtWidgets.QMainWindow):
+    def __init__(self):
+        super().__init__()
+        self.ui = Ui_PasswordChange()
+        self.ui.setupUi(self)
+
+        # Подключаем кнопку "Применить" к методу смены пароля
+        self.ui.BtnApply.clicked.connect(self.apply_password_change)
+
+    def apply_password_change(self):
+        current_password = self.ui.lineEditCurrentPassword.text()
+        new_password = self.ui.lineEditNewPassword.text()
+
+        # Логика проверки и смены пароля
+        if not current_password or not new_password:
+            QMessageBox.warning(self, "Ошибка", "Заполните оба поля!")
+            return
+
+        try:
+            response = requests.post(
+                "http://127.0.0.1:8000/api/change_password/",
+                data={"current_password": current_password, "new_password": new_password},
+            )
+            if response.status_code == 200 and response.json().get("success"):
+                QMessageBox.information(self, "Успех", "Пароль успешно изменен!")
+                self.close()
+            else:
+                QMessageBox.warning(self, "Ошибка", "Не удалось сменить пароль.")
+        except requests.RequestException as e:
+            QMessageBox.critical(self, "Ошибка", f"Не удалось подключиться к серверу: {e}")
+
+
+if __name__ == "__main__":
+    try:
+        app = QtWidgets.QApplication(sys.argv)
+        window = PasswordWindow("Администратор")
+        window.show()
+        sys.exit(app.exec_())  # Запуск основного цикла
+    except Exception as e:
+        print(f"Ошибка при запуске приложения: {e}")
+        sys.exit(1)

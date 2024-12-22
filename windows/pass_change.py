@@ -1,6 +1,6 @@
 
 from PyQt5 import QtCore, QtGui, QtWidgets
-
+import requests
 
 class Ui_PasswordChange(object):
     def setupUi(self, PasswordChange):
@@ -47,7 +47,37 @@ class Ui_PasswordChange(object):
         self.BtnApply.setText(_translate("PasswordChange", "Применить"))
         self.labelNewPassword.setText(_translate("PasswordChange", "Введите новый пароль:"))
 
+class PasswordChange(QtWidgets.QMainWindow):
+    def __init__(self):
+        super().__init__()
+        self.ui = Ui_PasswordChange()
+        self.ui.setupUi(self)
 
+        # Подключаем кнопку "Применить" к методу смены пароля
+        self.ui.BtnApply.clicked.connect(self.apply_password_change)
+
+    def apply_password_change(self):
+        current_password = self.ui.lineEditCurrentPassword.text()
+        new_password = self.ui.lineEditNewPassword.text()
+
+        # Добавьте вашу логику проверки и смены пароля
+        if not current_password or not new_password:
+            QtWidgets.QMessageBox.warning(self, "Ошибка", "Заполните оба поля!")
+            return
+
+        # Отправляем запрос на сервер (пример)
+        try:
+            response = requests.post(
+                "http://127.0.0.1:8000/api/change_password/",
+                data={"current_password": current_password, "new_password": new_password},
+            )
+            if response.status_code == 200 and response.json().get("success"):
+                QtWidgets.QMessageBox.information(self, "Успех", "Пароль успешно изменен!")
+                self.close()
+            else:
+                QtWidgets.QMessageBox.warning(self, "Ошибка", "Не удалось сменить пароль.")
+        except requests.RequestException as e:
+            QtWidgets.QMessageBox.critical(self, "Ошибка", f"Не удалось подключиться к серверу: {e}")
 if __name__ == "__main__":
     import sys
     app = QtWidgets.QApplication(sys.argv)
