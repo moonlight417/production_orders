@@ -1,5 +1,10 @@
+import os
+import django
 from PyQt5 import QtCore, QtWidgets
 
+# Настраиваем Django окружение
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'base.settings')
+django.setup()
 
 class Ui_StartWindow(object):
     def setupUi(self, StartWindow):
@@ -29,7 +34,6 @@ class Ui_StartWindow(object):
         self.menubar.setObjectName("menubar")
         StartWindow.setMenuBar(self.menubar)
 
-        StartWindow.setCentralWidget(self.centralwidget)
         self.retranslateUi(StartWindow)
         QtCore.QMetaObject.connectSlotsByName(StartWindow)
 
@@ -40,3 +44,27 @@ class Ui_StartWindow(object):
         self.BtnEngineer.setText(_translate("StartWindow", "Инженер"))
         self.BtnProduction.setText(_translate("StartWindow", "Производство"))
         self.BtnSettings.setText(_translate("StartWindow", "Настройки"))
+
+class StartWindow(QtWidgets.QMainWindow):
+    def __init__(self):
+        super().__init__()
+        self.ui = Ui_StartWindow()
+        self.ui.setupUi(self)
+
+        # Подключаем кнопки к методам
+        self.ui.BtnManager.clicked.connect(lambda: self.open_password_window("Менеджер"))
+        self.ui.BtnEngineer.clicked.connect(lambda: self.open_password_window("Инженер"))
+        self.ui.BtnProduction.clicked.connect(lambda: self.open_password_window("Производство"))
+        self.ui.BtnSettings.clicked.connect(lambda: self.open_password_window("Администратор"))
+
+    def open_password_window(self, role):
+        from password_window import PasswordWindow  # Импортируем внутри метода для избежания циклического импорта
+        self.password_window = PasswordWindow(role)
+        self.password_window.show()
+
+if __name__ == "__main__":
+    import sys
+    app = QtWidgets.QApplication(sys.argv)  # Создаем экземпляр приложения
+    window = StartWindow()  # Создаем главное окно
+    window.show()  # Показываем главное окно
+    sys.exit(app.exec_())  # Запускаем основной цикл приложения

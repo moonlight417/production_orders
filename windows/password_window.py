@@ -1,0 +1,85 @@
+import os
+import django
+
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'base.settings')  # Замените 'base.settings' на путь к вашему файлу настроек
+django.setup()
+from PyQt5 import QtCore, QtWidgets, QtGui
+import requests
+from employees.auth import authenticate
+
+class Ui_EnterPassword(object):
+    def setupUi(self, EnterPassword):
+        EnterPassword.setObjectName("EnterPassword")
+        EnterPassword.resize(242, 143)
+        self.centralwidget = QtWidgets.QWidget(EnterPassword)
+
+        self.labelEnterPassword = QtWidgets.QLabel(self.centralwidget)
+        self.labelEnterPassword.setGeometry(QtCore.QRect(10, 15, 121, 16))
+        font = QtGui.QFont()
+        font.setPointSize(11)
+        self.labelEnterPassword.setFont(font)
+        self.labelEnterPassword.setObjectName("labelEnterPassword")
+
+        self.lineEditEnterPassword = QtWidgets.QLineEdit(self.centralwidget)
+        self.lineEditEnterPassword.setGeometry(QtCore.QRect(10, 40, 161, 20))
+        self.lineEditEnterPassword.setEchoMode(QtWidgets.QLineEdit.Password)
+        self.lineEditEnterPassword.setObjectName("lineEditEnterPassword")
+
+        self.BtnChangePassword = QtWidgets.QPushButton(self.centralwidget)
+        self.BtnChangePassword.setGeometry(QtCore.QRect(155, 80, 81, 23))
+        self.BtnChangePassword.setObjectName("BtnChangePassword")
+
+        self.BtnEnter = QtWidgets.QPushButton(self.centralwidget)
+        self.BtnEnter.setGeometry(QtCore.QRect(180, 40, 51, 23))
+        self.BtnEnter.setObjectName("BtnEnter")
+
+        self.BtnBack = QtWidgets.QPushButton(self.centralwidget)
+        self.BtnBack.setGeometry(QtCore.QRect(10, 80, 81, 23))
+        self.BtnBack.setObjectName("BtnBack")
+
+        EnterPassword.setCentralWidget(self.centralwidget)
+        self.retranslateUi(EnterPassword)
+        QtCore.QMetaObject.connectSlotsByName(EnterPassword)
+
+    def retranslateUi(self, EnterPassword):
+        _translate = QtCore.QCoreApplication.translate
+        EnterPassword.setWindowTitle(_translate("EnterPassword", "Пароль"))
+        self.labelEnterPassword.setText(_translate("EnterPassword", "Введите пароль:"))
+        self.BtnChangePassword.setText(_translate("EnterPassword", "Смена пароля"))
+        self.BtnEnter.setText(_translate("EnterPassword", "Войти"))
+        self.BtnBack.setText(_translate("EnterPassword", "Назад"))
+
+class PasswordWindow(QtWidgets.QMainWindow):
+    def __init__(self, role):
+        super().__init__()
+        self.ui = Ui_EnterPassword()
+        self.ui.setupUi(self)
+        self.role = role
+
+        self.ui.BtnEnter.clicked.connect(self.check_password)
+        self.ui.BtnBack.clicked.connect(self.close)
+        self.ui.BtnChangePassword.clicked.connect(self.change_password)
+
+    def check_password(self):
+        entered_password = self.ui.lineEditEnterPassword.text()
+        print(f"Отправляемая роль: {self.role}, Отправляемый пароль: {entered_password}")  # Отладка
+
+        try:
+            response = requests.post(
+                f"http://127.0.0.1:8000/api/check_password/{self.role}/",
+                data={"password": entered_password},
+            )
+            print(f"Ответ сервера: {response.status_code}, {response.json()}")  # Отладка
+            if response.status_code == 200 and response.json().get("success"):
+                QtWidgets.QMessageBox.information(self, "Успех", f"Добро пожаловать, {self.role}!")
+                self.close()
+            else:
+                QtWidgets.QMessageBox.warning(self, "Ошибка", "Неверный пароль.")
+        except requests.RequestException as e:
+            QtWidgets.QMessageBox.critical(self, "Ошибка", f"Не удалось подключиться к серверу: {e}")
+
+    def change_password(self):
+        # Заглушка для функции смены пароля
+        QtWidgets.QMessageBox.information(self, "Смена пароля", "Функция смены пароля пока не реализована.")
+
+
