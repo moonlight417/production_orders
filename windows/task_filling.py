@@ -1,5 +1,6 @@
 
 from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt5.QtWidgets import QMessageBox
 
 
 class Ui_TaskFilling(object):
@@ -176,6 +177,23 @@ class Ui_TaskFilling(object):
         self.labelDate.setText(_translate("TaskFilling", "Дата"))
         self.labelCustomer.setText(_translate("TaskFilling", "Название организации заказчика"))
         self.labelAddNewProduct.setText(_translate("TaskFilling", "Добавить новое изделие в задание"))
+
+class TaskFilling(QtWidgets.QMainWindow):
+    def __init__(self):
+        super().__init__()
+        self.ui = Ui_TaskFilling()
+        self.ui.setupUi(self)
+
+        self.ui.BtnBack.clicked.connect(self.back_main_manager_window)
+
+    def back_main_manager_window(self):
+        try:
+            from windows.main_manager_window import MainWindowManager
+            self.main_manager_window = MainWindowManager()  # Создаем экземпляр главного окна менеджера
+            self.main_manager_window.show()  # Показываем окно
+            self.close()  # Закрываем текущее окно
+        except Exception as e:
+            QMessageBox.critical(self, "Ошибка", f"Не удалось открыть главное окно менеджера: {e}")
 
 
 if __name__ == "__main__":

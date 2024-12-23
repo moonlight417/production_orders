@@ -2,35 +2,45 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 import requests
 
+
 class Ui_PasswordChange(object):
     def setupUi(self, PasswordChange):
         PasswordChange.setObjectName("PasswordChange")
-        PasswordChange.resize(325, 138)
+        PasswordChange.resize(325, 150)
         self.centralwidget = QtWidgets.QWidget(PasswordChange)
         self.centralwidget.setObjectName("centralwidget")
+
+        # Текущий пароль
         self.labelCurrentPassword = QtWidgets.QLabel(self.centralwidget)
         self.labelCurrentPassword.setGeometry(QtCore.QRect(20, 10, 191, 16))
         font = QtGui.QFont()
         font.setPointSize(11)
         self.labelCurrentPassword.setFont(font)
         self.labelCurrentPassword.setObjectName("labelCurrentPassword")
+
         self.lineEditCurrentPassword = QtWidgets.QLineEdit(self.centralwidget)
         self.lineEditCurrentPassword.setGeometry(QtCore.QRect(20, 30, 181, 20))
-        self.lineEditCurrentPassword.setText("")
+        self.lineEditCurrentPassword.setEchoMode(QtWidgets.QLineEdit.Password)
         self.lineEditCurrentPassword.setObjectName("lineEditCurrentPassword")
-        self.BtnApply = QtWidgets.QPushButton(self.centralwidget)
-        self.BtnApply.setGeometry(QtCore.QRect(220, 80, 91, 23))
-        self.BtnApply.setObjectName("BtnApply")
-        self.lineEditNewPassword = QtWidgets.QLineEdit(self.centralwidget)
-        self.lineEditNewPassword.setGeometry(QtCore.QRect(20, 80, 181, 20))
-        self.lineEditNewPassword.setText("")
-        self.lineEditNewPassword.setObjectName("lineEditNewPassword")
+
+        # Новый пароль
         self.labelNewPassword = QtWidgets.QLabel(self.centralwidget)
         self.labelNewPassword.setGeometry(QtCore.QRect(20, 60, 171, 16))
         font = QtGui.QFont()
         font.setPointSize(11)
         self.labelNewPassword.setFont(font)
         self.labelNewPassword.setObjectName("labelNewPassword")
+
+        self.lineEditNewPassword = QtWidgets.QLineEdit(self.centralwidget)
+        self.lineEditNewPassword.setGeometry(QtCore.QRect(20, 80, 181, 20))
+        self.lineEditNewPassword.setEchoMode(QtWidgets.QLineEdit.Password)
+        self.lineEditNewPassword.setObjectName("lineEditNewPassword")
+
+        # Кнопка "Применить"
+        self.BtnApply = QtWidgets.QPushButton(self.centralwidget)
+        self.BtnApply.setGeometry(QtCore.QRect(220, 80, 91, 23))
+        self.BtnApply.setObjectName("BtnApply")
+
         PasswordChange.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(PasswordChange)
         self.menubar.setGeometry(QtCore.QRect(0, 0, 325, 21))
@@ -47,6 +57,7 @@ class Ui_PasswordChange(object):
         self.BtnApply.setText(_translate("PasswordChange", "Применить"))
         self.labelNewPassword.setText(_translate("PasswordChange", "Введите новый пароль:"))
 
+
 class PasswordChange(QtWidgets.QMainWindow):
     def __init__(self):
         super().__init__()
@@ -60,29 +71,34 @@ class PasswordChange(QtWidgets.QMainWindow):
         current_password = self.ui.lineEditCurrentPassword.text()
         new_password = self.ui.lineEditNewPassword.text()
 
-        # Добавьте вашу логику проверки и смены пароля
+        # Проверка заполнения полей
         if not current_password or not new_password:
             QtWidgets.QMessageBox.warning(self, "Ошибка", "Заполните оба поля!")
             return
 
-        # Отправляем запрос на сервер (пример)
+        # Запрос на сервер
         try:
             response = requests.post(
                 "http://127.0.0.1:8000/api/change_password/",
-                data={"current_password": current_password, "new_password": new_password},
+                json={"current_password": current_password, "new_password": new_password},
             )
+            print(f"Отправляется запрос: {current_password}, {new_password}")
+
             if response.status_code == 200 and response.json().get("success"):
                 QtWidgets.QMessageBox.information(self, "Успех", "Пароль успешно изменен!")
                 self.close()
             else:
-                QtWidgets.QMessageBox.warning(self, "Ошибка", "Не удалось сменить пароль.")
+                error_message = response.json().get("message", "Не удалось сменить пароль.")
+                QtWidgets.QMessageBox.warning(self, "Ошибка", error_message)
         except requests.RequestException as e:
             QtWidgets.QMessageBox.critical(self, "Ошибка", f"Не удалось подключиться к серверу: {e}")
+
+
 if __name__ == "__main__":
     import sys
+
     app = QtWidgets.QApplication(sys.argv)
-    PasswordChange = QtWidgets.QMainWindow()
-    ui = Ui_PasswordChange()
-    ui.setupUi(PasswordChange)
-    PasswordChange.show()
+    window = PasswordChange()
+    window.show()
     sys.exit(app.exec_())
+

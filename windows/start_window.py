@@ -61,6 +61,7 @@ class StartWindow(QtWidgets.QMainWindow):
         from password_window import PasswordWindow  # Импортируем внутри метода для избежания циклического импорта
         self.password_window = PasswordWindow(role)
         self.password_window.show()
+        self.close()
 
 if __name__ == "__main__":
     import sys

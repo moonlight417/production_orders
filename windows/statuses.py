@@ -92,6 +92,11 @@ class Ui_StatusInfoWindow(object):
         self.label_5.setText(_translate("StatusInfoWindow", "6. Заказ отменён."))
         self.label_6.setText(_translate("StatusInfoWindow", "3. Заказ отправлен на проверку и утверждение."))
 
+class StatusInfoWindow(QtWidgets.QMainWindow):
+    def __init__(self):
+        super().__init__()
+        self.ui = Ui_StatusInfoWindow()
+        self.ui.setupUi(self)
 
 if __name__ == "__main__":
     import sys

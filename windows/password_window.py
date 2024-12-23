@@ -2,6 +2,12 @@ import os
 import django
 import sys
 
+from windows.castomizing import CastomizingWindow, Ui_Castomizing
+from windows.main_engineer_window import MainWindowEngineer
+from windows.main_manager_window import MainWindowManager
+from windows.main_production_window import MainWindowProduction
+from windows.start_window import StartWindow
+
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'base.settings')  # Замените 'base.settings' на путь к вашему файлу настроек
 django.setup()
 from PyQt5 import QtCore, QtWidgets, QtGui
@@ -62,25 +68,79 @@ class PasswordWindow(QtWidgets.QMainWindow):
 
         # Подключаем сигналы
         self.ui.BtnEnter.clicked.connect(self.check_password)
-        self.ui.BtnBack.clicked.connect(self.close)
+        # self.ui.BtnBack.clicked.connect(self.close)
         self.ui.BtnChangePassword.clicked.connect(self.change_password)
+
+        self.ui.BtnBack.clicked.connect(self.back_role_selection)
+
+    def back_role_selection(self):
+        try:
+            self.role_selection_window = StartWindow()  # Создаем экземпляр окна для выбора роли
+            self.role_selection_window.show()  # Показываем окно
+            self.close()  # Закрываем текущее окно
+        except Exception as e:
+            QMessageBox.critical(self, "Ошибка", f"Не удалось открыть окно выбора роли: {e}")
 
     def check_password(self):
         entered_password = self.ui.lineEditEnterPassword.text()
-        print(f"Отправляемая роль: {self.role}, Отправляемый пароль: {entered_password}")
-
         try:
             response = requests.post(
                 f"http://127.0.0.1:8000/api/check_password/{self.role}/",
                 data={"password": entered_password},
             )
             if response.status_code == 200 and response.json().get("success"):
-                QMessageBox.information(self, "Успех", f"Добро пожаловать, {self.role}!")
+
+                self.open_role_window(self.role)
+                # QMessageBox.information(self, "Успех", f"Добро пожаловать, {self.role}!")
                 self.close()
             else:
                 QMessageBox.warning(self, "Ошибка", "Неверный пароль.")
         except requests.RequestException as e:
             QMessageBox.critical(self, "Ошибка", f"Не удалось подключиться к серверу: {e}")
+
+    def open_role_window(self, role):
+        role = role.strip()  # Убираем лишние пробелы
+        # Здесь нужно открыть окно для соответствующей роли.
+        if role == "Администратор":
+            self.open_admin_window()
+        elif role == "Менеджер":
+            self.open_manager_window()
+        elif role == "Инженер":
+            self.open_engineer_window()
+        elif role == "Производство":
+            self.open_production_window()
+
+    def open_admin_window(self):
+        try:
+            self.admin_window = CastomizingWindow()  # Создаем экземпляр окна для администратора
+            self.admin_window.show()  # Показываем окно
+            self.close()  # Закрываем текущее окно
+        except Exception as e:
+            QMessageBox.critical(self, "Ошибка", f"Не удалось открыть окно администратора: {e}")
+
+    def open_manager_window(self):
+        try:
+            self.manager_window = MainWindowManager()  # Создаем экземпляр окна для менеджера
+            self.manager_window.show()  # Показываем окно
+            self.close()  # Закрываем текущее окно
+        except Exception as e:
+            QMessageBox.critical(self, "Ошибка", f"Не удалось открыть окно менеджера: {e}")
+
+    def open_engineer_window(self):
+        try:
+            self.engineer_window = MainWindowEngineer()  # Создаем экземпляр окна для инженера
+            self.engineer_window.show()  # Показываем окно
+            self.close()  # Закрываем текущее окно
+        except Exception as e:
+            QMessageBox.critical(self, "Ошибка", f"Не удалось открыть окно инженера: {e}")
+
+    def open_production_window(self):
+        try:
+            self.production_window = MainWindowProduction()  # Создаем экземпляр окна для производства
+            self.production_window.show()  # Показываем окно
+            self.close()  # Закрываем текущее окно
+        except Exception as e:
+            QMessageBox.critical(self, "Ошибка", f"Не удалось открыть окно производства: {e}")
 
     def change_password(self):
         if self.password_change_window is None:  # Проверяем, создано ли окно

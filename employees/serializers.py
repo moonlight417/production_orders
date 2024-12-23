@@ -11,3 +11,8 @@ class RolePasswordSerializer(serializers.ModelSerializer):
     class Meta:
         model = Role
         fields = ['role', 'password']
+
+class ChangePasswordSerializer(serializers.Serializer):
+    role = serializers.CharField(max_length=15)
+    current_password = serializers.CharField(max_length=15)
+    new_password = serializers.CharField(max_length=15)

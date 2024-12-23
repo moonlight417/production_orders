@@ -1,4 +1,7 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt5.QtWidgets import QMessageBox
+
+from windows.start_window import StartWindow
 
 
 class Ui_MainWindowEngineer(object):
@@ -84,6 +87,21 @@ class Ui_MainWindowEngineer(object):
         self.label_4.setText(_translate("MainWindowEngineer", "На доработку:"))
         self.BtnReworkOrders.setText(_translate("MainWindowEngineer", "Заказы на доработку"))
 
+class MainWindowEngineer(QtWidgets.QMainWindow):
+    def __init__(self):
+        super().__init__()
+        self.ui = Ui_MainWindowEngineer()
+        self.ui.setupUi(self)
+
+        self.ui.BtnRoleSelection.clicked.connect(self.back_role_selection)
+
+    def back_role_selection(self):
+        try:
+            self.role_selection_window = StartWindow()  # Создаем экземпляр окна для выбора роли
+            self.role_selection_window.show()  # Показываем окно
+            self.close()  # Закрываем текущее окно
+        except Exception as e:
+            QMessageBox.critical(self, "Ошибка", f"Не удалось открыть окно выбора роли: {e}")
 
 if __name__ == "__main__":
     import sys

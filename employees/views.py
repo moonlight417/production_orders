@@ -1,3 +1,4 @@
+from django.http import JsonResponse
 from django.shortcuts import render
 from rest_framework import viewsets
 from .models import Employee
@@ -7,10 +8,7 @@ from rest_framework.response import Response
 from .models import Role
 from .serializers import RolePasswordSerializer
 from rest_framework import status
-from django.contrib.auth.hashers import check_password
-
-
-
+from django.contrib.auth.hashers import check_password, make_password
 
 
 class EmployeeViewSet(viewsets.ModelViewSet):
@@ -39,3 +37,25 @@ class CheckPasswordView(APIView):
             return Response({"success": "Password is correct!"}, status=status.HTTP_200_OK)
         else:
             return Response({"error": "Incorrect password"}, status=status.HTTP_401_UNAUTHORIZED)
+
+class ChangePasswordView(APIView):
+    def post(self, request):
+        serializer = RolePasswordSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        role = serializer.validated_data['role']
+        current_password = serializer.validated_data['current_password']
+        new_password = serializer.validated_data['new_password']
+
+        try:
+            user = Employee.objects.get(role=role)
+        except Employee.DoesNotExist:
+            return Response({'success': False, 'message': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        if check_password(current_password, user.password):
+            user.password = make_password(new_password)
+            user.save()
+            return Response({'success': True, 'message': 'Password changed successfully'}, status=status.HTTP_200_OK)
+        else:
+            return Response({'success': False, 'message': 'Current password is incorrect'}, status=status.HTTP_400_BAD_REQUEST)
