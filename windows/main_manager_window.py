@@ -1,5 +1,9 @@
 
 from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt5.QtWidgets import QMessageBox
+
+
+
 
 
 class Ui_MainWindowManager(object):
@@ -67,6 +71,46 @@ class Ui_MainWindowManager(object):
         self.BtnCheck.setText(_translate("MainWindowManager", "Проверить"))
         self.BtnViewTasks.setText(_translate("MainWindowManager", "Смотреть задания"))
 
+class MainWindowManager(QtWidgets.QMainWindow):
+    def __init__(self):
+        super().__init__()
+        self.ui = Ui_MainWindowManager()
+        self.ui.setupUi(self)
+
+        self.ui.BtnRoleSelection.clicked.connect(self.back_role_selection)
+        # self.ui.BtnNewTasks.clicked(self.new_task)
+
+    def back_role_selection(self):
+        try:
+            from windows.start_window import StartWindow
+            self.role_selection_window = StartWindow()  # Создаем экземпляр окна для выбора роли
+            self.role_selection_window.show()  # Показываем окно
+            self.close()  # Закрываем текущее окно
+        except Exception as e:
+            QMessageBox.critical(self, "Ошибка", f"Не удалось открыть окно выбора роли: {e}")
+
+    # def new_task(self):
+    #     try:
+    #         from windows.task_filling import TaskFilling
+    #         self.new_task = TaskFilling()
+    #         self.new_task.show()
+    #         self.close()
+    #     except Exception as e:
+    #         QMessageBox.critical(self, "Ошибка", f"Не удалось открыть окно создания нового задания: {e}")
+
+    def new_task(self):
+        try:
+            from windows.task_filling import TaskFilling
+            print("Импорт TaskFilling успешен")
+            self.new_task_window = TaskFilling()
+            print("Создан экземпляр TaskFilling")
+            self.new_task_window.show()
+            print("Окно TaskFilling показано")
+            self.close()
+            print("Текущее окно закрыто")
+        except Exception as e:
+            print(f"Ошибка: {e}")
+            QMessageBox.critical(self, "Ошибка", f"Не удалось открыть окно создания нового задания: {e}")
 
 if __name__ == "__main__":
     import sys

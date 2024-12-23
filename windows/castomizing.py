@@ -1,5 +1,8 @@
 
 from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt5.QtWidgets import QMessageBox
+
+from windows.start_window import StartWindow
 
 
 class Ui_Castomizing(object):
@@ -432,6 +435,23 @@ class Ui_Castomizing(object):
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tabPasswords), _translate("Castomizing", "Пароли"))
         self.BtnBack.setText(_translate("Castomizing", "Назад"))
 
+class CastomizingWindow(QtWidgets.QMainWindow):
+    def __init__(self):
+        super().__init__()
+        print("Создание окна кастомизации...")
+        self.ui = Ui_Castomizing()
+        self.ui.setupUi(self)
+        print("Окно кастомизации настроено.")
+
+        self.ui.BtnBack.clicked.connect(self.back_role_selection)
+
+    def back_role_selection(self):
+        try:
+            self.role_selection_window = StartWindow()  # Создаем экземпляр окна для выбора роли
+            self.role_selection_window.show()  # Показываем окно
+            self.close()  # Закрываем текущее окно
+        except Exception as e:
+            QMessageBox.critical(self, "Ошибка", f"Не удалось открыть окно выбора роли: {e}")
 
 if __name__ == "__main__":
     import sys
