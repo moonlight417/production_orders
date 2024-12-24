@@ -3,9 +3,6 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import QMessageBox
 
 
-
-
-
 class Ui_MainWindowManager(object):
     def setupUi(self, MainWindowManager):
         MainWindowManager.setObjectName("MainWindowManager")
@@ -78,7 +75,18 @@ class MainWindowManager(QtWidgets.QMainWindow):
         self.ui.setupUi(self)
 
         self.ui.BtnRoleSelection.clicked.connect(self.back_role_selection)
-        # self.ui.BtnNewTasks.clicked(self.new_task)
+        self.ui.BtnNewTasks.clicked.connect(self.new_task)
+        self.ui.BtnViewTasks.clicked.connect(self.tasks_list)
+        self.ui.BtnDrowingArchive.clicked.connect(self.search_design_doc_window)
+
+    def search_design_doc_window(self):
+        try:
+            from search_design_document import SearchDesignDoc
+            self.search_design_doc = SearchDesignDoc(parent=self)
+            self.search_design_doc.show()
+            self.close()
+        except Exception as e:
+            QMessageBox.critical(self, "Ошибка", f"Не удалось открыть окно поиска КД: {e}")
 
     def back_role_selection(self):
         try:
@@ -89,28 +97,23 @@ class MainWindowManager(QtWidgets.QMainWindow):
         except Exception as e:
             QMessageBox.critical(self, "Ошибка", f"Не удалось открыть окно выбора роли: {e}")
 
-    # def new_task(self):
-    #     try:
-    #         from windows.task_filling import TaskFilling
-    #         self.new_task = TaskFilling()
-    #         self.new_task.show()
-    #         self.close()
-    #     except Exception as e:
-    #         QMessageBox.critical(self, "Ошибка", f"Не удалось открыть окно создания нового задания: {e}")
-
     def new_task(self):
         try:
             from windows.task_filling import TaskFilling
-            print("Импорт TaskFilling успешен")
-            self.new_task_window = TaskFilling()
-            print("Создан экземпляр TaskFilling")
-            self.new_task_window.show()
-            print("Окно TaskFilling показано")
+            self.new_task = TaskFilling()
+            self.new_task.show()
             self.close()
-            print("Текущее окно закрыто")
         except Exception as e:
-            print(f"Ошибка: {e}")
             QMessageBox.critical(self, "Ошибка", f"Не удалось открыть окно создания нового задания: {e}")
+
+    def tasks_list(self):
+        try:
+            from windows.tasks_list import TasksList
+            self.tasks_list = TasksList()
+            self.tasks_list.show()
+            self.close()
+        except Exception as e:
+            QMessageBox.critical(self, "Ошибка", f"Не удалось открыть окно просмотра заданий: {e}")
 
 if __name__ == "__main__":
     import sys

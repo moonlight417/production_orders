@@ -69,6 +69,26 @@ class MainWindowProduction(QtWidgets.QMainWindow):
         self.ui.setupUi(self)
 
         self.ui.BtnRoleSelection.clicked.connect(self.back_role_selection)
+        self.ui.BtnNewOrders.clicked.connect(self.new_orders)
+        self.ui.BtnDrowingArchive.clicked.connect(self.search_design_doc_window)
+
+    def search_design_doc_window(self):
+        try:
+            from search_design_document import SearchDesignDoc
+            self.search_design_doc = SearchDesignDoc(parent=self)
+            self.search_design_doc.show()
+            self.close()
+        except Exception as e:
+            QMessageBox.critical(self, "Ошибка", f"Не удалось открыть окно поиска КД: {e}")
+
+    def new_orders(self):
+        try:
+            from windows.new_orders import NewOrdersWindow
+            self.new_orders_window = NewOrdersWindow()
+            self.new_orders_window.show()  # Показываем окно
+            self.close()  # Закрываем текущее окно
+        except Exception as e:
+            QMessageBox.critical(self, "Ошибка", f"Не удалось открыть окно новых заказов: {e}")
 
     def back_role_selection(self):
         try:
