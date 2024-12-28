@@ -13,7 +13,6 @@ class Task(models.Model):
 
 class Order(models.Model):
     product = models.ForeignKey('products.Product', on_delete=models.CASCADE)
-    status = models.ForeignKey('changes.Status', on_delete=models.CASCADE)
     order_date = models.DateField()
     production_acceptance_date = models.DateField(null=True, blank=True)
     order_file = models.FileField(upload_to='orders/')

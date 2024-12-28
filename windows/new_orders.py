@@ -200,13 +200,13 @@ class NewOrdersWindow(QtWidgets.QMainWindow):
         self.ui.setupUi(self)
 
         self.ui.BtnBack.clicked.connect(self.back_main_production_window)
-        self.ui.BtnStatus.clicked.connect(self.status_info)
+        self.ui.BtnStatus.clicked.connect(self.status_info_window)
 
-    def status_info(self):
+    def status_info_window(self):
         try:
             from windows.statuses import StatusInfoWindow
-            self.status_info_window = StatusInfoWindow()
-            self.status_info_window.show()
+            self.status_info = StatusInfoWindow()
+            self.status_info.show()
         except Exception as e:
             QMessageBox.critical(self, "Ошибка", f"Не удалось открыть информацию о статусах: {e}")
 

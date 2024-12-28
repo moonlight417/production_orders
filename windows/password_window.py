@@ -34,9 +34,9 @@ class Ui_EnterPassword(object):
         self.lineEditEnterPassword.setEchoMode(QtWidgets.QLineEdit.Password)
         self.lineEditEnterPassword.setObjectName("lineEditEnterPassword")
 
-        self.BtnChangePassword = QtWidgets.QPushButton(self.centralwidget)
-        self.BtnChangePassword.setGeometry(QtCore.QRect(155, 80, 81, 23))
-        self.BtnChangePassword.setObjectName("BtnChangePassword")
+        # self.BtnChangePassword = QtWidgets.QPushButton(self.centralwidget)
+        # self.BtnChangePassword.setGeometry(QtCore.QRect(155, 80, 81, 23))
+        # self.BtnChangePassword.setObjectName("BtnChangePassword")
 
         self.BtnEnter = QtWidgets.QPushButton(self.centralwidget)
         self.BtnEnter.setGeometry(QtCore.QRect(180, 40, 51, 23))
@@ -54,7 +54,7 @@ class Ui_EnterPassword(object):
         _translate = QtCore.QCoreApplication.translate
         EnterPassword.setWindowTitle(_translate("EnterPassword", "Пароль"))
         self.labelEnterPassword.setText(_translate("EnterPassword", "Введите пароль:"))
-        self.BtnChangePassword.setText(_translate("EnterPassword", "Смена пароля"))
+        # self.BtnChangePassword.setText(_translate("EnterPassword", "Смена пароля"))
         self.BtnEnter.setText(_translate("EnterPassword", "Войти"))
         self.BtnBack.setText(_translate("EnterPassword", "Назад"))
 
@@ -69,7 +69,7 @@ class PasswordWindow(QtWidgets.QMainWindow):
         # Подключаем сигналы
         self.ui.BtnEnter.clicked.connect(self.check_password)
         # self.ui.BtnBack.clicked.connect(self.close)
-        self.ui.BtnChangePassword.clicked.connect(self.change_password)
+        # self.ui.BtnChangePassword.clicked.connect(self.change_password)
 
         self.ui.BtnBack.clicked.connect(self.back_role_selection)
 

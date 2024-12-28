@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/">
+        <file>.utils/icons/x-square.svg</file>
+    </qresource>
+</RCC>

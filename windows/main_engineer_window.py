@@ -93,7 +93,29 @@ class MainWindowEngineer(QtWidgets.QMainWindow):
         self.ui = Ui_MainWindowEngineer()
         self.ui.setupUi(self)
 
+
         self.ui.BtnRoleSelection.clicked.connect(self.back_role_selection)
+        self.ui.BtnNewTasks.clicked.connect(self.new_tasks_window)
+        self.ui.BtnDrowingArchive.clicked.connect(self.search_design_doc_window)
+
+
+    def search_design_doc_window(self):
+        try:
+            from search_design_document import SearchDesignDoc
+            self.search_design_doc = SearchDesignDoc(parent=self)
+            self.search_design_doc.show()
+            self.close()
+        except Exception as e:
+            QMessageBox.critical(self, "Ошибка", f"Не удалось открыть окно поиска КД: {e}")
+
+    def new_tasks_window(self):
+        try:
+            from windows.new_tasks import NewTasks
+            self.new_tasks = NewTasks()
+            self.new_tasks.show()
+            self.close()
+        except Exception as e:
+            QMessageBox.critical(self, "Ошибка", f"Не удалось открыть окно новых заданий: {e}")
 
     def back_role_selection(self):
         try:
