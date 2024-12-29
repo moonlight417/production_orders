@@ -34,9 +34,9 @@ class Ui_EnterPassword(object):
         self.lineEditEnterPassword.setEchoMode(QtWidgets.QLineEdit.Password)
         self.lineEditEnterPassword.setObjectName("lineEditEnterPassword")
 
-        # self.BtnChangePassword = QtWidgets.QPushButton(self.centralwidget)
-        # self.BtnChangePassword.setGeometry(QtCore.QRect(155, 80, 81, 23))
-        # self.BtnChangePassword.setObjectName("BtnChangePassword")
+        self.BtnChangePassword = QtWidgets.QPushButton(self.centralwidget)
+        self.BtnChangePassword.setGeometry(QtCore.QRect(155, 80, 81, 23))
+        self.BtnChangePassword.setObjectName("BtnChangePassword")
 
         self.BtnEnter = QtWidgets.QPushButton(self.centralwidget)
         self.BtnEnter.setGeometry(QtCore.QRect(180, 40, 51, 23))
@@ -54,7 +54,7 @@ class Ui_EnterPassword(object):
         _translate = QtCore.QCoreApplication.translate
         EnterPassword.setWindowTitle(_translate("EnterPassword", "Пароль"))
         self.labelEnterPassword.setText(_translate("EnterPassword", "Введите пароль:"))
-        # self.BtnChangePassword.setText(_translate("EnterPassword", "Смена пароля"))
+        self.BtnChangePassword.setText(_translate("EnterPassword", "Смена пароля"))
         self.BtnEnter.setText(_translate("EnterPassword", "Войти"))
         self.BtnBack.setText(_translate("EnterPassword", "Назад"))
 
@@ -69,7 +69,7 @@ class PasswordWindow(QtWidgets.QMainWindow):
         # Подключаем сигналы
         self.ui.BtnEnter.clicked.connect(self.check_password)
         # self.ui.BtnBack.clicked.connect(self.close)
-        # self.ui.BtnChangePassword.clicked.connect(self.change_password)
+        self.ui.BtnChangePassword.clicked.connect(self.change_password)
 
         self.ui.BtnBack.clicked.connect(self.back_role_selection)
 
@@ -85,7 +85,7 @@ class PasswordWindow(QtWidgets.QMainWindow):
         entered_password = self.ui.lineEditEnterPassword.text()
         try:
             response = requests.post(
-                f"http://127.0.0.1:8000/api/check_password/{self.role}/",
+                f"http://127.0.0.1:8000/employees/check_password/{self.role}/",
                 data={"password": entered_password},
             )
             if response.status_code == 200 and response.json().get("success"):
@@ -148,36 +148,29 @@ class PasswordWindow(QtWidgets.QMainWindow):
         self.password_change_window.show()  # Показываем окно
 
 
-class PasswordChange(QtWidgets.QMainWindow):
-    def __init__(self):
-        super().__init__()
-        self.ui = Ui_PasswordChange()
-        self.ui.setupUi(self)
 
-        # Подключаем кнопку "Применить" к методу смены пароля
-        self.ui.BtnApply.clicked.connect(self.apply_password_change)
 
-    def apply_password_change(self):
-        current_password = self.ui.lineEditCurrentPassword.text()
-        new_password = self.ui.lineEditNewPassword.text()
-
-        # Логика проверки и смены пароля
-        if not current_password or not new_password:
-            QMessageBox.warning(self, "Ошибка", "Заполните оба поля!")
-            return
-
-        try:
-            response = requests.post(
-                "http://127.0.0.1:8000/api/change_password/",
-                data={"current_password": current_password, "new_password": new_password},
-            )
-            if response.status_code == 200 and response.json().get("success"):
-                QMessageBox.information(self, "Успех", "Пароль успешно изменен!")
-                self.close()
-            else:
-                QMessageBox.warning(self, "Ошибка", "Не удалось сменить пароль.")
-        except requests.RequestException as e:
-            QMessageBox.critical(self, "Ошибка", f"Не удалось подключиться к серверу: {e}")
+    # def apply_password_change(self):
+    #     current_password = self.ui.lineEditCurrentPassword.text()
+    #     new_password = self.ui.lineEditNewPassword.text()
+    #
+    #     # Логика проверки и смены пароля
+    #     if not current_password or not new_password:
+    #         QMessageBox.warning(self, "Ошибка", "Заполните оба поля!")
+    #         return
+    #
+    #     try:
+    #         response = requests.post(
+    #             "http://127.0.0.1:8000/employees/change_password/",
+    #             data={"current_password": current_password, "new_password": new_password},
+    #         )
+    #         if response.status_code == 200 and response.json().get("success"):
+    #             QMessageBox.information(self, "Успех", "Пароль успешно изменен!")
+    #             self.close()
+    #         else:
+    #             QMessageBox.warning(self, "Ошибка", "Не удалось сменить пароль.")
+    #     except requests.RequestException as e:
+    #         QMessageBox.critical(self, "Ошибка", f"Не удалось подключиться к серверу: {e}")
 
 
 if __name__ == "__main__":

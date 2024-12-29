@@ -10,5 +10,5 @@ router.register(r'mymodel', EmployeeViewSet)
 urlpatterns = [
     path('',include(router.urls)),
     path('check_password/<str:role>/', CheckPasswordView.as_view(), name='check_password'),
-    path('api/change_password/', ChangePasswordView.as_view(), name='change_password'),
+    path('change_password/', ChangePasswordView.as_view(), name='change_password'),
 ]

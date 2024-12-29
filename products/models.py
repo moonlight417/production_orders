@@ -12,12 +12,12 @@ class Drawing(models.Model):
 
 class Product(models.Model):
     task = models.ForeignKey(Task, on_delete=models.CASCADE)
-    drawing = models.ForeignKey(Drawing, on_delete=models.CASCADE)
+    drawing = models.ForeignKey(Drawing, null=True, blank=True, on_delete=models.CASCADE)
     rod_blank = models.ForeignKey(RodForm, null=True, blank=True, on_delete=models.SET_NULL)
     sheet_blank = models.ForeignKey(SheetForm, null=True, blank=True, on_delete=models.SET_NULL)
     name = models.CharField(max_length=255)
     quantity_in_task = models.IntegerField()
-    quantity_to_produce = models.IntegerField()
+    quantity_to_produce = models.IntegerField(null=True, blank=True)
 
 class TaskProduct(models.Model):
     task = models.ForeignKey(Task, on_delete=models.CASCADE)

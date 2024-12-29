@@ -1,3 +1,4 @@
+import requests
 from PyQt5.QtCore import QDate
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import QMessageBox
@@ -47,6 +48,7 @@ class Ui_TaskFilling(object):
         font.setPointSize(10)
         self.BtnForDeveloping.setFont(font)
         self.BtnForDeveloping.setObjectName("BtnForDeveloping")
+        self.BtnForDeveloping.setEnabled(False)
 
         self.BtnBack = QtWidgets.QPushButton(self.centralwidget)
         self.BtnBack.setGeometry(QtCore.QRect(10, 720, 125, 31))
@@ -91,7 +93,6 @@ class Ui_TaskFilling(object):
         font.setPointSize(11)
         self.lineEditCheckNumber.setFont(font)
         self.lineEditCheckNumber.setObjectName("lineEditCheckNumber")
-        # self.lineEditCheckNumber.setText("142")
 
         self.frame_6 = QtWidgets.QFrame(self.centralwidget)
         self.frame_6.setGeometry(QtCore.QRect(10, 10, 561, 21))
@@ -127,12 +128,12 @@ class Ui_TaskFilling(object):
         self.line.setFrameShadow(QtWidgets.QFrame.Sunken)
         self.line.setObjectName("line")
 
-        self.BtnForDeveloping_2 = QtWidgets.QPushButton(self.centralwidget)
-        self.BtnForDeveloping_2.setGeometry(QtCore.QRect(396, 720, 111, 31))
+        self.BtnSave = QtWidgets.QPushButton(self.centralwidget)
+        self.BtnSave.setGeometry(QtCore.QRect(396, 720, 111, 31))
         font = QtGui.QFont()
         font.setPointSize(10)
-        self.BtnForDeveloping_2.setFont(font)
-        self.BtnForDeveloping_2.setObjectName("BtnForDeveloping_2")
+        self.BtnSave.setFont(font)
+        self.BtnSave.setObjectName("BtnForDeveloping_2")
 
         TaskFilling.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(TaskFilling)
@@ -152,10 +153,9 @@ class Ui_TaskFilling(object):
         self.labelDate.setText(_translate("TaskFilling", "Дата"))
         self.labelCustomer.setText(_translate("TaskFilling", "Название организации заказчика"))
         self.BtnAddNewProduct.setText(_translate("TaskFilling", "Добавить изделие"))
-        # self.BtnUpdateNumbers.setText(_translate("TaskFilling", "Обновить нумерацию"))
         self.BtnForDeveloping.setText(_translate("TaskFilling", "На разработку"))
         self.BtnBack.setText(_translate("TaskFilling", "Назад"))
-        self.BtnForDeveloping_2.setText(_translate("TaskFilling", "Сохранить"))
+        self.BtnSave.setText(_translate("TaskFilling", "Сохранить"))
 
 
 class TaskFilling(QtWidgets.QMainWindow):
@@ -164,11 +164,22 @@ class TaskFilling(QtWidgets.QMainWindow):
         self.ui = Ui_TaskFilling()
         self.ui.setupUi(self)
 
-        self.ui.lineEditCheckNumber.setText("142")
+        check_number = self.get_max_value_from_database("orders_task", "invoice_number")
+        self.ui.lineEditCheckNumber.setText(str(check_number + 1))  # Преобразуем int в str
+
+        # Получаем данные из базы данных для изделий
+        customer = self.get_words_from_database("orders_customer", "organization_name")
+
+        # Настраиваем QCompleter для поля lineEditCustomer
+        completer = QtWidgets.QCompleter(customer, self)
+        completer.setCaseSensitivity(QtCore.Qt.CaseInsensitive)
+        self.ui.lineEditCustomer.setCompleter(completer)
 
         # Обработчики для кнопок
         self.ui.BtnAddNewProduct.clicked.connect(self.add_product_line)
         self.ui.BtnBack.clicked.connect(self.back_main_manager_window)
+        self.ui.BtnSave.clicked.connect(self.enable_for_developing_button)
+        self.ui.BtnSave.clicked.connect(self.add_task)
 
         # Пустой заполнитель
         self.empty_placeholder = QtWidgets.QWidget()
@@ -176,6 +187,71 @@ class TaskFilling(QtWidgets.QMainWindow):
         self.ui.layoutProducts.addWidget(self.empty_placeholder)  # Добавляем заполнитель в конец layout
 
 
+    def get_words_from_database(self, table_name, column_name):
+        """
+        Получение данных из базы данных SQLite для указанной таблицы и столбца.
+
+        :param table_name: Название таблицы.
+        :param column_name: Название столбца.
+        :return: Список строк из указанного столбца.
+        """
+        try:
+            import os
+
+            # Путь к базе данных
+            BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+            db_path = os.path.join(BASE_DIR, "db.sqlite3")
+            conn = sqlite3.connect(db_path)
+
+            cursor = conn.cursor()
+
+            # Динамический SQL-запрос
+            query = f"SELECT DISTINCT {column_name} FROM {table_name}"
+            cursor.execute(query)
+            result = cursor.fetchall()
+
+            # Преобразуем результат в список строк
+            words = [row[0] for row in result]
+
+            conn.close()
+            return words
+
+        except sqlite3.Error as e:
+            print(f"Ошибка доступа к базе данных: {e}")
+            return []
+
+    def get_max_value_from_database(self, table_name, column_name):
+        """
+        Получение максимального числового значения из указанной колонки таблицы SQLite.
+
+        :param table_name: Название таблицы.
+        :param column_name: Название столбца.
+        :return: Максимальное значение из указанного столбца или None в случае ошибки.
+        """
+        try:
+            import os
+            import sqlite3
+
+            # Путь к базе данных
+            BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+            db_path = os.path.join(BASE_DIR, "db.sqlite3")
+            conn = sqlite3.connect(db_path)
+
+            cursor = conn.cursor()
+
+            # Динамический SQL-запрос с приведением к числовому типу
+            query = f"SELECT MAX(CAST({column_name} AS INTEGER)) FROM {table_name}"
+            cursor.execute(query)
+            result = cursor.fetchone()
+
+            conn.close()
+
+            # Если результат не None, вернуть максимальное значение
+            return result[0] if result else None
+
+        except sqlite3.Error as e:
+            print(f"Ошибка доступа к базе данных: {e}")
+            return None
 
     def add_product_line(self):
         try:
@@ -208,6 +284,13 @@ class TaskFilling(QtWidgets.QMainWindow):
             lineEditProductName = QtWidgets.QLineEdit()
             lineEditProductName.setFont(QtGui.QFont("Arial", 12))
             lineEditProductName.setPlaceholderText("Введите название изделия")
+
+            # Настраиваем QCompleter для нового поля
+            product_names = self.get_words_from_database("products_product", "name")
+            completer = QtWidgets.QCompleter(product_names, self)
+            completer.setCaseSensitivity(QtCore.Qt.CaseInsensitive)
+            lineEditProductName.setCompleter(completer)
+
             frame_layout.addWidget(lineEditProductName)
 
             # Поле ввода количества
@@ -263,7 +346,56 @@ class TaskFilling(QtWidgets.QMainWindow):
         except Exception as e:
             print(f"Ошибка в update_product_numbers: {e}")
 
+    def enable_for_developing_button(self):
+        """Активирует вторую кнопку."""
+        self.ui.BtnForDeveloping.setEnabled(True)
 
+    def add_task(self):
+        # Получение данных из lineEdit
+        order_invoice_date = self.ui.dateEditDate.text()
+        invoice_number = self.ui.lineEditCheckNumber.text()
+        organization_name = self.ui.lineEditCustomer.text()
+
+        # Проверка, что все поля заполнены
+        if not order_invoice_date or not invoice_number or not organization_name:
+            QtWidgets.QMessageBox.warning(self, "Ошибка", "Заполните все поля!")
+            return
+
+        # Формируем данные для запросов
+        data_task = {
+            'order_invoice_date': order_invoice_date,
+            'invoice_number': invoice_number,
+        }
+        data_customer = {'organization_name': organization_name}
+
+        # Универсальный метод отправки данных
+        def send_request(url, data, success_message, error_message):
+            try:
+                response = requests.post(url, data=data)
+                if response.status_code == 201:
+                    QtWidgets.QMessageBox.information(self, "Успех", success_message)
+                else:
+                    QtWidgets.QMessageBox.warning(self, "Ошибка", error_message)
+                return response
+            except requests.RequestException as e:
+                QtWidgets.QMessageBox.critical(self, "Ошибка", f"Ошибка соединения: {e}")
+                return None
+
+        # Отправляем задачу
+        send_request(
+            'http://127.0.0.1:8000/orders/add_task/',
+            data_task,
+            "Задание добавлено!",
+            "Не удалось добавить задание."
+        )
+
+        # Отправляем клиента
+        send_request(
+            'http://127.0.0.1:8000/orders/add_customer/',
+            data_customer,
+            "Клиент добавлен!",
+            "Не удалось добавить клиента."
+        )
 
     def back_main_manager_window(self):
         # Логика возврата к главному окну менеджера

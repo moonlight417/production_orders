@@ -7,7 +7,6 @@ class Customer(models.Model):
 
 class Task(models.Model):
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
-    name = models.CharField(max_length=255)
     order_invoice_date = models.DateField()
     invoice_number = models.CharField(max_length=255)
 
@@ -21,3 +20,5 @@ class Order(models.Model):
 class TaskEmployee(models.Model):
     order = models.ForeignKey(Task, on_delete=models.CASCADE)
     employee = models.ForeignKey(Employee, on_delete=models.CASCADE)
+
+
