@@ -10,7 +10,7 @@ urlpatterns = [
     path('employees/', include('employees.urls')),
     # path('materials/', include('materials.urls')),
     path('orders/', include('orders.urls')),
-    # path('products/', include('products.urls')),
+    path('products/', include('products.urls')),
     # path('technology/', include('technology.urls')),
 ]
 

@@ -1,7 +1,6 @@
 from django.urls import path
-from .views import AddTaskView, AddCustomerView
+from .views import AddCustomerAndTaskView
 
 urlpatterns = [
-    path('add_task/', AddTaskView.as_view(), name='add_task'),
-    path('add_customer/', AddCustomerView.as_view(), name='add_customer')
+    path('add_customer_and_task/', AddCustomerAndTaskView.as_view(), name='add_customer_and_task'),
 ]

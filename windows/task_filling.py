@@ -4,7 +4,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import QMessageBox
 import sqlite3
 import resources_rc
-
+import json
 
 class Ui_TaskFilling(object):
     def setupUi(self, TaskFilling):
@@ -180,6 +180,8 @@ class TaskFilling(QtWidgets.QMainWindow):
         self.ui.BtnBack.clicked.connect(self.back_main_manager_window)
         self.ui.BtnSave.clicked.connect(self.enable_for_developing_button)
         self.ui.BtnSave.clicked.connect(self.add_task)
+        self.ui.BtnSave.clicked.connect(self.clearLineEdit)
+        self.ui.BtnSave.clicked.connect(self.clear_products)
 
         # Пустой заполнитель
         self.empty_placeholder = QtWidgets.QWidget()
@@ -329,7 +331,6 @@ class TaskFilling(QtWidgets.QMainWindow):
             # Обновляем номера всех строк
             self.update_product_numbers()
 
-
         except Exception as e:
             print(f"Ошибка в delete_product_line: {e}")
 
@@ -351,58 +352,118 @@ class TaskFilling(QtWidgets.QMainWindow):
         self.ui.BtnForDeveloping.setEnabled(True)
 
     def add_task(self):
-        # Получение данных из lineEdit
-        order_invoice_date = self.ui.dateEditDate.text()
-        invoice_number = self.ui.lineEditCheckNumber.text()
-        organization_name = self.ui.lineEditCustomer.text()
+        # Собирает данные о заказе и продуктах, отправляет их на сервер.
+        # Сбор данных для заказчика и задания
+        customer_and_task_data = {
+            "invoice_number": self.ui.lineEditCheckNumber.text(),
+            "order_date": self.ui.dateEditDate.date().toString("yyyy-MM-dd"),
+            "organization_name": self.ui.lineEditCustomer.text(),
+        }
+        print("Отправляемые данные:", customer_and_task_data)
 
         # Проверка, что все поля заполнены
-        if not order_invoice_date or not invoice_number or not organization_name:
-            QtWidgets.QMessageBox.warning(self, "Ошибка", "Заполните все поля!")
+        if not all(customer_and_task_data.values()):
+            QtWidgets.QMessageBox.warning(self, "Ошибка", "Заполните все поля корректно.")
             return
 
-        # Формируем данные для запросов
-        data_task = {
-            'order_invoice_date': order_invoice_date,
-            'invoice_number': invoice_number,
-        }
-        data_customer = {'organization_name': organization_name}
+        try:
+            # Отправка первого запроса
+            response = requests.post(
+                "http://127.0.0.1:8000/orders/add_customer_and_task/",
+                json=customer_and_task_data
+            )
+            if response.status_code == 201:
+                task_id = response.json().get("task_id")
+                if not task_id:
+                    QtWidgets.QMessageBox.warning(self, "Ошибка", "Не удалось получить ID задания.")
+                    return
 
-        # Универсальный метод отправки данных
-        def send_request(url, data, success_message, error_message):
-            try:
-                response = requests.post(url, data=data)
-                if response.status_code == 201:
-                    QtWidgets.QMessageBox.information(self, "Успех", success_message)
-                else:
-                    QtWidgets.QMessageBox.warning(self, "Ошибка", error_message)
-                return response
-            except requests.RequestException as e:
-                QtWidgets.QMessageBox.critical(self, "Ошибка", f"Ошибка соединения: {e}")
-                return None
+                # Сбор данных о продуктах
+                product_data_list = self.collect_product_data(task_id)
 
-        # Отправляем задачу
-        send_request(
-            'http://127.0.0.1:8000/orders/add_task/',
-            data_task,
-            "Задание добавлено!",
-            "Не удалось добавить задание."
-        )
+                # Проверка, что данные о продуктах корректны
+                if not product_data_list:
+                    QtWidgets.QMessageBox.warning(self, "Ошибка", "Добавьте хотя бы один продукт и заполните все поля.")
+                    return
 
-        # Отправляем клиента
-        send_request(
-            'http://127.0.0.1:8000/orders/add_customer/',
-            data_customer,
-            "Клиент добавлен!",
-            "Не удалось добавить клиента."
-        )
+                # Отправка данных о продуктах
+                for product_data in product_data_list:
+                    response = requests.post("http://127.0.0.1:8000/products/add_product/", json=product_data)
+                    if response.status_code != 201:
+                        QtWidgets.QMessageBox.warning(
+                            self,
+                            "Ошибка",
+                            f"Ошибка при добавлении продукта: {response.text}"
+                        )
+                        return
+
+                QtWidgets.QMessageBox.information(self, "Успех", "Данные успешно добавлены!")
+            else:
+                QtWidgets.QMessageBox.warning(self, "Ошибка", f"Ошибка сервера: {response.text}")
+        except Exception as e:
+            QtWidgets.QMessageBox.critical(self, "Ошибка", f"Не удалось отправить данные: {e}")
+
+    def collect_product_data(self, task_id):
+        """
+        Сбор данных о продуктах из динамически созданных строк.
+
+        :param task_id: ID задания, с которым связаны продукты.
+        :return: Список словарей с данными о продуктах.
+        """
+        product_data_list = []
+
+        for i in range(self.ui.layoutProducts.count() - 1):  # Исключаем последний виджет-заполнитель
+            item = self.ui.layoutProducts.itemAt(i).widget()
+            if isinstance(item, QtWidgets.QFrame):  # Проверяем, что это строка продукта
+                # Извлекаем данные из виджетов внутри строки
+                lineEditProductName = item.findChild(QtWidgets.QLineEdit)
+                spin_box_quantity = item.findChild(QtWidgets.QSpinBox)
+
+                if lineEditProductName and spin_box_quantity:
+                    product_name = lineEditProductName.text().strip()
+                    quantity = spin_box_quantity.value()
+
+                    # Проверка, что данные заполнены
+                    if product_name and quantity > 0:
+                        product_data_list.append({
+                            "task_id": task_id,
+                            "name": product_name,
+                            "quantity": quantity,
+                        })
+
+        return product_data_list
+
+    def clearLineEdit(self):
+        self.ui.lineEditCustomer.clear()
+        check_number = self.get_max_value_from_database("orders_task", "invoice_number")
+        self.ui.lineEditCheckNumber.setText(str(check_number + 1))
+
+    def clear_layout(self, layout):
+        # Очищает все элементы в layout
+        if layout is not None:
+            for i in range(layout.count()):
+                item = layout.itemAt(i)
+                if item is not None:
+                    widget = item.widget()
+                    if widget is not None:
+                        widget.deleteLater()  # Удаляем виджет
+                    else:
+                        # Если это подмакет, рекурсивно очищаем его
+                        sub_layout = item.layout()
+                        if sub_layout is not None:
+                            self.clear_layout(sub_layout)
+
+    def clear_products(self):
+        # Очищает все строки продуктов в layout
+        self.clear_layout(self.ui.layoutProducts)
+        self.ui.layoutProducts.update()  # Обновляем layout после очистки
 
     def back_main_manager_window(self):
-        # Логика возврата к главному окну менеджера
-        from windows.main_manager_window import MainWindowManager
-        self.main_manager_window = MainWindowManager()
-        self.main_manager_window.show()
-        self.close()
+            # Возврат к главному окну менеджера
+            from windows.main_manager_window import MainWindowManager
+            self.main_manager_window = MainWindowManager()
+            self.main_manager_window.show()
+            self.close()
 
 if __name__ == "__main__":
     import sys
