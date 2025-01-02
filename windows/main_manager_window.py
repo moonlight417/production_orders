@@ -66,7 +66,7 @@ class Ui_MainWindowManager(object):
         self.label.setText(_translate("MainWindowManager", "Заказов на проверку:"))
         self.LbCheckOrders.setText(_translate("MainWindowManager", "12"))
         self.BtnCheck.setText(_translate("MainWindowManager", "Проверить"))
-        self.BtnViewTasks.setText(_translate("MainWindowManager", "Смотреть задания"))
+        self.BtnViewTasks.setText(_translate("MainWindowManager", "Задания"))
 
 class MainWindowManager(QtWidgets.QMainWindow):
     def __init__(self):

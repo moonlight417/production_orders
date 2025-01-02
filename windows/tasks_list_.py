@@ -7,12 +7,15 @@ import requests
 
 class Ui_TasksList(object):
     def setupUi(self, TasksList):
-        # class Ui_TasksList(object):
+        class Ui_TasksList(object):
+
 
             TasksList.setObjectName("TasksList")
             TasksList.resize(1132, 798)
             self.centralwidget = QtWidgets.QWidget(TasksList)
             self.centralwidget.setObjectName("centralwidget")
+
+            # Упрощение: остальной код интерфейса остается без изменений.
 
             self.scrollArea = QtWidgets.QScrollArea(self.centralwidget)
             self.scrollArea.setGeometry(QtCore.QRect(10, 110, 1111, 601))
@@ -43,6 +46,12 @@ class Ui_TasksList(object):
             self.retranslateUi(TasksList)
             QtCore.QMetaObject.connectSlotsByName(TasksList)
 
+
+        # TasksList.setObjectName("TasksList")
+        # TasksList.resize(1132, 798)
+        # self.centralwidget = QtWidgets.QWidget(TasksList)
+        # self.centralwidget.setObjectName("centralwidget")
+
             self.frame_3 = QtWidgets.QFrame(self.centralwidget)
             self.frame_3.setGeometry(QtCore.QRect(10, 65, 1111, 41))
             self.frame_3.setFrameShape(QtWidgets.QFrame.StyledPanel)
@@ -60,6 +69,10 @@ class Ui_TasksList(object):
             self.labelDate = QtWidgets.QLabel(self.frame_3)
             self.labelDate.setGeometry(QtCore.QRect(95, 0, 31, 16))
             self.labelDate.setObjectName("labelDate")
+
+            # self.labelQuantity = QtWidgets.QLabel(self.frame_3)
+            # self.labelQuantity.setGeometry(QtCore.QRect(960, 15, 61, 16))
+            # self.labelQuantity.setObjectName("labelQuantity")
 
             self.labelCustomer = QtWidgets.QLabel(self.frame_3)
             self.labelCustomer.setGeometry(QtCore.QRect(240, 15, 171, 16))
@@ -115,6 +128,18 @@ class Ui_TasksList(object):
             self.line_7.setFrameShadow(QtWidgets.QFrame.Sunken)
             self.line_7.setObjectName("line_7")
 
+            # self.line_9 = QtWidgets.QFrame(self.frame_3)
+            # self.line_9.setGeometry(QtCore.QRect(940, 10, 20, 31))
+            # self.line_9.setFrameShape(QtWidgets.QFrame.VLine)
+            # self.line_9.setFrameShadow(QtWidgets.QFrame.Sunken)
+            # self.line_9.setObjectName("line_9")
+
+            # self.line_10 = QtWidgets.QFrame(self.frame_3)
+            # self.line_10.setGeometry(QtCore.QRect(1025, 10, 20, 31))
+            # self.line_10.setFrameShape(QtWidgets.QFrame.VLine)
+            # self.line_10.setFrameShadow(QtWidgets.QFrame.Sunken)
+            # self.line_10.setObjectName("line_10")
+
             self.scrollArea = QtWidgets.QScrollArea(self.centralwidget)
             self.scrollArea.setGeometry(QtCore.QRect(10, 110, 1111, 601))
             self.scrollArea.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOn)
@@ -135,70 +160,85 @@ class Ui_TasksList(object):
             self.frame_4.setFrameShadow(QtWidgets.QFrame.Raised)
             self.frame_4.setObjectName("frame_4")
 
-            # self.frameLineTask = QtWidgets.QFrame(self.frame_4)
-            # self.frameLineTask.setGeometry(QtCore.QRect(0, 0, 1071, 41))
-            # self.frameLineTask.setStyleSheet("background-color: rgb(255, 255, 255);\n"
-            #                                 "border-color: rgb(0, 0, 0);")
-            # self.frameLineTask.setFrameShape(QtWidgets.QFrame.StyledPanel)
-            # self.frameLineTask.setFrameShadow(QtWidgets.QFrame.Sunken)
-            # self.frameLineTask.setLineWidth(2)
-            # self.frameLineTask.setMidLineWidth(1)
-            # self.frameLineTask.setObjectName("frameLineTask")
-            #
-            # self.line = QtWidgets.QFrame(self.frameLineTask)
-            # self.line.setGeometry(QtCore.QRect(40, 1, 18, 39))
-            # self.line.setFrameShape(QtWidgets.QFrame.VLine)
-            # self.line.setFrameShadow(QtWidgets.QFrame.Sunken)
-            # self.line.setObjectName("line")
-            #
-            # self.line_2 = QtWidgets.QFrame(self.frameLineTask)
-            # self.line_2.setGeometry(QtCore.QRect(150, 1, 18, 39))
-            # self.line_2.setFrameShape(QtWidgets.QFrame.VLine)
-            # self.line_2.setFrameShadow(QtWidgets.QFrame.Sunken)
-            # self.line_2.setObjectName("line_2")
+            self.frameLineTask = QtWidgets.QFrame(self.frame_4)
+            self.frameLineTask.setGeometry(QtCore.QRect(0, 0, 1071, 41))
+            self.frameLineTask.setStyleSheet("background-color: rgb(255, 255, 255);\n"
+                                            "border-color: rgb(0, 0, 0);")
+            self.frameLineTask.setFrameShape(QtWidgets.QFrame.StyledPanel)
+            self.frameLineTask.setFrameShadow(QtWidgets.QFrame.Sunken)
+            self.frameLineTask.setLineWidth(2)
+            self.frameLineTask.setMidLineWidth(1)
+            self.frameLineTask.setObjectName("frameLineTask")
 
-            # self.LbCheckNumber = QtWidgets.QLabel(self.frameLineTask)
-            # self.LbCheckNumber.setGeometry(QtCore.QRect(10, 10, 31, 21))
-            # font = QtGui.QFont()
-            # font.setPointSize(12)
-            # self.LbCheckNumber.setFont(font)
-            # self.LbCheckNumber.setObjectName("LbCheckNumber")
-            #
-            # self.LbCustomer = QtWidgets.QLabel(self.frameLineTask)
-            # self.LbCustomer.setGeometry(QtCore.QRect(170, 10, 301, 21))
+            self.line = QtWidgets.QFrame(self.frameLineTask)
+            self.line.setGeometry(QtCore.QRect(40, 1, 18, 39))
+            self.line.setFrameShape(QtWidgets.QFrame.VLine)
+            self.line.setFrameShadow(QtWidgets.QFrame.Sunken)
+            self.line.setObjectName("line")
+
+            self.line_2 = QtWidgets.QFrame(self.frameLineTask)
+            self.line_2.setGeometry(QtCore.QRect(150, 1, 18, 39))
+            self.line_2.setFrameShape(QtWidgets.QFrame.VLine)
+            self.line_2.setFrameShadow(QtWidgets.QFrame.Sunken)
+            self.line_2.setObjectName("line_2")
+
+            self.LbCheckNumber = QtWidgets.QLabel(self.frameLineTask)
+            self.LbCheckNumber.setGeometry(QtCore.QRect(10, 10, 31, 21))
+            font = QtGui.QFont()
+            font.setPointSize(12)
+            self.LbCheckNumber.setFont(font)
+            self.LbCheckNumber.setObjectName("LbCheckNumber")
+
+            self.LbCustomer = QtWidgets.QLabel(self.frameLineTask)
+            self.LbCustomer.setGeometry(QtCore.QRect(170, 10, 301, 21))
+            font = QtGui.QFont()
+            font.setPointSize(12)
+            font.setBold(False)
+            font.setWeight(50)
+            self.LbCustomer.setFont(font)
+            self.LbCustomer.setObjectName("LbCustomer")
+
+            # self.line_8 = QtWidgets.QFrame(self.frameLineTask)
+            # self.line_8.setGeometry(QtCore.QRect(1015, 1, 18, 39))
+            # self.line_8.setFrameShape(QtWidgets.QFrame.VLine)
+            # self.line_8.setFrameShadow(QtWidgets.QFrame.Sunken)
+            # self.line_8.setObjectName("line_8")
+
+            self.LbDate = QtWidgets.QLabel(self.frameLineTask)
+            self.LbDate.setGeometry(QtCore.QRect(60, 10, 81, 21))
+            font = QtGui.QFont()
+            font.setPointSize(12)
+            font.setBold(False)
+            font.setWeight(50)
+            self.LbDate.setFont(font)
+            self.LbDate.setObjectName("LbDate")
+
+            # self.LbQuantity = QtWidgets.QLabel(self.frameLineTask)
+            # self.LbQuantity.setGeometry(QtCore.QRect(950, 10, 71, 21))
             # font = QtGui.QFont()
             # font.setPointSize(12)
             # font.setBold(False)
             # font.setWeight(50)
-            # self.LbCustomer.setFont(font)
-            # self.LbCustomer.setObjectName("LbCustomer")
-            #
-            # self.LbDate = QtWidgets.QLabel(self.frameLineTask)
-            # self.LbDate.setGeometry(QtCore.QRect(60, 10, 81, 21))
-            # font = QtGui.QFont()
-            # font.setPointSize(12)
-            # font.setBold(False)
-            # font.setWeight(50)
-            # self.LbDate.setFont(font)
-            # self.LbDate.setObjectName("LbDate")
-            #
-            # self.comboBoxProductName = QtWidgets.QComboBox(self.frameLineTask)
-            # self.comboBoxProductName.setGeometry(QtCore.QRect(480, 0, 543, 41))
-            # font = QtGui.QFont()
-            # font.setPointSize(12)
-            # self.comboBoxProductName.setFont(font)
-            # self.comboBoxProductName.setStyleSheet("background-color: rgb(240, 240, 240);")
-            # self.comboBoxProductName.setModelColumn(8)
-            # self.comboBoxProductName.setObjectName("comboBoxProductName")
-            #
-            # self.BtnEditTask = QtWidgets.QPushButton(self.frame_4)
-            # self.BtnEditTask.setGeometry(QtCore.QRect(1030, 5, 31, 31))
-            # self.BtnEditTask.setText("")
-            # icon4 = QtGui.QIcon()
-            # icon4.addPixmap(QtGui.QPixmap("../utils/icons/pencil-square.svg"), QtGui.QIcon.Selected, QtGui.QIcon.On)
-            # self.BtnEditTask.setIcon(icon4)
-            # self.BtnEditTask.setIconSize(QtCore.QSize(23, 23))
-            # self.BtnEditTask.setObjectName("BtnEditTask")
+            # self.LbQuantity.setFont(font)
+            # self.LbQuantity.setObjectName("LbQuantity")
+
+            self.comboBoxProductName = QtWidgets.QComboBox(self.frameLineTask)
+            self.comboBoxProductName.setGeometry(QtCore.QRect(480, 0, 543, 41))
+            font = QtGui.QFont()
+            font.setPointSize(12)
+            self.comboBoxProductName.setFont(font)
+            self.comboBoxProductName.setStyleSheet("background-color: rgb(240, 240, 240);")
+            self.comboBoxProductName.setModelColumn(8)
+            self.comboBoxProductName.setObjectName("comboBoxProductName")
+
+            self.BtnEditTask = QtWidgets.QPushButton(self.frame_4)
+            self.BtnEditTask.setGeometry(QtCore.QRect(1030, 5, 31, 31))
+            self.BtnEditTask.setText("")
+            icon4 = QtGui.QIcon()
+            icon4.addPixmap(QtGui.QPixmap("../utils/icons/pencil-square.svg"), QtGui.QIcon.Selected, QtGui.QIcon.On)
+            self.BtnEditTask.setIcon(icon4)
+            self.BtnEditTask.setIconSize(QtCore.QSize(23, 23))
+            self.BtnEditTask.setObjectName("BtnEditTask")
 
             self.scrollArea.setWidget(self.scrollAreaWidgetContents)
 
@@ -292,16 +332,15 @@ class Ui_TasksList(object):
         TasksList.setWindowTitle(_translate("TasksList", "Список заданий"))
         self.lineEditSearchCustomer.setPlaceholderText(_translate("TasksList", "Введите название заказчика"))
         self.BtnSearchCustomer.setToolTip(_translate("TasksList", "Искать задания по названию заказчика"))
-        # self.BtnBack.setText(_translate("TasksList", "Назад"))
 
     # def retranslateUi(self, TasksList):
     #     _translate = QtCore.QCoreApplication.translate
     #     TasksList.setWindowTitle(_translate("TasksList", "Список заданий"))
-    #     self.labelProductName.setText(_translate("TasksList", "Наименование изделия/ Количество"))
-    #     self.labelCheckNumber.setText(_translate("TasksList", "№ счёта"))
-    #     self.labelDate.setText(_translate("TasksList", "Дата"))
-    # #     # self.labelQuantity.setText(_translate("TasksList", "Количество"))
-    #     self.labelCustomer.setText(_translate("TasksList", "Название организации заказчика"))
+    #     # self.labelProductName.setText(_translate("TasksList", "Наименование изделия/ Количество"))
+    #     # self.labelCheckNumber.setText(_translate("TasksList", "№ счёта"))
+    #     # self.labelDate.setText(_translate("TasksList", "Дата"))
+    #     # self.labelQuantity.setText(_translate("TasksList", "Количество"))
+    #     # self.labelCustomer.setText(_translate("TasksList", "Название организации заказчика"))
     #     self.LbCheckNumber.setText(_translate("TasksList", "142"))
     #     self.LbCustomer.setText(_translate("TasksList", "ООО \"Белагро Бел\""))
     #     self.LbDate.setText(_translate("TasksList", "26.07.2024"))
@@ -502,11 +541,11 @@ class Ui_TasksList(object):
 #         self.retranslateUi(TasksList)
 #         QtCore.QMetaObject.connectSlotsByName(TasksList)
 
-        # def retranslateUi(self, TasksList):
-        #     _translate = QtCore.QCoreApplication.translate
-        #     TasksList.setWindowTitle(_translate("TasksList", "Список заданий"))
-        #     self.lineEditSearchCustomer.setPlaceholderText(_translate("TasksList", "Введите название заказчика"))
-        #     self.BtnSearchCustomer.setToolTip(_translate("TasksList", "Искать задания по названию заказчика"))
+        def retranslateUi(self, TasksList):
+            _translate = QtCore.QCoreApplication.translate
+            TasksList.setWindowTitle(_translate("TasksList", "Список заданий"))
+            self.lineEditSearchCustomer.setPlaceholderText(_translate("TasksList", "Введите название заказчика"))
+            self.BtnSearchCustomer.setToolTip(_translate("TasksList", "Искать задания по названию заказчика"))
 
 class TasksList(QtWidgets.QMainWindow):
     def __init__(self):
@@ -514,30 +553,8 @@ class TasksList(QtWidgets.QMainWindow):
         self.ui = Ui_TasksList()
         self.ui.setupUi(self)
 
-        # Обработчики для кнопок
+        # Подключаем обработчик кнопки поиска
         self.ui.BtnSearchCustomer.clicked.connect(self.search_tasks_by_customer)
-
-
-        self.ui.BtnBack.clicked.connect(self.back_main_manager_window)
-
-        # Получаем данные из базы данных для названий организаций-заказчиков
-        customer = self.get_words_from_database("orders_customer", "organization_name")
-        # Настраиваем QCompleter для поля lineEditSearchCustomer
-        completer = QtWidgets.QCompleter(customer, self)
-        completer.setCaseSensitivity(QtCore.Qt.CaseInsensitive)
-        self.ui.lineEditSearchCustomer.setCompleter(completer)
-
-        # Получаем данные из базы данных для наименований изделий
-        product_names = self.get_words_from_database("products_product", "name")
-        # Настраиваем QCompleter для поля lineEditSearchProductName
-        completer = QtWidgets.QCompleter(product_names, self)
-        completer.setCaseSensitivity(QtCore.Qt.CaseInsensitive)
-        self.ui.lineEditSearchProductName.setCompleter(completer)
-
-        # # Пустой заполнитель
-        # self.empty_placeholder = QtWidgets.QWidget()
-        # self.empty_placeholder.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
-        # self.ui.layoutTask.addWidget(self.empty_placeholder)  # Добавляем заполнитель в конец layout
 
     def search_tasks_by_customer(self):
         customer_name = self.ui.lineEditSearchCustomer.text().strip()
@@ -582,47 +599,6 @@ class TasksList(QtWidgets.QMainWindow):
                 )
                 product_widget.setStyleSheet("margin-left: 15px;")
                 self.ui.layoutTask.addWidget(product_widget)
-
-    def get_words_from_database(self, table_name, column_name):
-
-
-        """
-        Получение данных из базы данных SQLite для указанной таблицы и столбца.
-        :param table_name: Название таблицы.
-        :param column_name: Название столбца.
-        :return: Список строк из указанного столбца.
-        """
-        try:
-            import os
-
-            # Путь к базе данных
-            BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-            db_path = os.path.join(BASE_DIR, "db.sqlite3")
-            conn = sqlite3.connect(db_path)
-
-            cursor = conn.cursor()
-
-            # Динамический SQL-запрос
-            query = f"SELECT DISTINCT {column_name} FROM {table_name}"
-            cursor.execute(query)
-            result = cursor.fetchall()
-
-            # Преобразуем результат в список строк
-            words = [row[0] for row in result]
-
-            conn.close()
-            return words
-
-        except sqlite3.Error as e:
-            print(f"Ошибка доступа к базе данных: {e}")
-            return []
-
-    def back_main_manager_window(self):
-        # Возврат к главному окну менеджера
-        from windows.main_manager_window import MainWindowManager
-        self.main_manager_window = MainWindowManager()
-        self.main_manager_window.show()
-        self.close()
 
 
 if __name__ == "__main__":

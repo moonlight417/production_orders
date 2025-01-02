@@ -3,6 +3,8 @@ from rest_framework.response import Response
 from rest_framework import status
 from .models import Customer, Task
 # from .serializers import CustomerSerializer, TaskSerializer
+from products.models import Product
+
 
 class AddCustomerAndTaskView(APIView):
     def post(self, request):
@@ -35,7 +37,66 @@ class AddCustomerAndTaskView(APIView):
             "message": "Данные заказчика и задания успешно сохранены."
         }, status=status.HTTP_201_CREATED)
 
+    def get(self, request):
+        # Фильтрация заданий по параметрам
+        tasks = Task.objects.all()
 
+        # Фильтры для поиска заданий
+        customer_id = request.query_params.get("customer_id")
+        invoice_number = request.query_params.get("invoice_number")
+        order_date = request.query_params.get("order_date")
+
+        if customer_id:
+            tasks = tasks.filter(customer_id=customer_id)
+        if invoice_number:
+            tasks = tasks.filter(invoice_number__icontains=invoice_number)
+        if order_date:
+            tasks = tasks.filter(order_invoice_date=order_date)
+
+        # Формирование ответа с данными заданий
+        task_list = [{
+            "task_id": task.id,
+            "invoice_number": task.invoice_number,
+            "order_invoice_date": task.order_invoice_date,
+            "customer_name": task.customer.organization_name
+        } for task in tasks]
+
+        return Response({
+            "tasks": task_list
+        }, status=status.HTTP_200_OK)
+
+from django.db.models import Q
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from .models import Customer, Task
+from products.models import Product
+
+class CustomerDataView(APIView):
+    def get(self, request):
+        customer_name = request.query_params.get("name", "").strip()
+        if not customer_name:
+            return Response({"error": "Имя заказчика не указано."}, status=400)
+
+        try:
+            customer = Customer.objects.get(organization_name__iexact=customer_name)
+            tasks = Task.objects.filter(customer=customer)
+            data = []
+            for task in tasks:
+                products = Product.objects.filter(task=task)
+                products_data = [
+                    {"name": product.name, "quantity": product.quantity_in_task} for product in products
+                ]
+                data.append({
+                    "task_id": task.id,
+                    "invoice_number": task.invoice_number,
+                    "order_date": task.order_invoice_date,
+                    "customer_name": customer.organization_name,
+                    "products": products_data,
+                })
+            return Response(data, status=200)
+        except Customer.DoesNotExist:
+            return Response({"error": "Заказчик не найден."}, status=404)
 # from django.shortcuts import render
 # from rest_framework import status
 # from rest_framework.views import APIView

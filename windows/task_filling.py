@@ -178,7 +178,6 @@ class TaskFilling(QtWidgets.QMainWindow):
         # Обработчики для кнопок
         self.ui.BtnAddNewProduct.clicked.connect(self.add_product_line)
         self.ui.BtnBack.clicked.connect(self.back_main_manager_window)
-        self.ui.BtnSave.clicked.connect(self.enable_for_developing_button)
         self.ui.BtnSave.clicked.connect(self.add_task)
         self.ui.BtnSave.clicked.connect(self.clearLineEdit)
         self.ui.BtnSave.clicked.connect(self.clear_products)
@@ -397,6 +396,7 @@ class TaskFilling(QtWidgets.QMainWindow):
                         )
                         return
 
+                self.enable_for_developing_button()  #Активация кнопки "На разработку"
                 QtWidgets.QMessageBox.information(self, "Успех", "Данные успешно добавлены!")
             else:
                 QtWidgets.QMessageBox.warning(self, "Ошибка", f"Ошибка сервера: {response.text}")
