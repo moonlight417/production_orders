@@ -32,6 +32,30 @@ class Ui_TaskFilling(object):
         self.scrollArea.setGeometry(QtCore.QRect(10, 100, 621, 551))
         self.scrollArea.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOn)
         self.scrollArea.setWidgetResizable(True)
+
+        # Настроим цвет фона для QScrollArea
+        self.scrollArea.setStyleSheet("""
+                     QScrollArea {
+                         background-color: #383838;
+
+                     }
+                     QScrollArea::widget {
+                         background-color: #383838;
+
+                     }
+                     QScrollBar {
+                         background-color: #d0d0d0;
+                         width: 12px;
+                     }
+                     QScrollBar::handle {
+                         background-color: #888888;
+                         border-radius: 6px;
+                     }
+                     QScrollBar::add-line, QScrollBar::sub-line {
+                         background-color: #a0a0a0;
+                     }
+                 """)
+
         self.scrollArea.setObjectName("scrollArea")
         self.scrollAreaWidgetContents = QtWidgets.QWidget()
         self.scrollAreaWidgetContents.setGeometry(QtCore.QRect(0, 0, 602, 549))

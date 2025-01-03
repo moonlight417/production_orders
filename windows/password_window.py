@@ -12,7 +12,7 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'base.settings')  # Замени
 django.setup()
 from PyQt5 import QtCore, QtWidgets, QtGui
 import requests
-from employees.auth import authenticate
+# from employees.auth import authenticate
 from pass_change import PasswordChange, Ui_PasswordChange
 from PyQt5.QtWidgets import QMessageBox
 
