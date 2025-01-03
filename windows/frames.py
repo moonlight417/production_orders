@@ -15,8 +15,8 @@ class TaskFilling(QtWidgets.QMainWindow):
 
         # Верт. layout для размещения фреймов
         layout = QtWidgets.QVBoxLayout(container)
-        layout.setSpacing(5)  # Нет промежутков между фреймами
-        layout.setContentsMargins(5, 5, 5, 5)  # Отсутствие отступов
+        layout.setSpacing(5)  # Промежуток между фреймами
+        layout.setContentsMargins(5, 5, 5, 5)  # Отступы
 
         # Добавляем 5 фреймов размером 500x20
         for _ in range(20):

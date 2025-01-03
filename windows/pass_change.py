@@ -36,9 +36,13 @@ class Ui_PasswordChange(object):
         self.lineEditNewPassword.setEchoMode(QtWidgets.QLineEdit.Password)
         self.lineEditNewPassword.setObjectName("lineEditNewPassword")
 
+        self.comboBoxRole = QtWidgets.QComboBox(self.centralwidget)
+        self.comboBoxRole.setGeometry(210, 30, 100, 20)
+        self.comboBoxRole.addItems(["Менеджер", "Инженер", "Производство", "Админ"])
+
         # Кнопка "Применить"
         self.BtnApply = QtWidgets.QPushButton(self.centralwidget)
-        self.BtnApply.setGeometry(QtCore.QRect(220, 80, 91, 23))
+        self.BtnApply.setGeometry(QtCore.QRect(210, 80, 100, 23))
         self.BtnApply.setObjectName("BtnApply")
 
         PasswordChange.setCentralWidget(self.centralwidget)
@@ -67,7 +71,7 @@ class PasswordChange(QtWidgets.QMainWindow):
         # Подключаем кнопку "Применить" к методу смены пароля
         self.ui.BtnApply.clicked.connect(self.apply_password_change)
 
-    def apply_password_change(self):
+    def apply_password_change(self, role):
         current_password = self.ui.lineEditCurrentPassword.text()
         new_password = self.ui.lineEditNewPassword.text()
 
@@ -78,11 +82,17 @@ class PasswordChange(QtWidgets.QMainWindow):
 
         # Запрос на сервер
         try:
+            role = self.ui.comboBoxRole.currentText()  # Замените на реальное значение или получите из пользовательского ввода
             response = requests.post(
-                "http://127.0.0.1:8000/api/change_password/",
-                json={"current_password": current_password, "new_password": new_password},
+                "http://127.0.0.1:8000/employees/change_password/",
+                json={
+                    "role": role,
+                    "current_password": current_password,
+                    "new_password": new_password,
+                },
             )
             print(f"Отправляется запрос: {current_password}, {new_password}")
+            print(response.status_code)
 
             if response.status_code == 200 and response.json().get("success"):
                 QtWidgets.QMessageBox.information(self, "Успех", "Пароль успешно изменен!")

@@ -1,9 +1,10 @@
+import requests
 from PyQt5.QtCore import QDate
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import QMessageBox
-
+import sqlite3
 import resources_rc
-
+import json
 
 class Ui_TaskFilling(object):
     def setupUi(self, TaskFilling):
@@ -47,6 +48,7 @@ class Ui_TaskFilling(object):
         font.setPointSize(10)
         self.BtnForDeveloping.setFont(font)
         self.BtnForDeveloping.setObjectName("BtnForDeveloping")
+        self.BtnForDeveloping.setEnabled(False)
 
         self.BtnBack = QtWidgets.QPushButton(self.centralwidget)
         self.BtnBack.setGeometry(QtCore.QRect(10, 720, 125, 31))
@@ -84,10 +86,11 @@ class Ui_TaskFilling(object):
         font.setPointSize(12)
         self.lineEditCustomer.setFont(font)
         self.lineEditCustomer.setObjectName("lineEditCustomer")
+
         self.lineEditCheckNumber = QtWidgets.QLineEdit(self.frameCustomer)
         self.lineEditCheckNumber.setGeometry(QtCore.QRect(10, 10, 37, 21))
         font = QtGui.QFont()
-        font.setPointSize(12)
+        font.setPointSize(11)
         self.lineEditCheckNumber.setFont(font)
         self.lineEditCheckNumber.setObjectName("lineEditCheckNumber")
 
@@ -125,12 +128,12 @@ class Ui_TaskFilling(object):
         self.line.setFrameShadow(QtWidgets.QFrame.Sunken)
         self.line.setObjectName("line")
 
-        self.BtnForDeveloping_2 = QtWidgets.QPushButton(self.centralwidget)
-        self.BtnForDeveloping_2.setGeometry(QtCore.QRect(396, 720, 111, 31))
+        self.BtnSave = QtWidgets.QPushButton(self.centralwidget)
+        self.BtnSave.setGeometry(QtCore.QRect(396, 720, 111, 31))
         font = QtGui.QFont()
         font.setPointSize(10)
-        self.BtnForDeveloping_2.setFont(font)
-        self.BtnForDeveloping_2.setObjectName("BtnForDeveloping_2")
+        self.BtnSave.setFont(font)
+        self.BtnSave.setObjectName("BtnForDeveloping_2")
 
         TaskFilling.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(TaskFilling)
@@ -150,10 +153,9 @@ class Ui_TaskFilling(object):
         self.labelDate.setText(_translate("TaskFilling", "Дата"))
         self.labelCustomer.setText(_translate("TaskFilling", "Название организации заказчика"))
         self.BtnAddNewProduct.setText(_translate("TaskFilling", "Добавить изделие"))
-        # self.BtnUpdateNumbers.setText(_translate("TaskFilling", "Обновить нумерацию"))
         self.BtnForDeveloping.setText(_translate("TaskFilling", "На разработку"))
         self.BtnBack.setText(_translate("TaskFilling", "Назад"))
-        self.BtnForDeveloping_2.setText(_translate("TaskFilling", "Сохранить"))
+        self.BtnSave.setText(_translate("TaskFilling", "Сохранить"))
 
 
 class TaskFilling(QtWidgets.QMainWindow):
@@ -162,9 +164,23 @@ class TaskFilling(QtWidgets.QMainWindow):
         self.ui = Ui_TaskFilling()
         self.ui.setupUi(self)
 
+        check_number = self.get_max_value_from_database("orders_task", "invoice_number")
+        self.ui.lineEditCheckNumber.setText(str(check_number + 1))  # Преобразуем int в str
+
+        # Получаем данные из базы данных для изделий
+        customer = self.get_words_from_database("orders_customer", "organization_name")
+
+        # Настраиваем QCompleter для поля lineEditCustomer
+        completer = QtWidgets.QCompleter(customer, self)
+        completer.setCaseSensitivity(QtCore.Qt.CaseInsensitive)
+        self.ui.lineEditCustomer.setCompleter(completer)
+
         # Обработчики для кнопок
         self.ui.BtnAddNewProduct.clicked.connect(self.add_product_line)
         self.ui.BtnBack.clicked.connect(self.back_main_manager_window)
+        self.ui.BtnSave.clicked.connect(self.add_task)
+        self.ui.BtnSave.clicked.connect(self.clearLineEdit)
+        self.ui.BtnSave.clicked.connect(self.clear_products)
 
         # Пустой заполнитель
         self.empty_placeholder = QtWidgets.QWidget()
@@ -172,6 +188,71 @@ class TaskFilling(QtWidgets.QMainWindow):
         self.ui.layoutProducts.addWidget(self.empty_placeholder)  # Добавляем заполнитель в конец layout
 
 
+    def get_words_from_database(self, table_name, column_name):
+        """
+        Получение данных из базы данных SQLite для указанной таблицы и столбца.
+
+        :param table_name: Название таблицы.
+        :param column_name: Название столбца.
+        :return: Список строк из указанного столбца.
+        """
+        try:
+            import os
+
+            # Путь к базе данных
+            BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+            db_path = os.path.join(BASE_DIR, "db.sqlite3")
+            conn = sqlite3.connect(db_path)
+
+            cursor = conn.cursor()
+
+            # Динамический SQL-запрос
+            query = f"SELECT DISTINCT {column_name} FROM {table_name}"
+            cursor.execute(query)
+            result = cursor.fetchall()
+
+            # Преобразуем результат в список строк
+            words = [row[0] for row in result]
+
+            conn.close()
+            return words
+
+        except sqlite3.Error as e:
+            print(f"Ошибка доступа к базе данных: {e}")
+            return []
+
+    def get_max_value_from_database(self, table_name, column_name):
+        """
+        Получение максимального числового значения из указанной колонки таблицы SQLite.
+
+        :param table_name: Название таблицы.
+        :param column_name: Название столбца.
+        :return: Максимальное значение из указанного столбца или None в случае ошибки.
+        """
+        try:
+            import os
+            import sqlite3
+
+            # Путь к базе данных
+            BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+            db_path = os.path.join(BASE_DIR, "db.sqlite3")
+            conn = sqlite3.connect(db_path)
+
+            cursor = conn.cursor()
+
+            # Динамический SQL-запрос с приведением к числовому типу
+            query = f"SELECT MAX(CAST({column_name} AS INTEGER)) FROM {table_name}"
+            cursor.execute(query)
+            result = cursor.fetchone()
+
+            conn.close()
+
+            # Если результат не None, вернуть максимальное значение
+            return result[0] if result else None
+
+        except sqlite3.Error as e:
+            print(f"Ошибка доступа к базе данных: {e}")
+            return None
 
     def add_product_line(self):
         try:
@@ -204,6 +285,13 @@ class TaskFilling(QtWidgets.QMainWindow):
             lineEditProductName = QtWidgets.QLineEdit()
             lineEditProductName.setFont(QtGui.QFont("Arial", 12))
             lineEditProductName.setPlaceholderText("Введите название изделия")
+
+            # Настраиваем QCompleter для нового поля
+            product_names = self.get_words_from_database("products_product", "name")
+            completer = QtWidgets.QCompleter(product_names, self)
+            completer.setCaseSensitivity(QtCore.Qt.CaseInsensitive)
+            lineEditProductName.setCompleter(completer)
+
             frame_layout.addWidget(lineEditProductName)
 
             # Поле ввода количества
@@ -229,9 +317,6 @@ class TaskFilling(QtWidgets.QMainWindow):
             # Добавляем созданный фрейм перед заполнителем
             self.ui.layoutProducts.insertWidget(self.ui.layoutProducts.count() - 1, frame_product_line)
 
-            # Скрываем заполнитель
-            self.update_empty_placeholder()
-
         except Exception as e:
             print(f"Ошибка в add_product_line: {e}")
 
@@ -244,9 +329,6 @@ class TaskFilling(QtWidgets.QMainWindow):
 
             # Обновляем номера всех строк
             self.update_product_numbers()
-
-            # Проверяем, нужно ли снова показать заполнитель
-            self.update_empty_placeholder()
 
         except Exception as e:
             print(f"Ошибка в delete_product_line: {e}")
@@ -264,19 +346,124 @@ class TaskFilling(QtWidgets.QMainWindow):
         except Exception as e:
             print(f"Ошибка в update_product_numbers: {e}")
 
-    def update_empty_placeholder(self):
-        """Показывает или скрывает заполнитель в зависимости от наличия строк"""
-        if self.ui.layoutProducts.count() > 1:  # Есть хотя бы один элемент, кроме заполнителя
-            self.empty_placeholder.hide()
-        else:
-            self.empty_placeholder.show()
+    def enable_for_developing_button(self):
+        """Активирует вторую кнопку."""
+        self.ui.BtnForDeveloping.setEnabled(True)
+
+    def add_task(self):
+        # Собирает данные о заказе и продуктах, отправляет их на сервер.
+        # Сбор данных для заказчика и задания
+        customer_and_task_data = {
+            "invoice_number": self.ui.lineEditCheckNumber.text(),
+            "order_date": self.ui.dateEditDate.date().toString("yyyy-MM-dd"),
+            "organization_name": self.ui.lineEditCustomer.text(),
+        }
+        print("Отправляемые данные:", customer_and_task_data)
+
+        # Проверка, что все поля заполнены
+        if not all(customer_and_task_data.values()):
+            QtWidgets.QMessageBox.warning(self, "Ошибка", "Заполните все поля корректно.")
+            return
+
+        try:
+            # Отправка первого запроса
+            response = requests.post(
+                "http://127.0.0.1:8000/orders/add_customer_and_task/",
+                json=customer_and_task_data
+            )
+            if response.status_code == 201:
+                task_id = response.json().get("task_id")
+                if not task_id:
+                    QtWidgets.QMessageBox.warning(self, "Ошибка", "Не удалось получить ID задания.")
+                    return
+
+                # Сбор данных о продуктах
+                product_data_list = self.collect_product_data(task_id)
+
+                # Проверка, что данные о продуктах корректны
+                if not product_data_list:
+                    QtWidgets.QMessageBox.warning(self, "Ошибка", "Добавьте хотя бы один продукт и заполните все поля.")
+                    return
+
+                # Отправка данных о продуктах
+                for product_data in product_data_list:
+                    response = requests.post("http://127.0.0.1:8000/products/add_product/", json=product_data)
+                    if response.status_code != 201:
+                        QtWidgets.QMessageBox.warning(
+                            self,
+                            "Ошибка",
+                            f"Ошибка при добавлении продукта: {response.text}"
+                        )
+                        return
+
+                self.enable_for_developing_button()  #Активация кнопки "На разработку"
+                QtWidgets.QMessageBox.information(self, "Успех", "Данные успешно добавлены!")
+            else:
+                QtWidgets.QMessageBox.warning(self, "Ошибка", f"Ошибка сервера: {response.text}")
+        except Exception as e:
+            QtWidgets.QMessageBox.critical(self, "Ошибка", f"Не удалось отправить данные: {e}")
+
+    def collect_product_data(self, task_id):
+        """
+        Сбор данных о продуктах из динамически созданных строк.
+
+        :param task_id: ID задания, с которым связаны продукты.
+        :return: Список словарей с данными о продуктах.
+        """
+        product_data_list = []
+
+        for i in range(self.ui.layoutProducts.count() - 1):  # Исключаем последний виджет-заполнитель
+            item = self.ui.layoutProducts.itemAt(i).widget()
+            if isinstance(item, QtWidgets.QFrame):  # Проверяем, что это строка продукта
+                # Извлекаем данные из виджетов внутри строки
+                lineEditProductName = item.findChild(QtWidgets.QLineEdit)
+                spin_box_quantity = item.findChild(QtWidgets.QSpinBox)
+
+                if lineEditProductName and spin_box_quantity:
+                    product_name = lineEditProductName.text().strip()
+                    quantity = spin_box_quantity.value()
+
+                    # Проверка, что данные заполнены
+                    if product_name and quantity > 0:
+                        product_data_list.append({
+                            "task_id": task_id,
+                            "name": product_name,
+                            "quantity": quantity,
+                        })
+
+        return product_data_list
+
+    def clearLineEdit(self):
+        self.ui.lineEditCustomer.clear()
+        check_number = self.get_max_value_from_database("orders_task", "invoice_number")
+        self.ui.lineEditCheckNumber.setText(str(check_number + 1))
+
+    def clear_layout(self, layout):
+        # Очищает все элементы в layout
+        if layout is not None:
+            for i in range(layout.count()):
+                item = layout.itemAt(i)
+                if item is not None:
+                    widget = item.widget()
+                    if widget is not None:
+                        widget.deleteLater()  # Удаляем виджет
+                    else:
+                        # Если это подмакет, рекурсивно очищаем его
+                        sub_layout = item.layout()
+                        if sub_layout is not None:
+                            self.clear_layout(sub_layout)
+
+    def clear_products(self):
+        # Очищает все строки продуктов в layout
+        self.clear_layout(self.ui.layoutProducts)
+        self.ui.layoutProducts.update()  # Обновляем layout после очистки
 
     def back_main_manager_window(self):
-        # Логика возврата к главному окну менеджера
-        from windows.main_manager_window import MainWindowManager
-        self.main_manager_window = MainWindowManager()
-        self.main_manager_window.show()
-        self.close()
+            # Возврат к главному окну менеджера
+            from windows.main_manager_window import MainWindowManager
+            self.main_manager_window = MainWindowManager()
+            self.main_manager_window.show()
+            self.close()
 
 if __name__ == "__main__":
     import sys

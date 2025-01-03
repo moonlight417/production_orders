@@ -1,3 +1,7 @@
 from django.contrib import admin
+from .models import ManufacturingOperation, RodBlank, SheetBlank
 
-# Register your models here.
+
+admin.site.register(ManufacturingOperation)
+admin.site.register(RodBlank)
+admin.site.register(SheetBlank)
