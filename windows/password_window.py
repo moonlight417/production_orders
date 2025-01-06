@@ -2,76 +2,113 @@ import os
 import django
 import sys
 
-from windows.castomizing import CastomizingWindow, Ui_Castomizing
+from windows.customizing import CustomizingWindow, Ui_Customizing
 from windows.main_engineer_window import MainWindowEngineer
 from windows.main_manager_window import MainWindowManager
 from windows.main_production_window import MainWindowProduction
 from windows.start_window import StartWindow
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'base.settings')  # Замените 'base.settings' на путь к вашему файлу настроек
+os.environ.setdefault('DJANGO_SETTINGS_MODULE',
+                      'base.settings')  # Замените 'base.settings' на путь к вашему файлу настроек
 django.setup()
 from PyQt5 import QtCore, QtWidgets, QtGui
 import requests
-from employees.auth import authenticate
+# from employees.auth import authenticate
 from pass_change import PasswordChange, Ui_PasswordChange
 from PyQt5.QtWidgets import QMessageBox
 
+
 class Ui_EnterPassword(object):
-    def setupUi(self, EnterPassword):
+    def setupUi(self, EnterPassword, change_password_callback):
         EnterPassword.setObjectName("EnterPassword")
-        EnterPassword.resize(242, 143)
+        # EnterPassword.resize(400, 200)
         self.centralwidget = QtWidgets.QWidget(EnterPassword)
 
-        self.labelEnterPassword = QtWidgets.QLabel(self.centralwidget)
-        self.labelEnterPassword.setGeometry(QtCore.QRect(10, 15, 121, 16))
-        font = QtGui.QFont()
-        font.setPointSize(11)
-        self.labelEnterPassword.setFont(font)
-        self.labelEnterPassword.setObjectName("labelEnterPassword")
+        # Создание сетки для размещения элементов
+        self.layout = QtWidgets.QGridLayout(self.centralwidget)
 
+        # Поле для ввода пароля
         self.lineEditEnterPassword = QtWidgets.QLineEdit(self.centralwidget)
-        self.lineEditEnterPassword.setGeometry(QtCore.QRect(10, 40, 161, 20))
         self.lineEditEnterPassword.setEchoMode(QtWidgets.QLineEdit.Password)
+        self.lineEditEnterPassword.setFixedHeight(40)
         self.lineEditEnterPassword.setObjectName("lineEditEnterPassword")
 
-        self.BtnChangePassword = QtWidgets.QPushButton(self.centralwidget)
-        self.BtnChangePassword.setGeometry(QtCore.QRect(155, 80, 81, 23))
-        self.BtnChangePassword.setObjectName("BtnChangePassword")
+        # Устанавливаем текст-заполнитель (placeholder) и его стиль
+        self.lineEditEnterPassword.setPlaceholderText("Введите пароль")
+        self.lineEditEnterPassword.setStyleSheet("""
+                    QLineEdit {
+                        font-size: 20px;  /* Размер шрифта для текста ввода */
+                    }
+                    QLineEdit::placeholder {
+                        font-size: 20px;  /* Размер шрифта для текста-заполнителя */
+                        color: gray;      /* Цвет текста-заполнителя */
+                    }
+                """)
 
+        # Размещаем поле для пароля в первой строке, второй колонке
+        self.layout.addWidget(self.lineEditEnterPassword, 0, 0)
+
+        # Кнопка "Войти"
         self.BtnEnter = QtWidgets.QPushButton(self.centralwidget)
-        self.BtnEnter.setGeometry(QtCore.QRect(180, 40, 51, 23))
         self.BtnEnter.setObjectName("BtnEnter")
+        self.BtnEnter.setMinimumWidth(150)
+        self.BtnEnter.setMaximumWidth(200)
+        self.BtnEnter.setText("Войти")
 
+        # Размещаем кнопку "Войти"
+        self.layout.addWidget(self.BtnEnter, 0, 2)
+
+        # Кнопка "Назад"
         self.BtnBack = QtWidgets.QPushButton(self.centralwidget)
-        self.BtnBack.setGeometry(QtCore.QRect(10, 80, 81, 23))
         self.BtnBack.setObjectName("BtnBack")
 
+        self.BtnBack.setText("Назад")
+
+        # Размещаем кнопку "Назад"
+        self.layout.addWidget(self.BtnBack, 3, 2)
+
+        # Устанавливаем центральный виджет
         EnterPassword.setCentralWidget(self.centralwidget)
         self.retranslateUi(EnterPassword)
         QtCore.QMetaObject.connectSlotsByName(EnterPassword)
 
+        # Меню
+        self.menubar = QtWidgets.QMenuBar(EnterPassword)
+        self.menubar.setGeometry(QtCore.QRect(0, 0, 400, 21))
+        self.menubar.setObjectName("menubar")
+        EnterPassword.setMenuBar(self.menubar)
+
+        # Создание меню "Правка"
+        fileMenu = self.menubar.addMenu("Правка")
+
+        # Создание действия "Сменить пароль"
+        changePasswordAction = QtWidgets.QAction("Сменить пароль", EnterPassword)
+        changePasswordAction.triggered.connect(change_password_callback)  # Подключаем действие к методу
+        fileMenu.addAction(changePasswordAction)
+
     def retranslateUi(self, EnterPassword):
         _translate = QtCore.QCoreApplication.translate
-        EnterPassword.setWindowTitle(_translate("EnterPassword", "Пароль"))
-        self.labelEnterPassword.setText(_translate("EnterPassword", "Введите пароль:"))
-        self.BtnChangePassword.setText(_translate("EnterPassword", "Смена пароля"))
-        self.BtnEnter.setText(_translate("EnterPassword", "Войти"))
-        self.BtnBack.setText(_translate("EnterPassword", "Назад"))
+        self.lineEditEnterPassword.setPlaceholderText(_translate("EnterPassword", "Введите пароль"))
 
 class PasswordWindow(QtWidgets.QMainWindow):
     def __init__(self, role):
         super().__init__()
         self.ui = Ui_EnterPassword()
-        self.ui.setupUi(self)
+        self.ui.setupUi(self, self.change_password)  # Передаем метод change_password
         self.role = role
         self.password_change_window = None  # Инициализируем как None
+
+        # Устанавливаем фиксированный размер окна
+        self.setFixedSize(400, 200)
 
         # Подключаем сигналы
         self.ui.BtnEnter.clicked.connect(self.check_password)
         # self.ui.BtnBack.clicked.connect(self.close)
-        self.ui.BtnChangePassword.clicked.connect(self.change_password)
+        # self.ui.BtnChangePassword.clicked.connect(self.change_password)
 
         self.ui.BtnBack.clicked.connect(self.back_role_selection)
+
+        self.ui.lineEditEnterPassword.returnPressed.connect(self.check_password)
 
     def back_role_selection(self):
         try:
@@ -85,13 +122,11 @@ class PasswordWindow(QtWidgets.QMainWindow):
         entered_password = self.ui.lineEditEnterPassword.text()
         try:
             response = requests.post(
-                f"http://127.0.0.1:8000/api/check_password/{self.role}/",
+                f"http://127.0.0.1:8000/employees/check_password/{self.role}/",
                 data={"password": entered_password},
             )
             if response.status_code == 200 and response.json().get("success"):
-
                 self.open_role_window(self.role)
-                # QMessageBox.information(self, "Успех", f"Добро пожаловать, {self.role}!")
                 self.close()
             else:
                 QMessageBox.warning(self, "Ошибка", "Неверный пароль.")
@@ -100,7 +135,6 @@ class PasswordWindow(QtWidgets.QMainWindow):
 
     def open_role_window(self, role):
         role = role.strip()  # Убираем лишние пробелы
-        # Здесь нужно открыть окно для соответствующей роли.
         if role == "Администратор":
             self.open_admin_window()
         elif role == "Менеджер":
@@ -112,7 +146,7 @@ class PasswordWindow(QtWidgets.QMainWindow):
 
     def open_admin_window(self):
         try:
-            self.admin_window = CastomizingWindow()  # Создаем экземпляр окна для администратора
+            self.admin_window = CustomizingWindow()  # Создаем экземпляр окна для администратора
             self.admin_window.show()  # Показываем окно
             self.close()  # Закрываем текущее окно
         except Exception as e:
@@ -147,37 +181,6 @@ class PasswordWindow(QtWidgets.QMainWindow):
             self.password_change_window = PasswordChange()  # Создаем новое окно
         self.password_change_window.show()  # Показываем окно
 
-
-class PasswordChange(QtWidgets.QMainWindow):
-    def __init__(self):
-        super().__init__()
-        self.ui = Ui_PasswordChange()
-        self.ui.setupUi(self)
-
-        # Подключаем кнопку "Применить" к методу смены пароля
-        self.ui.BtnApply.clicked.connect(self.apply_password_change)
-
-    def apply_password_change(self):
-        current_password = self.ui.lineEditCurrentPassword.text()
-        new_password = self.ui.lineEditNewPassword.text()
-
-        # Логика проверки и смены пароля
-        if not current_password or not new_password:
-            QMessageBox.warning(self, "Ошибка", "Заполните оба поля!")
-            return
-
-        try:
-            response = requests.post(
-                "http://127.0.0.1:8000/api/change_password/",
-                data={"current_password": current_password, "new_password": new_password},
-            )
-            if response.status_code == 200 and response.json().get("success"):
-                QMessageBox.information(self, "Успех", "Пароль успешно изменен!")
-                self.close()
-            else:
-                QMessageBox.warning(self, "Ошибка", "Не удалось сменить пароль.")
-        except requests.RequestException as e:
-            QMessageBox.critical(self, "Ошибка", f"Не удалось подключиться к серверу: {e}")
 
 
 if __name__ == "__main__":

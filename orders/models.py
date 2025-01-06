@@ -7,7 +7,6 @@ class Customer(models.Model):
 
 class Task(models.Model):
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
-    name = models.CharField(max_length=255)
     order_invoice_date = models.DateField()
     invoice_number = models.CharField(max_length=255)
 
@@ -17,7 +16,9 @@ class Order(models.Model):
     production_acceptance_date = models.DateField(null=True, blank=True)
     order_file = models.FileField(upload_to='orders/')
     label_file = models.FileField(upload_to='labels/', null=True, blank=True)
+    status = models.CharField(max_length=1, null=True, blank=True)
 
 class TaskEmployee(models.Model):
     order = models.ForeignKey(Task, on_delete=models.CASCADE)
     employee = models.ForeignKey(Employee, on_delete=models.CASCADE)
+
