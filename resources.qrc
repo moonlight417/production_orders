@@ -1,5 +1,7 @@
 <RCC>
     <qresource prefix="/">
-        <file>.utils/icons/x-square.svg</file>
+        <file>utils/icons/x-square.svg</file>
+        <file>utils/icons/search.svg</file>
+        <file>utils/icons/refresh.png</file>
     </qresource>
 </RCC>

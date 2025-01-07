@@ -1,7 +1,7 @@
 import requests
 from PyQt5.QtCore import QDate
 from PyQt5 import QtCore, QtGui, QtWidgets
-from PyQt5.QtWidgets import QMessageBox
+from PyQt5.QtWidgets import QMessageBox, QSpacerItem, QSizePolicy, QHBoxLayout, QPushButton
 import sqlite3
 import resources_rc
 import json
@@ -9,56 +9,91 @@ import json
 class Ui_TaskFilling(object):
     def setupUi(self, TaskFilling):
         TaskFilling.setObjectName("TaskFilling")
-        TaskFilling.resize(641, 785)
+        TaskFilling.resize(1132, 698)
 
         self.centralwidget = QtWidgets.QWidget(TaskFilling)
         self.centralwidget.setObjectName("centralwidget")
 
+        # Главный вертикальный layout для размещения всех виджетов
+        main_layout = QtWidgets.QVBoxLayout(self.centralwidget)
+        main_layout.setContentsMargins(0, 0, 0, 10)
+        main_layout.setSpacing(10)
+
+        # ======= Шапка с виджетами =======
         self.frame_3 = QtWidgets.QFrame(self.centralwidget)
-        self.frame_3.setGeometry(QtCore.QRect(10, 80, 621, 21))
         self.frame_3.setFrameShape(QtWidgets.QFrame.StyledPanel)
         self.frame_3.setFrameShadow(QtWidgets.QFrame.Raised)
+        self.frame_3.setMinimumHeight(80)  # Устанавливаем минимальную высоту для шапки
         self.frame_3.setObjectName("frame_3")
 
-        self.labelProduct = QtWidgets.QLabel(self.frame_3)
-        self.labelProduct.setGeometry(QtCore.QRect(230, 0, 51, 16))
-        self.labelProduct.setObjectName("labelProduct")
+        # Горизонтальный layout для шапки, заменяем на QGridLayout
+        header_layout = QtWidgets.QGridLayout(self.frame_3)
+        header_layout.setContentsMargins(10, 10, 10, 10)
+        header_layout.setSpacing(10)
 
-        self.labelQuantity = QtWidgets.QLabel(self.frame_3)
-        self.labelQuantity.setGeometry(QtCore.QRect(475, 0, 61, 16))
-        self.labelQuantity.setObjectName("labelQuantity")
+        # Лейблы
+        self.labelCheckNumber = QtWidgets.QLabel("№ счёта:")
+        self.labelDate = QtWidgets.QLabel("Дата:")
+        self.labelCustomer = QtWidgets.QLabel("Название организации заказчика:")
+        self.labelProduct = QtWidgets.QLabel("Изделие:")
+        # self.labelQuantity = QtWidgets.QLabel("Количество:")
 
+
+
+        # Поля ввода
+        self.lineEditCheckNumber = QtWidgets.QLineEdit()
+        self.lineEditCheckNumber.setFixedWidth(50)
+        self.dateEditDate = QtWidgets.QDateEdit()
+        self.lineEditCustomer = QtWidgets.QLineEdit()
+        self.lineEditProduct = QtWidgets.QLineEdit()
+        self.lineEditQuantity = QtWidgets.QLineEdit()
+
+        # Настройка QDateEdit
+        self.dateEditDate.setCorrectionMode(QtWidgets.QAbstractSpinBox.CorrectToPreviousValue)
+        self.dateEditDate.setCalendarPopup(True)
+        self.dateEditDate.setDate(QDate.currentDate())
+        self.dateEditDate.setFixedWidth(100)
+
+        # Добавляем виджеты в grid
+        header_layout.addWidget(self.labelCheckNumber, 0, 0)  # 0 строка, 0 столбец
+        header_layout.addWidget(self.lineEditCheckNumber, 0, 1)
+        header_layout.addWidget(self.labelCustomer, 0, 2)
+        header_layout.addWidget(self.lineEditCustomer, 0, 3)
+        header_layout.addWidget(self.labelDate, 0, 5)
+        header_layout.addWidget(self.dateEditDate, 0, 6, 1, 2)
+        # header_layout.addWidget(self.labelProduct, 1, 3)
+        # header_layout.addWidget(self.labelQuantity, 1, 5, 1, 2)
+
+
+        # Добавляем шапку в главный layout
+        main_layout.addWidget(self.frame_3)
+
+        # ======= Прокручиваемая область =======
         self.scrollArea = QtWidgets.QScrollArea(self.centralwidget)
-        self.scrollArea.setGeometry(QtCore.QRect(10, 100, 621, 551))
         self.scrollArea.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOn)
         self.scrollArea.setWidgetResizable(True)
-
-        # Настроим цвет фона для QScrollArea
         self.scrollArea.setStyleSheet("""
-                     QScrollArea {
-                         background-color: #383838;
-
-                     }
-                     QScrollArea::widget {
-                         background-color: #383838;
-
-                     }
-                     QScrollBar {
-                         background-color: #d0d0d0;
-                         width: 12px;
-                     }
-                     QScrollBar::handle {
-                         background-color: #888888;
-                         border-radius: 6px;
-                     }
-                     QScrollBar::add-line, QScrollBar::sub-line {
-                         background-color: #a0a0a0;
-                     }
-                 """)
-
+                    QScrollArea {
+                        background-color: #383838;
+                    }
+                    QScrollArea::widget {
+                        background-color: #383838;
+                    }
+                    QScrollBar {
+                        background-color: #d0d0d0;
+                        width: 12px;
+                    }
+                    QScrollBar::handle {
+                        background-color: #888888;
+                        border-radius: 6px;
+                    }
+                    QScrollBar::add-line, QScrollBar::sub-line {
+                        background-color: #a0a0a0;
+                    }
+                """)
         self.scrollArea.setObjectName("scrollArea")
+
         self.scrollAreaWidgetContents = QtWidgets.QWidget()
-        self.scrollAreaWidgetContents.setGeometry(QtCore.QRect(0, 0, 602, 549))
         self.scrollAreaWidgetContents.setObjectName("scrollAreaWidgetContents")
         self.layoutProducts = QtWidgets.QVBoxLayout(self.scrollAreaWidgetContents)
         self.layoutProducts.setContentsMargins(5, 5, 5, 5)
@@ -66,98 +101,25 @@ class Ui_TaskFilling(object):
         self.scrollAreaWidgetContents.setLayout(self.layoutProducts)
         self.scrollArea.setWidget(self.scrollAreaWidgetContents)
 
-        self.BtnForDeveloping = QtWidgets.QPushButton(self.centralwidget)
-        self.BtnForDeveloping.setGeometry(QtCore.QRect(520, 720, 111, 31))
-        font = QtGui.QFont()
-        font.setPointSize(10)
-        self.BtnForDeveloping.setFont(font)
-        self.BtnForDeveloping.setObjectName("BtnForDeveloping")
-        self.BtnForDeveloping.setEnabled(False)
+        # Добавляем scrollArea в главный layout
+        main_layout.addWidget(self.scrollArea)
 
-        self.BtnBack = QtWidgets.QPushButton(self.centralwidget)
-        self.BtnBack.setGeometry(QtCore.QRect(10, 720, 125, 31))
-        font = QtGui.QFont()
-        font.setPointSize(10)
-        self.BtnBack.setFont(font)
-        self.BtnBack.setObjectName("BtnBack")
+        # Нижняя панель с кнопками
+        self.bottom_panel = QHBoxLayout()
 
-        self.frame_5 = QtWidgets.QFrame(self.centralwidget)
-        self.frame_5.setGeometry(QtCore.QRect(10, 30, 621, 51))
-        self.frame_5.setFrameShape(QtWidgets.QFrame.StyledPanel)
-        self.frame_5.setFrameShadow(QtWidgets.QFrame.Raised)
-        self.frame_5.setObjectName("frame_5")
+        self.BtnAddNewProduct = QPushButton("Добавить изделие")
+        self.bottom_panel.addWidget(self.BtnAddNewProduct)
 
-        self.frameCustomer = QtWidgets.QFrame(self.frame_5)
-        self.frameCustomer.setGeometry(QtCore.QRect(0, 0, 621, 41))
-        self.frameCustomer.setStyleSheet("background-color: rgb(255, 255, 255);\n"
-                                         "border-color: rgb(0, 0, 0);")
-        self.frameCustomer.setFrameShape(QtWidgets.QFrame.StyledPanel)
-        self.frameCustomer.setFrameShadow(QtWidgets.QFrame.Sunken)
-        self.frameCustomer.setLineWidth(2)
-        self.frameCustomer.setMidLineWidth(1)
-        self.frameCustomer.setObjectName("frameCustomer")
+        self.BtnSave = QPushButton("Сохранить")
+        self.bottom_panel.addStretch()  # Добавляем отступ, чтобы кнопка была справа
+        self.bottom_panel.addWidget(self.BtnSave)
 
-        self.dateEditDate = QtWidgets.QDateEdit(self.frameCustomer)
-        self.dateEditDate.setGeometry(QtCore.QRect(58, 10, 81, 22))
-        self.dateEditDate.setCorrectionMode(QtWidgets.QAbstractSpinBox.CorrectToPreviousValue)
-        self.dateEditDate.setCalendarPopup(True)
-        self.dateEditDate.setDate(QDate.currentDate())
-        self.dateEditDate.setObjectName("dateEditDate")
+        self.BtnForDeveloping = QPushButton("На разработку")
+        self.BtnForDeveloping.setEnabled(True)
+        self.bottom_panel.addStretch()  # Добавляем отступ, чтобы кнопка была справа
+        self.bottom_panel.addWidget(self.BtnForDeveloping)
 
-        self.lineEditCustomer = QtWidgets.QLineEdit(self.frameCustomer)
-        self.lineEditCustomer.setGeometry(QtCore.QRect(150, 10, 461, 21))
-        font = QtGui.QFont()
-        font.setPointSize(12)
-        self.lineEditCustomer.setFont(font)
-        self.lineEditCustomer.setObjectName("lineEditCustomer")
-
-        self.lineEditCheckNumber = QtWidgets.QLineEdit(self.frameCustomer)
-        self.lineEditCheckNumber.setGeometry(QtCore.QRect(10, 10, 37, 21))
-        font = QtGui.QFont()
-        font.setPointSize(11)
-        self.lineEditCheckNumber.setFont(font)
-        self.lineEditCheckNumber.setObjectName("lineEditCheckNumber")
-
-        self.frame_6 = QtWidgets.QFrame(self.centralwidget)
-        self.frame_6.setGeometry(QtCore.QRect(10, 10, 561, 21))
-        self.frame_6.setFrameShape(QtWidgets.QFrame.StyledPanel)
-        self.frame_6.setFrameShadow(QtWidgets.QFrame.Raised)
-        self.frame_6.setObjectName("frame_6")
-
-        self.labelCheckNumber = QtWidgets.QLabel(self.frame_6)
-        self.labelCheckNumber.setGeometry(QtCore.QRect(0, 0, 51, 16))
-        self.labelCheckNumber.setObjectName("labelCheckNumber")
-
-        self.labelDate = QtWidgets.QLabel(self.frame_6)
-        self.labelDate.setGeometry(QtCore.QRect(80, 0, 31, 16))
-        self.labelDate.setObjectName("labelDate")
-
-        self.labelCustomer = QtWidgets.QLabel(self.frame_6)
-        self.labelCustomer.setGeometry(QtCore.QRect(260, 0, 171, 16))
-        self.labelCustomer.setObjectName("labelCustomer")
-
-        self.BtnAddNewProduct = QtWidgets.QPushButton(self.centralwidget)
-        self.BtnAddNewProduct.setGeometry(QtCore.QRect(12, 666, 123, 31))
-        font = QtGui.QFont()
-        font.setPointSize(10)
-        self.BtnAddNewProduct.setFont(font)
-        icon1 = QtGui.QIcon()
-        self.BtnAddNewProduct.setIcon(icon1)
-        self.BtnAddNewProduct.setIconSize(QtCore.QSize(23, 23))
-        self.BtnAddNewProduct.setObjectName("BtnAddNewProduct")
-
-        self.line = QtWidgets.QFrame(self.centralwidget)
-        self.line.setGeometry(QtCore.QRect(10, 700, 621, 16))
-        self.line.setFrameShape(QtWidgets.QFrame.HLine)
-        self.line.setFrameShadow(QtWidgets.QFrame.Sunken)
-        self.line.setObjectName("line")
-
-        self.BtnSave = QtWidgets.QPushButton(self.centralwidget)
-        self.BtnSave.setGeometry(QtCore.QRect(396, 720, 111, 31))
-        font = QtGui.QFont()
-        font.setPointSize(10)
-        self.BtnSave.setFont(font)
-        self.BtnSave.setObjectName("BtnForDeveloping_2")
+        main_layout.addLayout(self.bottom_panel)
 
         TaskFilling.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(TaskFilling)
@@ -170,15 +132,16 @@ class Ui_TaskFilling(object):
 
     def retranslateUi(self, TaskFilling):
         _translate = QtCore.QCoreApplication.translate
+
         TaskFilling.setWindowTitle(_translate("TaskFilling", "Оформление задания"))
         self.labelProduct.setText(_translate("TaskFilling", "Изделие"))
-        self.labelQuantity.setText(_translate("TaskFilling", "Количество"))
-        self.labelCheckNumber.setText(_translate("TaskFilling", "№ счёта"))
-        self.labelDate.setText(_translate("TaskFilling", "Дата"))
-        self.labelCustomer.setText(_translate("TaskFilling", "Название организации заказчика"))
+        # self.labelQuantity.setText(_translate("TaskFilling", "Количество"))
+        self.labelCheckNumber.setText(_translate("TaskFilling", "№ счёта:"))
+        self.labelDate.setText(_translate("TaskFilling", "Дата:"))
+        self.labelCustomer.setText(_translate("TaskFilling", "     Название организации заказчика:"))
         self.BtnAddNewProduct.setText(_translate("TaskFilling", "Добавить изделие"))
-        self.BtnForDeveloping.setText(_translate("TaskFilling", "На разработку"))
-        self.BtnBack.setText(_translate("TaskFilling", "Назад"))
+        # self.BtnForDeveloping.setText(_translate("TaskFilling", "На разработку"))
+        # self.BtnBack.setText(_translate("TaskFilling", "Назад"))
         self.BtnSave.setText(_translate("TaskFilling", "Сохранить"))
 
 
@@ -201,10 +164,10 @@ class TaskFilling(QtWidgets.QMainWindow):
 
         # Обработчики для кнопок
         self.ui.BtnAddNewProduct.clicked.connect(self.add_product_line)
-        self.ui.BtnBack.clicked.connect(self.back_main_manager_window)
+        # self.ui.BtnBack.clicked.connect(self.back_main_manager_window)
         self.ui.BtnSave.clicked.connect(self.add_task)
-        self.ui.BtnSave.clicked.connect(self.clearLineEdit)
-        self.ui.BtnSave.clicked.connect(self.clear_products)
+        # self.ui.BtnSave.clicked.connect(self.clearLineEdit)
+        # self.ui.BtnSave.clicked.connect(self.clear_scroll_area)
 
         # Пустой заполнитель
         self.empty_placeholder = QtWidgets.QWidget()
@@ -290,6 +253,7 @@ class TaskFilling(QtWidgets.QMainWindow):
                 }
             """)
             frame_product_line.setFixedHeight(40)
+            frame_product_line.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Fixed)
 
             # Создаем layout для элементов внутри строки
             frame_layout = QtWidgets.QHBoxLayout(frame_product_line)
@@ -325,6 +289,15 @@ class TaskFilling(QtWidgets.QMainWindow):
             spin_box_quantity.setMaximum(999999)
             spin_box_quantity.setSingleStep(10)
             frame_layout.addWidget(spin_box_quantity)
+
+            label_piece = QtWidgets.QLabel("шт.")
+            label_piece.setStyleSheet("""
+                QLabel {
+                        border: none;
+                     }
+                        """)
+
+            frame_layout.addWidget(label_piece)
 
             # Кнопка удаления строки
             btn_delete = QtWidgets.QPushButton()
@@ -376,21 +349,25 @@ class TaskFilling(QtWidgets.QMainWindow):
 
     def add_task(self):
         # Собирает данные о заказе и продуктах, отправляет их на сервер.
-        # Сбор данных для заказчика и задания
         customer_and_task_data = {
             "invoice_number": self.ui.lineEditCheckNumber.text(),
             "order_date": self.ui.dateEditDate.date().toString("yyyy-MM-dd"),
             "organization_name": self.ui.lineEditCustomer.text(),
         }
-        print("Отправляемые данные:", customer_and_task_data)
 
-        # Проверка, что все поля заполнены
+        # Проверка, что все поля задания заполнены
         if not all(customer_and_task_data.values()):
             QtWidgets.QMessageBox.warning(self, "Ошибка", "Заполните все поля корректно.")
             return
 
+        # Проверка, что добавлен хотя бы один продукт
+        product_data_list = self.collect_product_data(None)  # Передаем None, так как task_id пока неизвестен
+        if not product_data_list:
+            QtWidgets.QMessageBox.warning(self, "Ошибка", "Добавьте хотя бы один продукт и заполните все поля.")
+            return
+
         try:
-            # Отправка первого запроса
+            # Сначала отправляем задание и получаем task_id
             response = requests.post(
                 "http://127.0.0.1:8000/orders/add_customer_and_task/",
                 json=customer_and_task_data
@@ -401,15 +378,11 @@ class TaskFilling(QtWidgets.QMainWindow):
                     QtWidgets.QMessageBox.warning(self, "Ошибка", "Не удалось получить ID задания.")
                     return
 
-                # Сбор данных о продуктах
-                product_data_list = self.collect_product_data(task_id)
+                # Теперь добавляем task_id к каждому продукту
+                for product_data in product_data_list:
+                    product_data["task_id"] = task_id
 
-                # Проверка, что данные о продуктах корректны
-                if not product_data_list:
-                    QtWidgets.QMessageBox.warning(self, "Ошибка", "Добавьте хотя бы один продукт и заполните все поля.")
-                    return
-
-                # Отправка данных о продуктах
+                # Отправляем данные о продуктах
                 for product_data in product_data_list:
                     response = requests.post("http://127.0.0.1:8000/products/add_product/", json=product_data)
                     if response.status_code != 201:
@@ -420,8 +393,11 @@ class TaskFilling(QtWidgets.QMainWindow):
                         )
                         return
 
-                self.enable_for_developing_button()  #Активация кнопки "На разработку"
                 QtWidgets.QMessageBox.information(self, "Успех", "Данные успешно добавлены!")
+                self.clear_products()
+                self.ui.lineEditCustomer.clear()
+                check_number = self.get_max_value_from_database("orders_task", "invoice_number")
+                self.ui.lineEditCheckNumber.setText(str(check_number + 1))
             else:
                 QtWidgets.QMessageBox.warning(self, "Ошибка", f"Ошибка сервера: {response.text}")
         except Exception as e:
@@ -457,37 +433,26 @@ class TaskFilling(QtWidgets.QMainWindow):
 
         return product_data_list
 
-    def clearLineEdit(self):
-        self.ui.lineEditCustomer.clear()
-        check_number = self.get_max_value_from_database("orders_task", "invoice_number")
-        self.ui.lineEditCheckNumber.setText(str(check_number + 1))
-
     def clear_layout(self, layout):
-        # Очищает все элементы в layout
-        if layout is not None:
-            for i in range(layout.count()):
+        """Очищает layout и обновляет его."""
+        if layout:
+            for i in reversed(range(layout.count())):
                 item = layout.itemAt(i)
                 if item is not None:
                     widget = item.widget()
-                    if widget is not None:
-                        widget.deleteLater()  # Удаляем виджет
-                    else:
-                        # Если это подмакет, рекурсивно очищаем его
-                        sub_layout = item.layout()
-                        if sub_layout is not None:
-                            self.clear_layout(sub_layout)
+                    if widget:
+                        widget.deleteLater()
+            layout.update()  # Обновляем layout после удаления виджетов
 
     def clear_products(self):
         # Очищает все строки продуктов в layout
         self.clear_layout(self.ui.layoutProducts)
         self.ui.layoutProducts.update()  # Обновляем layout после очистки
+        # Пустой заполнитель
+        self.empty_placeholder = QtWidgets.QWidget()
+        self.empty_placeholder.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+        self.ui.layoutProducts.addWidget(self.empty_placeholder)  # Добавляем заполнитель в конец layout
 
-    def back_main_manager_window(self):
-            # Возврат к главному окну менеджера
-            from windows.main_manager_window import MainWindowManager
-            self.main_manager_window = MainWindowManager()
-            self.main_manager_window.show()
-            self.close()
 
 if __name__ == "__main__":
     import sys

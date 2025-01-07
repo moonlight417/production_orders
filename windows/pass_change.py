@@ -6,44 +6,85 @@ import requests
 class Ui_PasswordChange(object):
     def setupUi(self, PasswordChange):
         PasswordChange.setObjectName("PasswordChange")
-        PasswordChange.resize(325, 150)
+        # PasswordChange.resize(400, 200)
+
         self.centralwidget = QtWidgets.QWidget(PasswordChange)
         self.centralwidget.setObjectName("centralwidget")
 
-        # Текущий пароль
-        self.labelCurrentPassword = QtWidgets.QLabel(self.centralwidget)
-        self.labelCurrentPassword.setGeometry(QtCore.QRect(20, 10, 191, 16))
-        font = QtGui.QFont()
-        font.setPointSize(11)
-        self.labelCurrentPassword.setFont(font)
-        self.labelCurrentPassword.setObjectName("labelCurrentPassword")
+        # Создание сетки для размещения элементов
+        self.layout = QtWidgets.QGridLayout(self.centralwidget)
 
+        self.labelRoleChoice = QtWidgets.QLabel(self.centralwidget)
+        # self.labelRoleChoice.setGeometry(QtCore.QRect(70, 5, 221, 20))
+        # Устанавливаем стиль шрифта через setStyleSheet
+        self.labelRoleChoice.setStyleSheet("font-size: 16px;")  # Устанавливаем размер шрифта 20px
+
+        self.labelRoleChoice.setObjectName("labelRoleChoice")
+
+        # Размещаем labelRoleChoice
+        self.layout.addWidget(self.labelRoleChoice, 0, 1)
+
+        # Текущий пароль
         self.lineEditCurrentPassword = QtWidgets.QLineEdit(self.centralwidget)
-        self.lineEditCurrentPassword.setGeometry(QtCore.QRect(20, 30, 181, 20))
+        self.lineEditCurrentPassword.setFixedHeight(40)
+        # self.lineEditCurrentPassword.setGeometry(QtCore.QRect(20, 30, 181, 20))
         self.lineEditCurrentPassword.setEchoMode(QtWidgets.QLineEdit.Password)
         self.lineEditCurrentPassword.setObjectName("lineEditCurrentPassword")
 
-        # Новый пароль
-        self.labelNewPassword = QtWidgets.QLabel(self.centralwidget)
-        self.labelNewPassword.setGeometry(QtCore.QRect(20, 60, 171, 16))
-        font = QtGui.QFont()
-        font.setPointSize(11)
-        self.labelNewPassword.setFont(font)
-        self.labelNewPassword.setObjectName("labelNewPassword")
+        # Устанавливаем текст-заполнитель (placeholder) и его стиль
+        self.lineEditCurrentPassword.setPlaceholderText("Введите пароль")
+        self.lineEditCurrentPassword.setStyleSheet("""
+                            QLineEdit {
+                                font-size: 20px;  /* Размер шрифта для текста ввода */
+                            }
+                            QLineEdit::placeholder {
+                                font-size: 20px;  /* Размер шрифта для текста-заполнителя */
+                                color: gray;      /* Цвет текста-заполнителя */
+                            }
+                        """)
+        # Размещаем lineEditCurrentPassword
+        self.layout.addWidget(self.lineEditCurrentPassword, 1, 0, 1, 2)
 
+        # Новый пароль
         self.lineEditNewPassword = QtWidgets.QLineEdit(self.centralwidget)
-        self.lineEditNewPassword.setGeometry(QtCore.QRect(20, 80, 181, 20))
+        self.lineEditNewPassword.setFixedHeight(40)
+        # self.lineEditNewPassword.setGeometry(QtCore.QRect(20, 80, 181, 20))
         self.lineEditNewPassword.setEchoMode(QtWidgets.QLineEdit.Password)
         self.lineEditNewPassword.setObjectName("lineEditNewPassword")
 
+        # Устанавливаем текст-заполнитель (placeholder) и его стиль
+        self.lineEditNewPassword.setPlaceholderText("Введите пароль")
+        self.lineEditNewPassword.setStyleSheet("""
+                                    QLineEdit {
+                                        font-size: 20px;  /* Размер шрифта для текста ввода */
+                                    }
+                                    QLineEdit::placeholder {
+                                        font-size: 20px;  /* Размер шрифта для текста-заполнителя */
+                                        color: gray;      /* Цвет текста-заполнителя */
+                                    }
+                                """)
+        # Размещаем lineEditNewPassword
+        self.layout.addWidget(self.lineEditNewPassword, 2, 0, 1, 2)
+
         self.comboBoxRole = QtWidgets.QComboBox(self.centralwidget)
-        self.comboBoxRole.setGeometry(210, 30, 100, 20)
+        # self.comboBoxRole.setGeometry(210, 30, 100, 20)
         self.comboBoxRole.addItems(["Менеджер", "Инженер", "Производство", "Админ"])
+
+        self.comboBoxRole.setStyleSheet("""
+                QComboBox {
+                font-size: 17px;
+                }
+                """)
+
+        # Размещаем comboBoxRole
+        self.layout.addWidget(self.comboBoxRole, 0, 2)
 
         # Кнопка "Применить"
         self.BtnApply = QtWidgets.QPushButton(self.centralwidget)
-        self.BtnApply.setGeometry(QtCore.QRect(210, 80, 100, 23))
+        # self.BtnApply.setGeometry(QtCore.QRect(210, 80, 100, 23))
         self.BtnApply.setObjectName("BtnApply")
+        # Размещаем BtnApply
+        self.layout.addWidget(self.BtnApply, 2, 2)
 
         PasswordChange.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(PasswordChange)
@@ -57,9 +98,11 @@ class Ui_PasswordChange(object):
     def retranslateUi(self, PasswordChange):
         _translate = QtCore.QCoreApplication.translate
         PasswordChange.setWindowTitle(_translate("PasswordChange", "Смена пароля"))
-        self.labelCurrentPassword.setText(_translate("PasswordChange", "Введите текущий пароль:"))
+        self.labelRoleChoice.setText(_translate("PasswordChange", "Выберите вашу роль:"))
         self.BtnApply.setText(_translate("PasswordChange", "Применить"))
-        self.labelNewPassword.setText(_translate("PasswordChange", "Введите новый пароль:"))
+        # self.labelNewPassword.setText(_translate("PasswordChange", "Введите новый пароль:"))
+        self.lineEditCurrentPassword.setPlaceholderText(_translate("PasswordChange", "Введите текущий пароль"))
+        self.lineEditNewPassword.setPlaceholderText(_translate("PasswordChange", "Введите новый пароль"))
 
 
 class PasswordChange(QtWidgets.QMainWindow):
@@ -67,6 +110,9 @@ class PasswordChange(QtWidgets.QMainWindow):
         super().__init__()
         self.ui = Ui_PasswordChange()
         self.ui.setupUi(self)
+
+        # Устанавливаем фиксированный размер окна
+        self.setFixedSize(400, 230)
 
         # Подключаем кнопку "Применить" к методу смены пароля
         self.ui.BtnApply.clicked.connect(self.apply_password_change)

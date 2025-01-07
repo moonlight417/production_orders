@@ -4,186 +4,117 @@ from PyQt5.QtWidgets import QMessageBox
 from datetime import datetime
 import sqlite3
 import requests
+import resources_rc
 
 class Ui_TasksList(object):
     def setupUi(self, TasksList):
+        TasksList.setObjectName("TasksList")
+        TasksList.resize(1132, 698)
+        self.centralwidget = QtWidgets.QWidget(TasksList)
+        self.centralwidget.setObjectName("centralwidget")
 
+        # Главный вертикальный layout для размещения всех виджетов
+        main_layout = QtWidgets.QVBoxLayout(self.centralwidget)
+        main_layout.setContentsMargins(10, 10, 10, 10)
+        main_layout.setSpacing(10)
 
-         TasksList.setObjectName("TasksList")
-         TasksList.resize(1132, 798)
-         self.centralwidget = QtWidgets.QWidget(TasksList)
-         self.centralwidget.setObjectName("centralwidget")
+        # ======= Шапка с виджетами =======
+        self.frame_3 = QtWidgets.QFrame(self.centralwidget)
+        self.frame_3.setFrameShape(QtWidgets.QFrame.StyledPanel)
+        self.frame_3.setFrameShadow(QtWidgets.QFrame.Raised)
+        self.frame_3.setObjectName("frame_3")
 
-         self.scrollArea = QtWidgets.QScrollArea(self.centralwidget)
-         self.scrollArea.setGeometry(QtCore.QRect(10, 80, 1111, 601))
-         self.scrollArea.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOn)
-         self.scrollArea.setWidgetResizable(True)
+        # Горизонтальный layout для шапки
+        header_layout = QtWidgets.QHBoxLayout(self.frame_3)
+        header_layout.setContentsMargins(0, 0, 0, 0)
+        header_layout.setSpacing(10)
 
-         # Настроим цвет фона для QScrollArea
-         self.scrollArea.setStyleSheet("""
-             QScrollArea {
-                 background-color: #383838;
-                 
-             }
-             QScrollArea::widget {
-                 background-color: #383838;
-                 
-             }
-             QScrollBar {
-                 background-color: #d0d0d0;
-                 width: 12px;
-             }
-             QScrollBar::handle {
-                 background-color: #888888;
-                 border-radius: 6px;
-             }
-             QScrollBar::add-line, QScrollBar::sub-line {
-                 background-color: #a0a0a0;
-             }
-         """)
+        self.lineEditSearchCustomer = QtWidgets.QLineEdit(self.frame_3)
+        self.lineEditSearchCustomer.setPlaceholderText("Введите название фирмы заказчика")
+        header_layout.addWidget(self.lineEditSearchCustomer)
 
-         self.scrollArea.setObjectName("scrollArea")
-         self.scrollAreaWidgetContents = QtWidgets.QWidget()
-         self.scrollAreaWidgetContents.setObjectName("scrollAreaWidgetContents")
-         self.layoutTask = QtWidgets.QVBoxLayout(self.scrollAreaWidgetContents)
-         self.layoutTask.setContentsMargins(5, 5, 5, 5)
-         self.layoutTask.setSpacing(5)
-         self.scrollAreaWidgetContents.setLayout(self.layoutTask)
-         self.scrollArea.setWidget(self.scrollAreaWidgetContents)
+        self.BtnSearchCustomer = QtWidgets.QPushButton(self.frame_3)
+        icon = QtGui.QIcon()
+        icon.addPixmap(QtGui.QPixmap(":/utils/icons/search.svg"), QtGui.QIcon.Selected, QtGui.QIcon.On)
+        self.BtnSearchCustomer.setIcon(icon)
+        header_layout.addWidget(self.BtnSearchCustomer)
 
-         self.BtnSearchCustomer = QtWidgets.QPushButton(self.centralwidget)
-         self.BtnSearchCustomer.setGeometry(QtCore.QRect(350, 30, 31, 31))
-         icon = QtGui.QIcon()
-         icon.addPixmap(QtGui.QPixmap("../utils/icons/search.svg"), QtGui.QIcon.Selected, QtGui.QIcon.On)
-         self.BtnSearchCustomer.setIcon(icon)
-         self.BtnSearchCustomer.setObjectName("BtnSearchCustomer")
+        self.lineEditSearchProductName = QtWidgets.QLineEdit(self.frame_3)
+        self.lineEditSearchProductName.setPlaceholderText("Введите наименование изделия")
+        header_layout.addWidget(self.lineEditSearchProductName)
 
+        self.BtnSearchProductName = QtWidgets.QPushButton(self.frame_3)
+        self.BtnSearchProductName.setIcon(icon)
+        header_layout.addWidget(self.BtnSearchProductName)
 
-         self.frame_3 = QtWidgets.QFrame(self.centralwidget)
-         self.frame_3.setGeometry(QtCore.QRect(10, 65, 1111, 41))
-         self.frame_3.setFrameShape(QtWidgets.QFrame.StyledPanel)
-         self.frame_3.setFrameShadow(QtWidgets.QFrame.Raised)
-         self.frame_3.setObjectName("frame_3")
+        self.checkBoxPeriodOn = QtWidgets.QCheckBox("В период от", self.frame_3)
+        header_layout.addWidget(self.checkBoxPeriodOn)
 
-         self.labelProductName = QtWidgets.QLabel(self.frame_3)
-         self.labelProductName.setGeometry(QtCore.QRect(660, 15, 200, 16))
-         self.labelProductName.setObjectName("labelProductName")
+        self.dateEditStartPeriod = QtWidgets.QDateEdit(self.frame_3)
+        self.dateEditStartPeriod.setCalendarPopup(True)
+        self.dateEditStartPeriod.setFixedWidth(100)
 
-         self.labelCheckNumber = QtWidgets.QLabel(self.frame_3)
-         self.labelCheckNumber.setGeometry(QtCore.QRect(10, 15, 51, 16))
-         self.labelCheckNumber.setObjectName("labelCheckNumber")
+        header_layout.addWidget(self.dateEditStartPeriod)
 
-         self.labelDate = QtWidgets.QLabel(self.frame_3)
-         self.labelDate.setGeometry(QtCore.QRect(95, 15, 31, 16))
-         self.labelDate.setObjectName("labelDate")
+        self.label_7 = QtWidgets.QLabel("по", self.frame_3)
+        header_layout.addWidget(self.label_7)
 
-         self.labelCustomer = QtWidgets.QLabel(self.frame_3)
-         self.labelCustomer.setGeometry(QtCore.QRect(240, 15, 171, 16))
-         self.labelCustomer.setObjectName("labelCustomer")
+        self.dateEditEndPeriod = QtWidgets.QDateEdit(self.frame_3)
+        self.dateEditEndPeriod.setCalendarPopup(True)
+        self.dateEditEndPeriod.setFixedWidth(100)
+        self.dateEditEndPeriod.setDate(QDate.currentDate())
+        header_layout.addWidget(self.dateEditEndPeriod)
 
-         self.BtnSearchCustomer = QtWidgets.QPushButton(self.centralwidget)
-         self.BtnSearchCustomer.setGeometry(QtCore.QRect(350, 30, 31, 31))
-         self.BtnSearchCustomer.setText("")
-         icon5 = QtGui.QIcon()
-         icon5.addPixmap(QtGui.QPixmap("../utils/icons/search.svg"), QtGui.QIcon.Selected, QtGui.QIcon.On)
-         self.BtnSearchCustomer.setIcon(icon5)
-         self.BtnSearchCustomer.setObjectName("BtnSearchCustomer")
+        # Добавляем шапку в главный layout
+        main_layout.addWidget(self.frame_3)
 
-         self.lineEditSearchCustomer = QtWidgets.QLineEdit(self.centralwidget)
-         self.lineEditSearchCustomer.setGeometry(QtCore.QRect(20, 29, 321, 31))
-         self.lineEditSearchCustomer.setObjectName("lineEditSearchCustomer")
-         font = QtGui.QFont()
-         font.setPointSize(11)
-         font.setBold(False)  # Жирный шрифт
-         font.setItalic(False)  # Курсив
-         font.setFamily("Arial")  # Шрифт Arial
-         self.lineEditSearchCustomer.setFont(font)
+        # ======= Прокручиваемая область =======
+        self.scrollArea = QtWidgets.QScrollArea(self.centralwidget)
+        self.scrollArea.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOn)
+        self.scrollArea.setWidgetResizable(True)
+        self.scrollArea.setStyleSheet("""
+            QScrollArea {
+                background-color: #383838;
+            }
+            QScrollArea::widget {
+                background-color: #383838;
+            }
+            QScrollBar {
+                background-color: #d0d0d0;
+                width: 12px;
+            }
+            QScrollBar::handle {
+                background-color: #888888;
+                border-radius: 6px;
+            }
+            QScrollBar::add-line, QScrollBar::sub-line {
+                background-color: #a0a0a0;
+            }
+        """)
+        self.scrollArea.setObjectName("scrollArea")
 
-         self.current_date = datetime.now()
-         self.last_year_date = self.current_date.replace(year=self.current_date.year - 1)
-         self.last_year_qdate = QDate(self.last_year_date.year, self.last_year_date.month, self.last_year_date.day)
-         self.dateEditStartPeriod = QtWidgets.QDateEdit(self.centralwidget)
-         self.dateEditStartPeriod.setGeometry(QtCore.QRect(885, 37, 81, 22))
-         self.dateEditStartPeriod.setCalendarPopup(True)
-         self.dateEditStartPeriod.setDate(QDate(self.last_year_qdate))
-         self.dateEditStartPeriod.setObjectName("dateEditStartPeriod")
+        self.scrollAreaWidgetContents = QtWidgets.QWidget()
+        self.scrollAreaWidgetContents.setObjectName("scrollAreaWidgetContents")
+        self.layoutTask = QtWidgets.QVBoxLayout(self.scrollAreaWidgetContents)
+        self.layoutTask.setContentsMargins(5, 5, 5, 5)
+        self.layoutTask.setSpacing(5)
+        self.scrollAreaWidgetContents.setLayout(self.layoutTask)
+        self.scrollArea.setWidget(self.scrollAreaWidgetContents)
 
-         self.dateEditEndPeriod = QtWidgets.QDateEdit(self.centralwidget)
-         self.dateEditEndPeriod.setGeometry(QtCore.QRect(995, 37, 81, 22))
-         self.dateEditEndPeriod.setCalendarPopup(True)
-         self.dateEditEndPeriod.setDate(QDate.currentDate())
-         self.dateEditEndPeriod.setObjectName("dateEditEndPeriod")
+        # Добавляем scrollArea в главный layout
+        main_layout.addWidget(self.scrollArea)
 
-         self.label_7 = QtWidgets.QLabel(self.centralwidget)
-         self.label_7.setGeometry(QtCore.QRect(975, 40, 16, 16))
-         self.label_7.setObjectName("label_7")
-
-         self.checkBoxPeriodOn = QtWidgets.QCheckBox(self.centralwidget)
-         self.checkBoxPeriodOn.setGeometry(QtCore.QRect(800, 40, 81, 17))
-         self.checkBoxPeriodOn.setObjectName("checkBoxPeriodOn")
-
-         self.lineEditSearchProductName = QtWidgets.QLineEdit(self.centralwidget)
-         self.lineEditSearchProductName.setGeometry(QtCore.QRect(410, 30, 321, 31))
-         self.lineEditSearchProductName.setObjectName("lineEditSearchProductName")
-         font = QtGui.QFont()
-         font.setPointSize(11)
-         font.setBold(False)  # Жирный шрифт
-         font.setItalic(False)  # Курсив
-         font.setFamily("Arial")  # Шрифт Arial
-         self.lineEditSearchProductName.setFont(font)
-
-         self.BtnSearchProductName = QtWidgets.QPushButton(self.centralwidget)
-         self.BtnSearchProductName.setGeometry(QtCore.QRect(740, 31, 31, 31))
-         self.BtnSearchProductName.setText("")
-         self.BtnSearchProductName.setIcon(icon5)
-         self.BtnSearchProductName.setObjectName("BtnSearchProductName")
-
-         self.labelSearchCustomer = QtWidgets.QLabel(self.centralwidget)
-         self.labelSearchCustomer.setGeometry(QtCore.QRect(70, 5, 221, 20))
-         self.labelSearchCustomer.setObjectName("labelSearchCustomer")
-
-         self.labelSearchProductName = QtWidgets.QLabel(self.centralwidget)
-         self.labelSearchProductName.setGeometry(QtCore.QRect(480, 5, 171, 20))
-         self.labelSearchProductName.setObjectName("labelSearchProductName")
-
-         self.line_11 = QtWidgets.QFrame(self.centralwidget)
-         self.line_11.setGeometry(QtCore.QRect(390, 20, 20, 51))
-         self.line_11.setFrameShape(QtWidgets.QFrame.VLine)
-         self.line_11.setFrameShadow(QtWidgets.QFrame.Sunken)
-         self.line_11.setObjectName("line_11")
-
-         self.line_12 = QtWidgets.QFrame(self.centralwidget)
-         self.line_12.setGeometry(QtCore.QRect(780, 20, 20, 51))
-         self.line_12.setFrameShape(QtWidgets.QFrame.VLine)
-         self.line_12.setFrameShadow(QtWidgets.QFrame.Sunken)
-         self.line_12.setObjectName("line_12")
-
-         TasksList.setCentralWidget(self.centralwidget)
-         self.menubar = QtWidgets.QMenuBar(TasksList)
-         self.menubar.setGeometry(QtCore.QRect(0, 0, 1132, 21))
-         self.menubar.setObjectName("menubar")
-         TasksList.setMenuBar(self.menubar)
-         self.statusbar = QtWidgets.QStatusBar(TasksList)
-         self.statusbar.setObjectName("statusbar")
-         TasksList.setStatusBar(self.statusbar)
-
-         self.BtnBack = QtWidgets.QPushButton(self.centralwidget)
-         self.BtnBack.setGeometry(QtCore.QRect(10, 720, 111, 31))
-         font = QtGui.QFont()
-         font.setPointSize(10)
-         self.BtnBack.setFont(font)
-         self.BtnBack.setObjectName("BtnBack")
-
-         self.retranslateUi(TasksList)
-         QtCore.QMetaObject.connectSlotsByName(TasksList)
+        TasksList.setCentralWidget(self.centralwidget)
+        self.retranslateUi(TasksList)
+        QtCore.QMetaObject.connectSlotsByName(TasksList)
 
     def retranslateUi(self, TasksList):
         _translate = QtCore.QCoreApplication.translate
         TasksList.setWindowTitle(_translate("TasksList", "Список заданий"))
         self.lineEditSearchCustomer.setPlaceholderText(_translate("TasksList", "Введите название фирмы заказчика"))
         self.lineEditSearchProductName.setPlaceholderText(_translate("TasksList", "Введите наименование изделия"))
-        self.BtnSearchCustomer.setToolTip(_translate("TasksList", "Искать задания по названию заказчика"))
-        self.BtnBack.setText(_translate("TasksList", "Назад"))
+        self.BtnSearchCustomer.setToolTip(_translate("TasksList", "Искать задания по названию фирмы заказчика"))
+        self.BtnSearchProductName.setToolTip(_translate("TasksList", "Искать задания по наименованию изделия"))
         self.checkBoxPeriodOn.setText(_translate("TasksList", "В период от"))
         self.label_7.setText(_translate("TasksList", "по"))
 
@@ -196,7 +127,7 @@ class TasksList(QtWidgets.QMainWindow):
 
         # Обработчики для кнопок
         self.ui.BtnSearchCustomer.clicked.connect(self.search_tasks_by_customer)
-        self.ui.BtnBack.clicked.connect(self.back_main_manager_window)
+        # self.ui.BtnBack.clicked.connect(self.back_main_manager_window)
 
         # Получаем данные из базы данных для названий организаций-заказчиков
         customer = self.get_words_from_database("orders_customer", "organization_name")
@@ -304,24 +235,24 @@ class TasksList(QtWidgets.QMainWindow):
             # edit_button.setStyleSheet("margin-top: 10px;font-size: 16px")
             task_layout.addWidget(edit_button, alignment=QtCore.Qt.AlignRight)
             edit_button.setFixedSize(80, 30)  # ширина: 120px, высота: 40px
-            edit_button.setStyleSheet("""
-                QPushButton 
-                {
-                    background-color: #f0f0f0;
-                    border: 1px solid #808a9c;
-                    font-size: 13px;                                      
-                }
-                QPushButton:hover {
-                    background-color: #dae5f7;
-                    border: 1px solid #0a66fa;                    
-                }
-                QPushButton:pressed {
-                    background-color: #d0d0d0;
-                }
-                QPushButton:focus {
-                    outline: none;
-                }
-            """)
+            # edit_button.setStyleSheet("""
+            #     QPushButton
+            #     {
+            #         background-color: #f0f0f0;
+            #         border: 1px solid #808a9c;
+            #         font-size: 13px;
+            #     }
+            #     QPushButton:hover {
+            #         background-color: #dae5f7;
+            #         border: 1px solid #0a66fa;
+            #     }
+            #     QPushButton:pressed {
+            #         background-color: #d0d0d0;
+            #     }
+            #     QPushButton:focus {
+            #         outline: none;
+            #     }
+            # """)
 
             # Добавляем рамку задания в общий layout
             self.ui.layoutTask.addWidget(task_frame)
@@ -371,13 +302,6 @@ class TasksList(QtWidgets.QMainWindow):
         except sqlite3.Error as e:
             print(f"Ошибка доступа к базе данных: {e}")
             return []
-
-    def back_main_manager_window(self):
-        # Возврат к главному окну менеджера
-        from windows.main_manager_window import MainWindowManager
-        self.main_manager_window = MainWindowManager()
-        self.main_manager_window.show()
-        self.close()
 
 
 if __name__ == "__main__":

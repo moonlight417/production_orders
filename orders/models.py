@@ -16,9 +16,9 @@ class Order(models.Model):
     production_acceptance_date = models.DateField(null=True, blank=True)
     order_file = models.FileField(upload_to='orders/')
     label_file = models.FileField(upload_to='labels/', null=True, blank=True)
+    status = models.CharField(max_length=1, null=True, blank=True)
 
 class TaskEmployee(models.Model):
     order = models.ForeignKey(Task, on_delete=models.CASCADE)
     employee = models.ForeignKey(Employee, on_delete=models.CASCADE)
-
 
