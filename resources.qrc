@@ -3,5 +3,11 @@
         <file>utils/icons/x-square.svg</file>
         <file>utils/icons/search.svg</file>
         <file>utils/icons/refresh.png</file>
+        <file>utils/icons/plus-square-dotted.svg</file>
+        <file>utils/icons/folder2-open.svg</file>
+        <file>utils/icons/icons8_1.png</file>
+        <file>utils/icons/icons8_2.png</file>
+        <file>utils/icons/floppy.svg</file>
+        <file>utils/icons/eye.png</file>
     </qresource>
 </RCC>

@@ -2,14 +2,14 @@ import os
 import django
 import sys
 
-from windows.customizing import CustomizingWindow, Ui_Customizing
+from windows.customizing import Customizing, Ui_Customizing
 from windows.main_engineer_window import MainWindowEngineer
 from windows.main_manager_window import MainWindowManager
 from windows.main_production_window import MainWindowProduction
 from windows.start_window import StartWindow
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE',
-                      'base.settings')  # Замените 'base.settings' на путь к вашему файлу настроек
+                      'base.settings')
 django.setup()
 from PyQt5 import QtCore, QtWidgets, QtGui
 import requests
@@ -146,7 +146,7 @@ class PasswordWindow(QtWidgets.QMainWindow):
 
     def open_admin_window(self):
         try:
-            self.admin_window = CustomizingWindow()  # Создаем экземпляр окна для администратора
+            self.admin_window = Customizing()  # Создаем экземпляр окна для администратора
             self.admin_window.show()  # Показываем окно
             self.close()  # Закрываем текущее окно
         except Exception as e:

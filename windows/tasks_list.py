@@ -61,7 +61,7 @@ class Ui_TasksList(object):
 
         self.dateEditStartPeriod.setCalendarPopup(True)
         self.dateEditStartPeriod.setDate(QDate(self.last_year_qdate))
-        self.dateEditStartPeriod.setFixedWidth(100)
+        self.dateEditStartPeriod.setFixedWidth(110)
 
         header_layout.addWidget(self.dateEditStartPeriod)
 
@@ -70,7 +70,7 @@ class Ui_TasksList(object):
 
         self.dateEditEndPeriod = QtWidgets.QDateEdit(self.frame_3)
         self.dateEditEndPeriod.setCalendarPopup(True)
-        self.dateEditEndPeriod.setFixedWidth(100)
+        self.dateEditEndPeriod.setFixedWidth(110)
         self.dateEditEndPeriod.setDate(QDate.currentDate())
         header_layout.addWidget(self.dateEditEndPeriod)
 

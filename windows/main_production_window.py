@@ -6,7 +6,7 @@ from search_design_document import SearchDesignDoc
 from windows.design_document_filling_form import DesignDocumentFillingForm
 from new_tasks import NewTasks
 from windows.new_orders import NewOrders
-
+from orders_archive import OrdersArchive
 
 class Ui_MainWindowProduction(object):
     def setupUi(self, MainWindowProduction):
@@ -102,9 +102,10 @@ class MainWindowProduction(QtWidgets.QMainWindow):
         self.tasks_list_window = TasksList()
         self.search_design_doc_window = SearchDesignDoc(parent=None)
         self.new_orders_list_window = NewOrders(parent=None)
+        self.view_orders_window = OrdersArchive()
 
         self.check_orders_window = self.create_check_orders()
-        self.view_orders_window = self.create_view_orders_window()
+        # self.view_orders_window = self.create_view_orders_window()
         self.open_new_tasks = self.create_open_new_orders()
 
         # Добавление окон в QStackedWidget

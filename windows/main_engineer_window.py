@@ -5,6 +5,7 @@ from tasks_list import TasksList
 from search_design_document import SearchDesignDoc
 from windows.design_document_filling_form import DesignDocumentFillingForm
 from new_tasks import NewTasks
+from orders_archive import OrdersArchive
 
 
 class Ui_MainWindowEngineer(object):
@@ -29,7 +30,6 @@ class Ui_MainWindowEngineer(object):
         self.left_top_panel.addWidget(self.BtnOrderBase)
         self.left_top_panel.addWidget(self.BtnDrowingArchive)
         self.left_top_panel.addWidget(self.BtnAddNewDesignDoc)
-
 
         # Правая часть верхней панели (лейбл и кнопка проверки)
         self.right_top_panel = QHBoxLayout()
@@ -101,76 +101,22 @@ class MainWindowEngineer(QtWidgets.QMainWindow):
         self.tasks_list_window = TasksList()
         self.search_design_doc_window = SearchDesignDoc(parent=None)
         self.new_tasks_list_window = NewTasks(parent=None)
-
-        self.check_orders_window = self.create_check_orders()
-        self.view_orders_window = self.create_view_orders_window()
-        self.open_new_tasks = self.create_open_new_tasks()
+        self.view_orders_window = OrdersArchive()
 
         # Добавление окон в QStackedWidget
         self.ui.stacked_widget.addWidget(self.empty_window)
         self.ui.stacked_widget.addWidget(self.design_document_filling_window)
         self.ui.stacked_widget.addWidget(self.tasks_list_window)
         self.ui.stacked_widget.addWidget(self.search_design_doc_window)
-        self.ui.stacked_widget.addWidget(self.check_orders_window)
         self.ui.stacked_widget.addWidget(self.view_orders_window)
         self.ui.stacked_widget.addWidget(self.new_tasks_list_window)
 
         # Устанавливаем пустое окно как текущее
         self.ui.stacked_widget.setCurrentWidget(self.empty_window)
 
-
     def switch_window(self, window):
         """Переключение на указанное окно"""
         self.ui.stacked_widget.setCurrentWidget(window)
-
-
-    def design_document_filling_window(self):
-        """Создание окна 'Новый КД'"""
-        window = QWidget()
-        layout = QVBoxLayout(window)
-        label = QLabel("Окно: Новый КД")
-        layout.addWidget(label)
-        return window
-
-    def create_tasks_list_window(self):
-        """Создание окна 'Список заданий'"""
-        window = QWidget()
-        layout = QVBoxLayout(window)
-        label = QLabel("Окно: Список заданий")
-        layout.addWidget(label)
-        return window
-
-    def create_view_orders_window(self):
-        """Создание окна 'Список заданий'"""
-        window = QWidget()
-        layout = QVBoxLayout(window)
-        label = QLabel("Окно: Заказы")
-        layout.addWidget(label)
-        return window
-
-    def create_search_design_doc_window(self):
-        """Создание окна 'Архив КД'"""
-        window = QWidget()
-        layout = QVBoxLayout(window)
-        label = QLabel("Окно: Архив КД")
-        layout.addWidget(label)
-        return window
-
-    def create_check_orders(self):
-        window = QWidget()
-        layout = QVBoxLayout(window)
-        label = QLabel("Окно: Проверка заказов")
-        layout.addWidget(label)
-        return window
-
-    def create_open_new_tasks(self):
-        """Создание окна 'Новое задание'"""
-        window = QWidget()
-        layout = QVBoxLayout(window)
-        label = QLabel("Окно: Новое задание")
-        layout.addWidget(label)
-        return window
-
 
     def update_order_count_label(self):
         """Обновление текста лейбла с числом заказов"""

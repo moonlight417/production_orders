@@ -1,5 +1,5 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
-
+import resources_rc
 
 class Ui_DesignDocumentFillingForm(object):
     def setupUi(self, DesignDocumentFillingForm):
@@ -46,7 +46,7 @@ class Ui_DesignDocumentFillingForm(object):
         self.BtnUnit = QtWidgets.QPushButton(self.widget_2)
         self.BtnUnit.setText("")
         icon = QtGui.QIcon()
-        icon.addPixmap(QtGui.QPixmap("../utils/icons/plus-square-dotted.svg"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        icon.addPixmap(QtGui.QPixmap(":/utils/icons/plus-square-dotted.svg"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.BtnUnit.setIcon(icon)
         self.BtnUnit.setObjectName("BtnUnit")
         self.horizontalLayout.addWidget(self.BtnUnit)
@@ -124,7 +124,7 @@ class Ui_DesignDocumentFillingForm(object):
         self.BtnOpenDesignFile_2 = QtWidgets.QPushButton(self.tab_detail)
         self.BtnOpenDesignFile_2.setToolTipDuration(3000)
         icon1 = QtGui.QIcon()
-        icon1.addPixmap(QtGui.QPixmap("icons/folder2-open.svg"), QtGui.QIcon.Selected, QtGui.QIcon.On)
+        icon1.addPixmap(QtGui.QPixmap(":/utils/icons/folder2-open.svg"), QtGui.QIcon.Selected, QtGui.QIcon.On)
         self.BtnOpenDesignFile_2.setIcon(icon1)
         self.BtnOpenDesignFile_2.setIconSize(QtCore.QSize(20, 20))
         self.BtnOpenDesignFile_2.setObjectName("BtnOpenDesignFile_2")
@@ -144,7 +144,7 @@ class Ui_DesignDocumentFillingForm(object):
         self.gridLayout_11.setObjectName("gridLayout_11")
         self.BtnAddSheet_2 = QtWidgets.QPushButton(self.tab)
         icon2 = QtGui.QIcon()
-        icon2.addPixmap(QtGui.QPixmap("icons/plus-square-dotted.svg"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        icon2.addPixmap(QtGui.QPixmap(":/utils/icons/plus-square-dotted.svg"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.BtnAddSheet_2.setIcon(icon2)
         self.BtnAddSheet_2.setObjectName("BtnAddSheet_2")
         self.gridLayout_11.addWidget(self.BtnAddSheet_2, 3, 6, 1, 1)
@@ -161,7 +161,7 @@ class Ui_DesignDocumentFillingForm(object):
         self.BtnRotateLeft_2.setAutoFillBackground(False)
         self.BtnRotateLeft_2.setText("")
         icon3 = QtGui.QIcon()
-        icon3.addPixmap(QtGui.QPixmap("../utils/icons/icons8_1.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        icon3.addPixmap(QtGui.QPixmap(":/utils/icons/icons8_1.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.BtnRotateLeft_2.setIcon(icon3)
         self.BtnRotateLeft_2.setIconSize(QtCore.QSize(25, 25))
         self.BtnRotateLeft_2.setObjectName("BtnRotateLeft_2")
@@ -171,7 +171,7 @@ class Ui_DesignDocumentFillingForm(object):
         self.pushButton_9.setAutoFillBackground(False)
         self.pushButton_9.setText("")
         icon4 = QtGui.QIcon()
-        icon4.addPixmap(QtGui.QPixmap("../utils/icons/icons8_2.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        icon4.addPixmap(QtGui.QPixmap(":/utils/icons/icons8_2.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.pushButton_9.setIcon(icon4)
         self.pushButton_9.setIconSize(QtCore.QSize(25, 25))
         self.pushButton_9.setObjectName("pushButton_9")
@@ -182,7 +182,7 @@ class Ui_DesignDocumentFillingForm(object):
         self.gridLayout_11.addWidget(self.lineEditMass_3, 3, 1, 1, 1)
         self.BtnDeleteSheet_2 = QtWidgets.QPushButton(self.tab)
         icon5 = QtGui.QIcon()
-        icon5.addPixmap(QtGui.QPixmap("icons/x-square.svg"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        icon5.addPixmap(QtGui.QPixmap(":/utils/icons/x-square.svg"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.BtnDeleteSheet_2.setIcon(icon5)
         self.BtnDeleteSheet_2.setObjectName("BtnDeleteSheet_2")
         self.gridLayout_11.addWidget(self.BtnDeleteSheet_2, 3, 7, 1, 1)
@@ -279,7 +279,7 @@ class Ui_DesignDocumentFillingForm(object):
         self.BtnSave.setToolTipDuration(3000)
         self.BtnSave.setText("")
         icon6 = QtGui.QIcon()
-        icon6.addPixmap(QtGui.QPixmap("../utils/icons/floppy.svg"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        icon6.addPixmap(QtGui.QPixmap(":/utils/icons/floppy.svg"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.BtnSave.setIcon(icon6)
         self.BtnSave.setIconSize(QtCore.QSize(30, 30))
         self.BtnSave.setObjectName("BtnSave")
