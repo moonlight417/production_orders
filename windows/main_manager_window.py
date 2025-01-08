@@ -1,72 +1,82 @@
-
 from PyQt5 import QtCore, QtGui, QtWidgets
-from PyQt5.QtWidgets import QMessageBox
-
+from PyQt5.QtWidgets import QMessageBox, QStackedWidget, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton
+from task_filling import TaskFilling
+from tasks_list import TasksList
+from windows.search_design_document import SearchDesignDoc
+from orders_archive import OrdersArchive
+import resources_rc
 
 class Ui_MainWindowManager(object):
     def setupUi(self, MainWindowManager):
         MainWindowManager.setObjectName("MainWindowManager")
-        MainWindowManager.resize(378, 211)
+        MainWindowManager.resize(1200, 700)
+
         self.centralwidget = QtWidgets.QWidget(MainWindowManager)
-        self.centralwidget.setObjectName("centralwidget")
-        self.BtnNewTasks = QtWidgets.QPushButton(self.centralwidget)
-        self.BtnNewTasks.setGeometry(QtCore.QRect(20, 20, 131, 31))
-        self.BtnNewTasks.setObjectName("BtnNewTasks")
-        self.BtnOrderBase = QtWidgets.QPushButton(self.centralwidget)
-        self.BtnOrderBase.setGeometry(QtCore.QRect(20, 100, 131, 31))
-        self.BtnOrderBase.setObjectName("BtnOrderBase")
-        self.BtnDrowingArchive = QtWidgets.QPushButton(self.centralwidget)
-        self.BtnDrowingArchive.setGeometry(QtCore.QRect(20, 140, 131, 31))
-        self.BtnDrowingArchive.setObjectName("BtnDrowingArchive")
-        self.BtnRoleSelection = QtWidgets.QPushButton(self.centralwidget)
-        self.BtnRoleSelection.setGeometry(QtCore.QRect(270, 150, 91, 23))
-        self.BtnRoleSelection.setObjectName("BtnRoleSelection")
-        self.label = QtWidgets.QLabel(self.centralwidget)
-        self.label.setGeometry(QtCore.QRect(170, 27, 151, 16))
+        self.main_layout = QVBoxLayout(self.centralwidget)
+
+        # Верхняя панель с кнопками (левая и правая части)
+        self.top_panel = QHBoxLayout()
+
+        # Левая часть верхней панели (основные кнопки)
+        self.left_top_panel = QHBoxLayout()
+        self.BtnNewTasks = QtWidgets.QPushButton("Новое задание")
+        self.BtnViewTasks = QtWidgets.QPushButton("Задания")
+        self.BtnOrderBase = QtWidgets.QPushButton("База заказов")
+        self.BtnDrowingArchive = QtWidgets.QPushButton("Архив КД")
+
+        self.left_top_panel.addWidget(self.BtnNewTasks)
+        self.left_top_panel.addWidget(self.BtnViewTasks)
+        self.left_top_panel.addWidget(self.BtnOrderBase)
+        self.left_top_panel.addWidget(self.BtnDrowingArchive)
+
+
+        # Правая часть верхней панели (лейбл и кнопка проверки)
+        self.right_top_panel = QHBoxLayout()
+
+        self.LbCheckOrders = QLabel()  # Лейбл с числом заказов
         font = QtGui.QFont()
         font.setPointSize(11)
-        self.label.setFont(font)
-        self.label.setObjectName("label")
-        self.frame = QtWidgets.QFrame(self.centralwidget)
-        self.frame.setGeometry(QtCore.QRect(330, 27, 31, 21))
-        self.frame.setStyleSheet("background-color: rgb(255, 255, 255);")
-        self.frame.setFrameShape(QtWidgets.QFrame.StyledPanel)
-        self.frame.setFrameShadow(QtWidgets.QFrame.Sunken)
-        self.frame.setMidLineWidth(1)
-        self.frame.setObjectName("frame")
-        self.LbCheckOrders = QtWidgets.QLabel(self.frame)
-        self.LbCheckOrders.setGeometry(QtCore.QRect(6, 2, 20, 15))
-        font = QtGui.QFont()
-        font.setPointSize(12)
+        font.setBold(True)
         self.LbCheckOrders.setFont(font)
         self.LbCheckOrders.setAlignment(QtCore.Qt.AlignCenter)
-        self.LbCheckOrders.setObjectName("LbCheckOrders")
-        self.BtnCheck = QtWidgets.QPushButton(self.centralwidget)
-        self.BtnCheck.setGeometry(QtCore.QRect(290, 60, 70, 23))
-        self.BtnCheck.setObjectName("BtnCheck")
-        self.BtnViewTasks = QtWidgets.QPushButton(self.centralwidget)
-        self.BtnViewTasks.setGeometry(QtCore.QRect(20, 60, 131, 31))
-        self.BtnViewTasks.setObjectName("BtnViewTasks")
-        MainWindowManager.setCentralWidget(self.centralwidget)
-        self.menubar = QtWidgets.QMenuBar(MainWindowManager)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 378, 21))
-        self.menubar.setObjectName("menubar")
-        MainWindowManager.setMenuBar(self.menubar)
 
+        self.BtnCheckOrders = QPushButton("Открыть")
+        self.BtnRefresh = QPushButton()
+        icon = QtGui.QIcon()
+        icon.addPixmap(QtGui.QPixmap(":/utils/icons/refresh.png"), QtGui.QIcon.Selected, QtGui.QIcon.On)
+        self.BtnRefresh.setIcon(icon)
+
+        self.right_top_panel.addWidget(self.LbCheckOrders)
+        self.right_top_panel.addWidget(self.BtnRefresh)
+        self.right_top_panel.addWidget(self.BtnCheckOrders)
+
+        # Добавляем левую и правую части в верхнюю панель
+        self.top_panel.addLayout(self.left_top_panel)
+        self.top_panel.addStretch()  # Отступ между левой и правой частью
+        self.top_panel.addLayout(self.right_top_panel)
+
+        # Стек для переключаемых окон
+        self.stacked_widget = QStackedWidget()
+        self.stacked_widget.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+
+        # Нижняя панель с кнопкой "Назад"
+        self.bottom_panel = QHBoxLayout()
+        self.BtnRoleSelection = QPushButton("К выбору роли")
+        self.bottom_panel.addStretch()  # Добавляем отступ, чтобы кнопка была справа
+        self.bottom_panel.addWidget(self.BtnRoleSelection)
+
+        # Добавляем все элементы в главный layout
+        self.main_layout.addLayout(self.top_panel)
+        self.main_layout.addWidget(self.stacked_widget)
+        self.main_layout.addLayout(self.bottom_panel)
+
+        MainWindowManager.setCentralWidget(self.centralwidget)
         self.retranslateUi(MainWindowManager)
-        QtCore.QMetaObject.connectSlotsByName(MainWindowManager)
 
     def retranslateUi(self, MainWindowManager):
         _translate = QtCore.QCoreApplication.translate
         MainWindowManager.setWindowTitle(_translate("MainWindowManager", "Главное окно менеджера"))
-        self.BtnNewTasks.setText(_translate("MainWindowManager", "Новое задание"))
-        self.BtnOrderBase.setText(_translate("MainWindowManager", "База заказов"))
-        self.BtnDrowingArchive.setText(_translate("MainWindowManager", "Архив КД"))
-        self.BtnRoleSelection.setText(_translate("MainWindowManager", "К выбору роли"))
-        self.label.setText(_translate("MainWindowManager", "Заказов на проверку:"))
-        self.LbCheckOrders.setText(_translate("MainWindowManager", "12"))
-        self.BtnCheck.setText(_translate("MainWindowManager", "Проверить"))
-        self.BtnViewTasks.setText(_translate("MainWindowManager", "Задания"))
+
 
 class MainWindowManager(QtWidgets.QMainWindow):
     def __init__(self):
@@ -74,52 +84,112 @@ class MainWindowManager(QtWidgets.QMainWindow):
         self.ui = Ui_MainWindowManager()
         self.ui.setupUi(self)
 
+        # Подключение кнопок к методам
+        self.ui.BtnNewTasks.clicked.connect(lambda: self.switch_window(self.tasks_filling_window))
+        self.ui.BtnViewTasks.clicked.connect(lambda: self.switch_window(self.tasks_list_window))
         self.ui.BtnRoleSelection.clicked.connect(self.back_role_selection)
-        self.ui.BtnNewTasks.clicked.connect(self.new_task)
-        self.ui.BtnViewTasks.clicked.connect(self.tasks_list)
-        self.ui.BtnDrowingArchive.clicked.connect(self.search_design_doc_window)
+        self.ui.BtnDrowingArchive.clicked.connect(lambda: self.switch_window(self.search_design_doc_window))
+        self.ui.BtnCheckOrders.clicked.connect(lambda: self.switch_window(self.check_orders_window))
+        self.ui.BtnOrderBase.clicked.connect(lambda: self.switch_window(self.view_orders_window))
 
-    def search_design_doc_window(self):
-        try:
-            from search_design_document import SearchDesignDoc
-            self.search_design_doc = SearchDesignDoc(parent=self)
-            self.search_design_doc.show()
-            self.close()
-        except Exception as e:
-            QMessageBox.critical(self, "Ошибка", f"Не удалось открыть окно поиска КД: {e}")
+        self.order_count = 1  # Начальное значение числа заказов
+        self.update_order_count_label()
+        self.ui.BtnCheckOrders.setEnabled(self.order_count != 0)  # Включение/отключение кнопки
+
+        # Создание пустого окна
+        self.empty_window = QWidget()
+
+        # Создание экземпляров вложенных окон
+        self.tasks_filling_window = TaskFilling()
+        self.tasks_list_window = TasksList()
+        self.search_design_doc_window = SearchDesignDoc(parent=None)
+        self.view_orders_window = OrdersArchive()
+
+        # Добавление окон в QStackedWidget
+        self.ui.stacked_widget.addWidget(self.empty_window)  # Добавляем пустое окно
+        self.ui.stacked_widget.addWidget(self.tasks_filling_window)
+        self.ui.stacked_widget.addWidget(self.tasks_list_window)
+        self.ui.stacked_widget.addWidget(self.search_design_doc_window)
+        self.ui.stacked_widget.addWidget(self.view_orders_window)
+
+        # # Создание внутренних окон
+        # self.new_task_window = self.create_new_task_window()
+        # # self.search_design_doc_window = self.create_search_design_doc_window()
+        # self.check_orders_window = self.create_check_orders()
+        # self.view_orders_window = self.create_view_orders_window()
+        #
+        # # Добавление внутренних окон в QStackedWidget
+        # self.ui.stacked_widget.addWidget(self.new_task_window)
+        # # self.ui.stacked_widget.addWidget(self.search_design_doc_window)
+        # self.ui.stacked_widget.addWidget(self.check_orders_window)
+        # self.ui.stacked_widget.addWidget(self.view_orders_window)
+
+        # Устанавливаем пустое окно как текущее
+        self.ui.stacked_widget.setCurrentWidget(self.empty_window)
+
+    def switch_window(self, window):
+        """Переключение на указанное окно"""
+        self.ui.stacked_widget.setCurrentWidget(window)
+
+
+    def create_new_task_window(self):
+        """Создание окна 'Новое задание'"""
+        window = QWidget()
+        layout = QVBoxLayout(window)
+        label = QLabel("Окно: Новое задание")
+        layout.addWidget(label)
+        return window
+
+    def create_tasks_list_window(self):
+        """Создание окна 'Список заданий'"""
+        window = QWidget()
+        layout = QVBoxLayout(window)
+        label = QLabel("Окно: Список заданий")
+        layout.addWidget(label)
+        return window
+
+    def create_view_orders_window(self):
+        """Создание окна 'Список заданий'"""
+        window = QWidget()
+        layout = QVBoxLayout(window)
+        label = QLabel("Окно: Заказы")
+        layout.addWidget(label)
+        return window
+
+    def create_search_design_doc_window(self):
+        """Создание окна 'Архив КД'"""
+        window = QWidget()
+        layout = QVBoxLayout(window)
+        label = QLabel("Окно: Архив КД")
+        layout.addWidget(label)
+        return window
+
+    def create_check_orders(self):
+        window = QWidget()
+        layout = QVBoxLayout(window)
+        label = QLabel("Окно: Проверка заказов")
+        layout.addWidget(label)
+        return window
+
+    def update_order_count_label(self):
+        """Обновление текста лейбла с числом заказов"""
+        self.ui.LbCheckOrders.setText(str(f"Заказов на проверку: {self.order_count} "))
 
     def back_role_selection(self):
+        """Переход к окну выбора роли"""
         try:
             from windows.start_window import StartWindow
-            self.role_selection_window = StartWindow()  # Создаем экземпляр окна для выбора роли
-            self.role_selection_window.show()  # Показываем окно
-            self.close()  # Закрываем текущее окно
+            self.role_selection_window = StartWindow()
+            self.role_selection_window.show()
+            self.close()
         except Exception as e:
             QMessageBox.critical(self, "Ошибка", f"Не удалось открыть окно выбора роли: {e}")
 
-    def new_task(self):
-        try:
-            from windows.task_filling import TaskFilling
-            self.new_task = TaskFilling()
-            self.new_task.show()
-            self.close()
-        except Exception as e:
-            QMessageBox.critical(self, "Ошибка", f"Не удалось открыть окно создания нового задания: {e}")
-
-    def tasks_list(self):
-        try:
-            from windows.tasks_list import TasksList
-            self.tasks_list = TasksList()
-            self.tasks_list.show()
-            self.close()
-        except Exception as e:
-            QMessageBox.critical(self, "Ошибка", f"Не удалось открыть окно просмотра заданий: {e}")
 
 if __name__ == "__main__":
     import sys
     app = QtWidgets.QApplication(sys.argv)
-    MainWindowManager = QtWidgets.QMainWindow()
-    ui = Ui_MainWindowManager()
-    ui.setupUi(MainWindowManager)
-    MainWindowManager.show()
+    window = MainWindowManager()
+    window.show()
     sys.exit(app.exec_())
+
