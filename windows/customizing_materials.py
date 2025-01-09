@@ -98,11 +98,17 @@ class Materials(QtWidgets.QMainWindow):
         self.ui = Ui_Materials()
         self.ui.setupUi(self)
 
+        # Кнопки
         self.ui.BtnAddMaterial.clicked.connect(self.add_material_line)
 
-        # Пустой заполнитель
-        spacerItem2 = QtWidgets.QSpacerItem(20, 423, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
-        self.ui.verticalLayout_3.addItem(spacerItem2)
+        # # Пустой заполнитель
+        # spacerItem2 = QtWidgets.QSpacerItem(20, 423, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
+        # self.ui.verticalLayout_3.addItem(spacerItem2)
+
+        # Пустой заполнитель снизу
+        self.bottom_spacer = QtWidgets.QSpacerItem(20, 20, QtWidgets.QSizePolicy.Minimum,
+                                                   QtWidgets.QSizePolicy.Expanding)
+        self.ui.verticalLayout_3.addItem(self.bottom_spacer)
 
     def add_material_line(self):
         print("Метод add_material_line вызван")
@@ -145,8 +151,7 @@ class Materials(QtWidgets.QMainWindow):
             lineEditLinkToSite.setFont(font)
             lineEditLinkToSite.setText("")
             lineEditLinkToSite.setObjectName("lineEditLinkToSite")
-            lineEditLinkToSite.setPlaceholderText(
-                "Ссылка на сайт")
+            lineEditLinkToSite.setPlaceholderText("Ссылка на сайт")
             horizontalLayout_3.addWidget(lineEditLinkToSite)
 
             # Кнопка удаления строки
@@ -161,8 +166,8 @@ class Materials(QtWidgets.QMainWindow):
             # Привязка кнопки удаления к функции
             btn_delete.clicked.connect(lambda: self.delete_material_line(widget_4))
 
-            # Добавляем новый виджет в layout
-            self.ui.verticalLayout_3.addWidget(widget_4)
+            # Добавляем новый виджет перед заполнителем
+            self.ui.verticalLayout_3.insertWidget(self.ui.verticalLayout_3.count() - 1, widget_4)
             print("Строка добавлена успешно.")
 
             # Обновляем размер scrollArea

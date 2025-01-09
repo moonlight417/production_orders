@@ -97,7 +97,7 @@ class MainWindowEngineer(QtWidgets.QMainWindow):
 
         # Создание экземпляров окон
         self.empty_window = QWidget()
-        self.design_document_filling_window = DesignDocumentFillingForm(parent=None)
+        self.design_document_filling_window = DesignDocumentFillingForm()
         self.tasks_list_window = TasksList()
         self.search_design_doc_window = SearchDesignDoc(parent=None)
         self.new_tasks_list_window = NewTasks(parent=None)
