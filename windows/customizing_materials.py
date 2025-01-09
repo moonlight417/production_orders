@@ -1,6 +1,6 @@
 
 from PyQt5 import QtCore, QtGui, QtWidgets
-
+import resources_rc
 
 class Ui_Materials(object):
     def setupUi(self, Materials):
@@ -51,7 +51,6 @@ class Ui_Materials(object):
         self.verticalLayout_3 = QtWidgets.QVBoxLayout(self.scrollAreaWidgetContents)
         self.verticalLayout_3.setObjectName("verticalLayout_3")
 
-
         self.scrollArea.setWidget(self.scrollAreaWidgetContents)
         self.verticalLayout_2.addWidget(self.scrollArea)
 
@@ -63,25 +62,12 @@ class Ui_Materials(object):
         self.horizontalLayout_2 = QtWidgets.QHBoxLayout(self.bottom_panel_widget)
         self.horizontalLayout_2.setObjectName("horizontalLayout_2")
 
-        self.BtnDeleteSelectedMaterial = QtWidgets.QPushButton(self.bottom_panel_widget)
-        font = QtGui.QFont()
-        font.setPointSize(10)
-        self.BtnDeleteSelectedMaterial.setFont(font)
-        self.BtnDeleteSelectedMaterial.setObjectName("BtnDeleteSelectedMaterial")
-        self.horizontalLayout_2.addWidget(self.BtnDeleteSelectedMaterial)
-
-        spacerItem3 = QtWidgets.QSpacerItem(258, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
-        self.horizontalLayout_2.addItem(spacerItem3)
-
-        # self.BtnAddMaterial = QtWidgets.QPushButton(self.bottom_panel_widget)
-        # self.BtnAddMaterial.setObjectName("BtnAddMaterial")
         self.BtnAddMaterial = QtWidgets.QPushButton(self.bottom_panel_widget)
         font = QtGui.QFont()
         font.setPointSize(10)
         self.BtnAddMaterial.setFont(font)
         self.BtnAddMaterial.setObjectName("BtnAddMaterial")
         self.horizontalLayout_2.addWidget(self.BtnAddMaterial)
-
 
         spacerItem4 = QtWidgets.QSpacerItem(257, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
         self.horizontalLayout_2.addItem(spacerItem4)
@@ -103,11 +89,6 @@ class Ui_Materials(object):
         _translate = QtCore.QCoreApplication.translate
         Materials.setWindowTitle(_translate("Materials", "Материалы"))
         self.label_title.setText(_translate("Materials", "Применяемые материалы:"))
-        # self.lineEditNameMaterial.setPlaceholderText(_translate("Materials", "Материал"))
-        # self.lineEditGostMaterial.setPlaceholderText(_translate("Materials", "ГОСТ ..."))
-        # self.lineEditDensity.setPlaceholderText(_translate("Materials", "кг/м³"))
-        # self.lineEditLinkToSite.setPlaceholderText(_translate("Materials", "Ссылка на сайт"))
-        self.BtnDeleteSelectedMaterial.setText(_translate("Materials", "Удалить выбранную запись"))
         self.BtnAddMaterial.setText(_translate("Materials", "Добавить запись"))
         self.BtnSaveChangesMaterial.setText(_translate("Materials", "Сохранить изменения"))
 
@@ -117,18 +98,22 @@ class Materials(QtWidgets.QMainWindow):
         self.ui = Ui_Materials()
         self.ui.setupUi(self)
 
-        self.ui.BtnAddMaterial.clicked.connect(self.add_material_line)  # Убираем скобки
-        # self.ui.BtnAddMaterial.setText("Проверка кнопки")
-        # self.ui.BtnAddMaterial.clicked.connect(lambda: print("Кнопка нажата"))
-        # self.BtnDeleteSelectedMaterial.connect(self.delete_material_line)
+        # Кнопки
+        self.ui.BtnAddMaterial.clicked.connect(self.add_material_line)
 
+        # # Пустой заполнитель
+        # spacerItem2 = QtWidgets.QSpacerItem(20, 423, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
+        # self.ui.verticalLayout_3.addItem(spacerItem2)
+
+        # Пустой заполнитель снизу
+        self.bottom_spacer = QtWidgets.QSpacerItem(20, 20, QtWidgets.QSizePolicy.Minimum,
+                                                   QtWidgets.QSizePolicy.Expanding)
+        self.ui.verticalLayout_3.addItem(self.bottom_spacer)
 
     def add_material_line(self):
         print("Метод add_material_line вызван")
         try:
-            print("Добавление строки материала...")  # Отладочный вывод
-
-            # Создаем новый виджет для строки материала
+            # Создаём новый виджет для строки материала
             widget_4 = QtWidgets.QWidget(self.ui.scrollAreaWidgetContents)
             widget_4.setObjectName("widget_4")
 
@@ -143,6 +128,7 @@ class Materials(QtWidgets.QMainWindow):
             lineEditNameMaterial.setFont(font)
             lineEditNameMaterial.setText("")
             lineEditNameMaterial.setObjectName("lineEditNameMaterial")
+            lineEditNameMaterial.setPlaceholderText("Материал")
             horizontalLayout_3.addWidget(lineEditNameMaterial)
 
             lineEditGostMaterial = QtWidgets.QLineEdit(widget_4)
@@ -150,6 +136,7 @@ class Materials(QtWidgets.QMainWindow):
             lineEditGostMaterial.setFont(font)
             lineEditGostMaterial.setText("")
             lineEditGostMaterial.setObjectName("lineEditGostMaterial")
+            lineEditGostMaterial.setPlaceholderText("ГОСТ ...")
             horizontalLayout_3.addWidget(lineEditGostMaterial)
 
             lineEditDensity = QtWidgets.QLineEdit(widget_4)
@@ -157,22 +144,30 @@ class Materials(QtWidgets.QMainWindow):
             lineEditDensity.setFont(font)
             lineEditDensity.setText("")
             lineEditDensity.setObjectName("lineEditDensity")
+            lineEditDensity.setPlaceholderText("кг/м³")
             horizontalLayout_3.addWidget(lineEditDensity)
 
             lineEditLinkToSite = QtWidgets.QLineEdit(widget_4)
             lineEditLinkToSite.setFont(font)
             lineEditLinkToSite.setText("")
             lineEditLinkToSite.setObjectName("lineEditLinkToSite")
+            lineEditLinkToSite.setPlaceholderText("Ссылка на сайт")
             horizontalLayout_3.addWidget(lineEditLinkToSite)
 
-            checkBoxSelectMaterial = QtWidgets.QCheckBox(widget_4)
-            checkBoxSelectMaterial.setText("")
-            checkBoxSelectMaterial.setIconSize(QtCore.QSize(20, 20))
-            checkBoxSelectMaterial.setObjectName("checkBoxSelectMaterial")
-            horizontalLayout_3.addWidget(checkBoxSelectMaterial)
+            # Кнопка удаления строки
+            btn_delete = QtWidgets.QPushButton()
+            btn_delete.setFixedSize(26, 26)
+            icon = QtGui.QIcon()
+            icon.addPixmap(QtGui.QPixmap(":/utils/icons/x-square.svg"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+            btn_delete.setIcon(icon)
+            btn_delete.setIconSize(QtCore.QSize(16, 16))
+            horizontalLayout_3.addWidget(btn_delete)
 
-            # Добавляем новый виджет в layout
-            self.ui.verticalLayout_3.addWidget(widget_4)
+            # Привязка кнопки удаления к функции
+            btn_delete.clicked.connect(lambda: self.delete_material_line(widget_4))
+
+            # Добавляем новый виджет перед заполнителем
+            self.ui.verticalLayout_3.insertWidget(self.ui.verticalLayout_3.count() - 1, widget_4)
             print("Строка добавлена успешно.")
 
             # Обновляем размер scrollArea
@@ -182,28 +177,24 @@ class Materials(QtWidgets.QMainWindow):
             print(f"Ошибка в add_material_line: {e}")
 
     def delete_material_line(self, widget_4):
-        """Удаление строки и обновление нумерации"""
+        """Удаление строки материала и обновление интерфейса"""
         try:
-            # Удаление фрейма из layout
-            self.ui.scrollAreaWidgetContents.removeWidget(widget_4)
-            widget_4.deleteLater()
+            layout = self.ui.verticalLayout_3
 
+            # Проверяем, есть ли виджет в Layout
+            if layout.indexOf(widget_4) != -1:
+                layout.removeWidget(widget_4)
+                widget_4.setParent(None)
 
+                # Отложенное удаление виджета
+                QtCore.QTimer.singleShot(0, widget_4.deleteLater)
+                print("Строка успешно удалена.")
+
+            # Обновляем размер scrollArea
+            self.ui.scrollAreaWidgetContents.adjustSize()
         except Exception as e:
-            print(f"Ошибка в delete_product_line: {e}")
+            print(f"Ошибка в delete_material_line: {e}")
 
-    def update_product_numbers(self):
-        """Пересчитывает номера всех строк"""
-        try:
-            # Находим все фреймы в layoutProducts, исключая заполнитель
-            for i in range(self.ui.layoutProducts.count() - 1):
-                item = self.ui.layoutProducts.itemAt(i).widget()
-                if isinstance(item, QtWidgets.QFrame):
-                    label = item.findChild(QtWidgets.QLabel)  # Находим QLabel в фрейме
-                    if label:
-                        label.setText(str(i + 1))  # Обновляем номер
-        except Exception as e:
-            print(f"Ошибка в update_product_numbers: {e}")
 
 if __name__ == "__main__":
     import sys
