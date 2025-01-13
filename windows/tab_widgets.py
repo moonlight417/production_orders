@@ -194,8 +194,6 @@ class StructureTabContent(QWidget):
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QLabel, QScrollArea, QFrame, QLineEdit, QPushButton, QHBoxLayout
 )
-from PyQt5.QtCore import Qt
-
 
 class TagsTabContent(QWidget):
     def __init__(self):
@@ -259,12 +257,9 @@ class TagsTabContent(QWidget):
         self.scroll_layout.removeItem(tag_layout)
 
 
-
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel, QMessageBox, QDialog, QTabBar, QScrollArea, QVBoxLayout, QFrame
 from PyQt5.QtCore import Qt
 
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel, QMessageBox, QDialog, QTabBar, QScrollArea, QVBoxLayout, QFrame
-from PyQt5.QtCore import Qt
 
 class MainTabWidget(QWidget):
     def __init__(self):
@@ -308,7 +303,7 @@ class MainTabWidget(QWidget):
         return label
 
     def add_scroll_area_to_tab(self, tab, tab_name):
-        """Добавляет QScrollArea во вкладку и сохраняет её для обновления."""
+        """Создаёт и добавляет область прокрутки (QScrollArea) во вкладку."""
         scroll_area = QScrollArea()
         scroll_content = QFrame()
         scroll_layout = QVBoxLayout(scroll_content)
@@ -322,7 +317,7 @@ class MainTabWidget(QWidget):
         layout.addWidget(QLabel(f"Вкладка: {tab_name}"))
         layout.addWidget(scroll_area)
 
-        # Сохраняем ссылку на QScrollArea
+        # Сохраняем QVBoxLayout для обновления (для всех вкладок)
         self.scroll_areas[tab] = scroll_layout
 
     def add_detail_tab(self):
@@ -331,25 +326,45 @@ class MainTabWidget(QWidget):
         new_index = self.main_tab_widget.count() - 1
         self.main_tab_widget.setCurrentIndex(new_index)
 
+        # Добавляем область прокрутки для вкладки «Деталь»
+        self.add_scroll_area_to_tab(tab, "Деталь")
+
     def add_assembly_unit_tab(self):
         tab = InnerTabWidget()
-        self.main_tab_widget.addTab(tab, "Сборочная единица")
+        tab_name = f"Сборочная единица {self.main_tab_widget.count() + 1}"
+        self.main_tab_widget.addTab(tab, tab_name)
         new_index = self.main_tab_widget.count() - 1
         self.main_tab_widget.setCurrentIndex(new_index)
 
-        print("Добавляем вкладку 'Сборочная единица' и обновляем список.")
-        self.update_scroll_areas("Сборочная единица")
+        # Добавляем область прокрутки вкладки в словарь
+        self.scroll_areas[tab] = tab.scroll_layout_a_u
 
-    def update_scroll_areas(self, tab_name):
-        """Добавляет название новой вкладки в QScrollArea всех вкладок с деталями."""
+        # Обновляем области прокрутки
+        self.update_scroll_areas()
+
+    def update_scroll_areas(self):
+        """Обновляет области прокрутки во всех вкладках."""
         if not self.scroll_areas:
-            print("Нет доступных QScrollArea для обновления.")
             return
 
-        for tab, scroll_layout in self.scroll_areas.items():
-            label = QLabel(tab_name)
-            scroll_layout.addWidget(label)
-            print(f"Добавлено '{tab_name}' в вкладку {tab}")
+        # Получаем список названий всех вкладок «Сборочная единица»
+        assembly_unit_tabs = [
+            self.main_tab_widget.tabText(i)
+            for i in range(self.main_tab_widget.count())
+            if "Сборочная единица" in self.main_tab_widget.tabText(i)
+        ]
+
+        for scroll_layout in self.scroll_areas.values():
+            # Очищаем текущий layout
+            for i in reversed(range(scroll_layout.count())):
+                item = scroll_layout.itemAt(i)
+                if item and item.widget():
+                    item.widget().setParent(None)
+
+            # Добавляем названия всех вкладок «Сборочная единица»
+            for name in assembly_unit_tabs:
+                label = QLabel(name)
+                scroll_layout.addWidget(label)
 
     def rename_tab(self):
         current_index = self.main_tab_widget.currentIndex()
@@ -372,6 +387,21 @@ class MainTabWidget(QWidget):
             else:
                 QMessageBox.warning(self, "Предупреждение", "Название не может быть пустым.")
 
+    def close_current_tab(self):
+        current_index = self.inner_tab_widget.currentIndex()
+        if current_index == -1:
+            return
+
+        tab = self.inner_tab_widget.widget(current_index)
+        self.inner_tab_widget.removeTab(current_index)
+
+        # Удаляем область прокрутки вкладки из словаря
+        if tab in self.scroll_areas:
+            del self.scroll_areas[tab]
+
+        # Обновляем области прокрутки
+        self.update_scroll_areas()
+
 class InnerTabWidget(QWidget):
     def __init__(self):
         super().__init__()
@@ -383,7 +413,7 @@ class InnerTabWidget(QWidget):
 
         # Создаём область прокрутки
         self.scroll_content = QWidget()
-        self.scroll_layout = QtWidgets.QVBoxLayout(self.scroll_content)
+        self.scroll_layout_a_u = QtWidgets.QVBoxLayout(self.scroll_content)  # Здесь инициализируем scroll_layout_a_u
 
         self.scroll_area = QtWidgets.QScrollArea()
         self.scroll_area.setWidgetResizable(True)
@@ -423,11 +453,6 @@ class InnerTabWidget(QWidget):
         tab_name = f"Лист {self.inner_tab_widget.count() + 1}"
         self.inner_tab_widget.addTab(tab, tab_name)
 
-        # Добавляем элемент в scroll_area
-        label = QLabel(tab_name)
-        label.setObjectName(f"tab_label_{self.inner_tab_widget.count() - 1}")
-        self.scroll_layout.addWidget(label)
-
         # Делаем новую вкладку текущей
         new_index = self.inner_tab_widget.count() - 1
         self.inner_tab_widget.setCurrentIndex(new_index)
@@ -447,7 +472,7 @@ class InnerTabWidget(QWidget):
                 self.inner_tab_widget.setTabText(current_index, new_name)
 
                 # Обновляем текст в scroll_area
-                item = self.scroll_layout.itemAt(current_index)
+                item = self.scroll_layout_a_u.itemAt(current_index)
                 if item and item.widget():
                     item.widget().setText(new_name)
             else:
@@ -458,10 +483,11 @@ class InnerTabWidget(QWidget):
         if current_index == -1:
             return
 
+        # Удаляем вкладку
         self.inner_tab_widget.removeTab(current_index)
 
-        # Удаляем элемент из scroll_area
-        item = self.scroll_layout.takeAt(current_index)  # Забираем элемент из layout
+        # Проверяем наличие элемента в scroll_layout_a_u
+        item = self.scroll_layout_a_u.takeAt(current_index)
         if item:
             widget = item.widget()
             if widget:
