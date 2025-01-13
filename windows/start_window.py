@@ -54,7 +54,7 @@ app.setStyleSheet("""
         background-color: #ffffff;
         color: #333333;
     }
-    
+
     QLabel {
         font-family: Arial;
         font-size: 9pt;

@@ -10,5 +10,6 @@
         <file>utils/icons/floppy.svg</file>
         <file>utils/icons/eye.png</file>
         <file>utils/icons/check.svg"</file>
+        <file>utils/icons/printer.svg"</file>
     </qresource>
 </RCC>
