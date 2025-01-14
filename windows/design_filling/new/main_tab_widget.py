@@ -1,15 +1,14 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
-from gui.ui_design_document_filling_form import Ui_DesignDocumentFillingForm
-from image_handler import ImageHandler
-from tab_manager import TabManager
-from printer import PrintDialog
+
 import sys
 from PyQt5.QtWidgets import (
     QApplication, QWidget, QVBoxLayout, QHBoxLayout, QTabWidget, QPushButton,
     QLabel, QScrollArea, QFrame, QMessageBox, QInputDialog, QRadioButton, QCheckBox
 )
 from PyQt5.QtCore import Qt
-
+from tags_tab_content import TagsTabContent
+from inner_tab_widget import InnerTabWidget
+from rename_tab_dialog import RenameTabDialog
 
 class MainTabWidget(QWidget):
     def __init__(self):
@@ -18,7 +17,7 @@ class MainTabWidget(QWidget):
 
         # Основной виджет с вкладками
         self.main_tab_widget = QTabWidget()
-        layout.addWidget(self.main_tab_widget)
+
 
         # Кнопки для управления вкладками
         button_layout = QHBoxLayout()
@@ -40,10 +39,22 @@ class MainTabWidget(QWidget):
         button_layout.addWidget(close_tab_button)
 
         layout.addLayout(button_layout)
+        layout.addWidget(self.main_tab_widget)
 
         # Словари для хранения областей прокрутки и типов вкладок
         self.scroll_areas = {}
         self.tab_types = {}
+
+        # Добавляем защищенные вкладки
+        self.add_protected_tabs()  # Вызов метода для добавления вкладок
+
+    def add_protected_tabs(self):
+        """Добавляет защищённые вкладки."""
+        tags_tab = TagsTabContent()
+        self.main_tab_widget.addTab(tags_tab, "Теги")
+
+        # Инициализируем множество защищённых вкладок и добавляем вкладку "Теги"
+        self.protected_tabs = {tags_tab}
 
     def add_assembly_unit_tab(self):
         """Добавляет новую вкладку с названием 'Сборочная единица'."""
@@ -52,8 +63,11 @@ class MainTabWidget(QWidget):
 
         scroll_area = QScrollArea()
         scroll_area.setWidgetResizable(True)
+        scroll_area.setFixedWidth(200)  # Устанавливаем фиксированную ширину
         scroll_frame = QFrame()
         scroll_layout = QVBoxLayout(scroll_frame)
+        scroll_layout.setAlignment(Qt.AlignTop)
+
         scroll_area.setWidget(scroll_frame)
 
         tab_layout = QVBoxLayout(tab)
@@ -76,6 +90,7 @@ class MainTabWidget(QWidget):
 
         scroll_area = QScrollArea()
         scroll_area.setWidgetResizable(True)
+        scroll_area.setFixedWidth(200)  # Устанавливаем фиксированную ширину
         scroll_frame = QFrame()
         scroll_layout = QVBoxLayout(scroll_frame)
         scroll_area.setWidget(scroll_frame)
@@ -115,16 +130,20 @@ class MainTabWidget(QWidget):
         if current_index == -1:
             return
 
-        # Проверяем, можно ли закрыть вкладку
-        if not hasattr(self, 'protected_tabs') or current_index not in self.protected_tabs:
-            self.main_tab_widget.removeTab(current_index)
+        tab = self.main_tab_widget.widget(current_index)
 
-            # Удаляем область прокрутки из словаря
-            if current_index in self.scroll_areas:
-                del self.scroll_areas[current_index]
-            self.update_scroll_areas()
-        else:
+        # Проверяем, является ли вкладка защищённой
+        if tab in self.protected_tabs:
             QMessageBox.warning(self, "Предупреждение", "Нельзя удалить защищённую вкладку.")
+            return
+
+        self.main_tab_widget.removeTab(current_index)
+
+        if tab in self.scroll_areas:
+            del self.scroll_areas[tab]
+        if tab in self.tab_types:
+            del self.tab_types[tab]
+        self.update_scroll_areas()
 
     def update_scroll_areas(self):
         """Обновляет содержимое всех областей прокрутки."""
