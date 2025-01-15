@@ -64,7 +64,21 @@ class MainTabWidget(QWidget):
 
     def add_detail_tab(self):
         """Добавляет новую вкладку с названием 'Деталь'."""
+
         self._add_tab("Деталь")
+
+    # def add_assembly_unit_tab(self):
+    #     tab = InnerTabWidget()
+    #     tab_name = f"Сборочная единица {self.main_tab_widget.count() + 1}"
+    #     self.main_tab_widget.addTab(tab, tab_name)
+    #     new_index = self.main_tab_widget.count() - 1
+    #     self.main_tab_widget.setCurrentIndex(new_index)
+    #
+    # def add_detail_tab(self):
+    #     tab = InnerTabWidget()
+    #     self.main_tab_widget.addTab(tab, "Деталь")
+    #     new_index = self.main_tab_widget.count() - 1
+    #     self.main_tab_widget.setCurrentIndex(new_index)
 
     def _add_tab(self, tab_name):
         """Создаёт вкладку с указанным названием."""
