@@ -1,7 +1,7 @@
 from PyQt5.QtWidgets import QWidget, QLabel, QPushButton, QVBoxLayout, QHBoxLayout, QSpacerItem, QSizePolicy, QFileDialog, QMessageBox
 from PyQt5.QtGui import QPixmap, QTransform
 from PyQt5.QtCore import Qt, QSize
-from print_dialog import PrintDialog
+from .print_dialog import PrintDialog
 
 class DrawingWidget(QWidget):
     def __init__(self):
