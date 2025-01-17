@@ -1,171 +1,191 @@
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import QMessageBox
+import requests
 
 
 class Ui_NewTasks(object):
     def setupUi(self, NewTasks):
         NewTasks.setObjectName("NewTasks")
-        NewTasks.resize(1102, 441)
+        NewTasks.resize(1006, 650)
+
         self.centralwidget = QtWidgets.QWidget(NewTasks)
         self.centralwidget.setObjectName("centralwidget")
+
+        self.verticalLayout = QtWidgets.QVBoxLayout(self.centralwidget)
+        self.verticalLayout.setObjectName("verticalLayout")
+
+        self.widget = QtWidgets.QWidget(self.centralwidget)
+        self.widget.setObjectName("widget")
+
+        self.horizontalLayout_2 = QtWidgets.QHBoxLayout(self.widget)
+        self.horizontalLayout_2.setObjectName("horizontalLayout_2")
+
+        self.label_3 = QtWidgets.QLabel(self.widget)
+        self.label_3.setMaximumSize(QtCore.QSize(300, 16777215))
+        self.label_3.setObjectName("label_3")
+        self.horizontalLayout_2.addWidget(self.label_3)
+
+        self.verticalLayout.addWidget(self.widget)
+
         self.scrollArea = QtWidgets.QScrollArea(self.centralwidget)
-        self.scrollArea.setGeometry(QtCore.QRect(10, 30, 1081, 341))
-        self.scrollArea.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOn)
         self.scrollArea.setWidgetResizable(True)
         self.scrollArea.setObjectName("scrollArea")
         self.scrollAreaWidgetContents = QtWidgets.QWidget()
-        self.scrollAreaWidgetContents.setGeometry(QtCore.QRect(0, 0, 1062, 339))
+        self.scrollAreaWidgetContents.setGeometry(QtCore.QRect(0, 0, 986, 593))
         self.scrollAreaWidgetContents.setObjectName("scrollAreaWidgetContents")
-        self.frameLineTask = QtWidgets.QFrame(self.scrollAreaWidgetContents)
-        self.frameLineTask.setGeometry(QtCore.QRect(10, 10, 1041, 21))
-        self.frameLineTask.setFrameShape(QtWidgets.QFrame.StyledPanel)
-        self.frameLineTask.setFrameShadow(QtWidgets.QFrame.Raised)
-        self.frameLineTask.setObjectName("frameLineTask")
-        self.frame = QtWidgets.QFrame(self.frameLineTask)
-        self.frame.setGeometry(QtCore.QRect(30, 0, 1015, 20))
-        self.frame.setStyleSheet("background-color: rgb(255, 255, 255);\n"
-"border-color: rgb(0, 0, 0);")
-        self.frame.setFrameShape(QtWidgets.QFrame.StyledPanel)
-        self.frame.setFrameShadow(QtWidgets.QFrame.Sunken)
-        self.frame.setLineWidth(2)
-        self.frame.setMidLineWidth(1)
-        self.frame.setObjectName("frame")
-        self.line = QtWidgets.QFrame(self.frame)
-        self.line.setGeometry(QtCore.QRect(40, 1, 10, 18))
-        self.line.setFrameShape(QtWidgets.QFrame.VLine)
-        self.line.setFrameShadow(QtWidgets.QFrame.Sunken)
-        self.line.setObjectName("line")
-        self.line_2 = QtWidgets.QFrame(self.frame)
-        self.line_2.setGeometry(QtCore.QRect(150, 1, 18, 18))
-        self.line_2.setFrameShape(QtWidgets.QFrame.VLine)
-        self.line_2.setFrameShadow(QtWidgets.QFrame.Sunken)
-        self.line_2.setObjectName("line_2")
-        self.LbCheckNumber = QtWidgets.QLabel(self.frame)
-        self.LbCheckNumber.setGeometry(QtCore.QRect(10, 2, 31, 16))
-        font = QtGui.QFont()
-        font.setPointSize(10)
-        self.LbCheckNumber.setFont(font)
-        self.LbCheckNumber.setObjectName("LbCheckNumber")
-        self.LbCustomer = QtWidgets.QLabel(self.frame)
-        self.LbCustomer.setGeometry(QtCore.QRect(170, 2, 291, 16))
-        font = QtGui.QFont()
-        font.setPointSize(10)
-        font.setBold(False)
-        font.setWeight(50)
-        self.LbCustomer.setFont(font)
-        self.LbCustomer.setObjectName("LbCustomer")
-        self.LbDate = QtWidgets.QLabel(self.frame)
-        self.LbDate.setGeometry(QtCore.QRect(60, 2, 81, 16))
-        font = QtGui.QFont()
-        font.setPointSize(10)
-        font.setBold(False)
-        font.setWeight(50)
-        self.LbDate.setFont(font)
-        self.LbDate.setObjectName("LbDate")
-        self.LbQuantity = QtWidgets.QLabel(self.frame)
-        self.LbQuantity.setGeometry(QtCore.QRect(905, 2, 41, 16))
-        font = QtGui.QFont()
-        font.setPointSize(10)
-        font.setBold(False)
-        font.setWeight(50)
-        self.LbQuantity.setFont(font)
-        self.LbQuantity.setObjectName("LbQuantity")
-        self.comboBoxProductName = QtWidgets.QComboBox(self.frame)
-        self.comboBoxProductName.setGeometry(QtCore.QRect(470, 0, 431, 20))
-        font = QtGui.QFont()
-        font.setPointSize(10)
-        self.comboBoxProductName.setFont(font)
-        self.comboBoxProductName.setStyleSheet("background-color: rgb(240, 240, 240);")
-        self.comboBoxProductName.setModelColumn(8)
-        self.comboBoxProductName.setObjectName("comboBoxProductName")
-        self.BtnStartDeveloping = QtWidgets.QPushButton(self.frameLineTask)
-        self.BtnStartDeveloping.setGeometry(QtCore.QRect(990, 0, 51, 20))
-        self.BtnStartDeveloping.setIconSize(QtCore.QSize(14, 14))
-        self.BtnStartDeveloping.setObjectName("BtnStartDeveloping")
-        self.BtnStatusInfo = QtWidgets.QPushButton(self.frameLineTask)
-        self.BtnStatusInfo.setGeometry(QtCore.QRect(4, 0, 25, 20))
-        self.BtnStatusInfo.setStyleSheet("background-color: rgb(255, 0, 0);")
-        self.BtnStatusInfo.setText("")
-        self.BtnStatusInfo.setObjectName("BtnStatusInfo")
+
+        self.verticalLayout_2 = QtWidgets.QVBoxLayout(self.scrollAreaWidgetContents)
+        self.verticalLayout_2.setObjectName("verticalLayout_2")
+
+        self.empty_task = QtWidgets.QWidget(self.scrollAreaWidgetContents)
+        self.empty_task.setMinimumSize(QtCore.QSize(0, 60))
+        self.empty_task.setAutoFillBackground(False)
+        self.empty_task.setStyleSheet("border-color: rgb(0, 0, 0);")
+        self.empty_task.setObjectName("empty_task")
+        self.verticalLayout_2.addWidget(self.empty_task)
+
+        spacerItem = QtWidgets.QSpacerItem(20, 506, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
+        self.verticalLayout_2.addItem(spacerItem)
+
         self.scrollArea.setWidget(self.scrollAreaWidgetContents)
-        self.BtnBack = QtWidgets.QPushButton(self.centralwidget)
-        self.BtnBack.setGeometry(QtCore.QRect(10, 380, 111, 31))
-        font = QtGui.QFont()
-        font.setPointSize(10)
-        self.BtnBack.setFont(font)
-        self.BtnBack.setObjectName("BtnBack")
-        self.labelQuantity = QtWidgets.QLabel(self.centralwidget)
-        self.labelQuantity.setGeometry(QtCore.QRect(940, 10, 61, 16))
-        self.labelQuantity.setObjectName("labelQuantity")
-        self.labelBoxProductName = QtWidgets.QLabel(self.centralwidget)
-        self.labelBoxProductName.setGeometry(QtCore.QRect(680, 10, 121, 16))
-        self.labelBoxProductName.setObjectName("labelBoxProductName")
-        self.labelCustomer = QtWidgets.QLabel(self.centralwidget)
-        self.labelCustomer.setGeometry(QtCore.QRect(270, 10, 171, 16))
-        self.labelCustomer.setObjectName("labelCustomer")
-        self.labelDate = QtWidgets.QLabel(self.centralwidget)
-        self.labelDate.setGeometry(QtCore.QRect(130, 10, 31, 16))
-        self.labelDate.setObjectName("labelDate")
-        self.labelCheckNumber = QtWidgets.QLabel(self.centralwidget)
-        self.labelCheckNumber.setGeometry(QtCore.QRect(60, 10, 31, 16))
-        self.labelCheckNumber.setObjectName("labelCheckNumber")
+        self.verticalLayout.addWidget(self.scrollArea)
+
         NewTasks.setCentralWidget(self.centralwidget)
-        self.menubar = QtWidgets.QMenuBar(NewTasks)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 1102, 21))
-        self.menubar.setObjectName("menubar")
-        NewTasks.setMenuBar(self.menubar)
 
         self.retranslateUi(NewTasks)
         QtCore.QMetaObject.connectSlotsByName(NewTasks)
 
-    def retranslateUi(self, NewTasks):
+    def retranslateUi(self, NewOrders):
         _translate = QtCore.QCoreApplication.translate
-        NewTasks.setWindowTitle(_translate("NewTasks", "Новые задания"))
-        self.LbCheckNumber.setText(_translate("NewTasks", "142"))
-        self.LbCustomer.setText(_translate("NewTasks", "ООО \"Белагро Бел\""))
-        self.LbDate.setText(_translate("NewTasks", "26.07.2024"))
-        self.LbQuantity.setText(_translate("NewTasks", "1000"))
-        self.BtnStartDeveloping.setText(_translate("NewTasks", "Начать"))
-        self.BtnBack.setText(_translate("NewTasks", "Назад"))
-        self.labelQuantity.setText(_translate("NewTasks", "Количество"))
-        self.labelBoxProductName.setText(_translate("NewTasks", "Наименование изделия"))
-        self.labelCustomer.setText(_translate("NewTasks", "Название организации заказчика"))
-        self.labelDate.setText(_translate("NewTasks", "Дата"))
-        self.labelCheckNumber.setText(_translate("NewTasks", "№ сч"))
+        NewOrders.setWindowTitle(_translate("NewTasks", "Новые заказы"))
+        self.label_3.setText(_translate("NewTasks", "Новые задания на разработку заказа"))
 
 class NewTasks(QtWidgets.QMainWindow):
-    def __init__(self):
+    def __init__(self, parent):
         super().__init__()
         self.ui = Ui_NewTasks()
         self.ui.setupUi(self)
+        self.parent = parent  # Сохраняем ссылку на родительское окно
 
-        self.ui.BtnBack.clicked.connect(self.back_main_engineer_window)
-        self.ui.BtnStatusInfo.clicked.connect(self.status_info_window)
+        # self.update_task_list()
 
-    def status_info_window(self):
+    def search_tasks_by_customer(self, name):
+        customer_name = self.ui.lineEditSearchCustomer.text().strip()
+        if not customer_name:
+            QMessageBox.warning(self, "Ошибка", "Введите название заказчика.")
+            return
+
         try:
-            from windows.statuses import StatusInfoWindow
-            self.status_info = StatusInfoWindow()
-            self.status_info.show()
+            response = requests.get("http://127.0.0.1:8000/orders/customer_data/", params={"name": customer_name})
+            if response.status_code == 200:
+                data = response.json()
+                self.update_task_list(data)
+            else:
+                QMessageBox.warning(self, "Ошибка", f"Ошибка сервера: {response.text}")
         except Exception as e:
-            QMessageBox.critical(self, "Ошибка", f"Не удалось открыть информацию о статусах: {e}")
+            QMessageBox.critical(self, "Ошибка", f"Не удалось подключиться к серверу: {e}")
 
-    def back_main_engineer_window(self):
-        try:
-            from windows.main_engineer_window import MainWindowEngineer
-            self.main_engineer_window = MainWindowEngineer()
-            self.main_engineer_window.show()
-            self.close()
-        except Exception as e:
-            QMessageBox.critical(self, "Ошибка", f"Не удалось открыть главное окно инженера: {e}")
 
+    def update_task_list(self, tasks):
+        """
+        Обновление списка заданий в прокручиваемой области.
+        :param tasks: Список заданий, полученных с сервера.
+        """
+        # Очистка текущего списка
+        for i in reversed(range(self.ui.layoutTask.count())):
+            widget = self.ui.layoutTask.itemAt(i).widget()
+            if widget:
+                widget.deleteLater()
+
+
+        # Добавление новых заданий
+        for task in reversed(tasks):
+            # Создаем рамку для задания
+            task_frame = QtWidgets.QFrame()
+            task_frame.setFrameShape(QtWidgets.QFrame.StyledPanel)
+            task_frame.setStyleSheet("border: 1.5px solid #666666; padding: 1px; margin: 1px;")
+
+
+
+            # Вертикальный layout для задания (информация о задании + список продуктов)
+            task_layout = QtWidgets.QVBoxLayout(task_frame)
+
+            # Верхняя часть задания: номер счета, дата, заказчик
+            task_info = QtWidgets.QLabel(
+                f"Счёт: {task['invoice_number']} / Дата: {task['order_date']} / Заказчик: {task['customer_name']}"
+            )
+            # task_info.setStyleSheet("font-weight: bold; font-size: 14px; background: white;")
+            task_info.setStyleSheet("font-size: 14px; "
+                                    "font-weight: bold; "
+                                     "background: white; "
+                                     "border: 1px solid #ff0f0f; "
+                                     "margin: 3px;")
+            task_info.setFixedHeight(34)
+            task_layout.addWidget(task_info)
+
+
+            product_number = 1
+
+            # Список продуктов
+            for product in task["products"]:
+                product_label = QtWidgets.QLabel(f"{product_number}. {product['name']} — {product['quantity']} шт.")
+                # Стиль для рамки продуктов с тонкой линией
+                product_label.setStyleSheet("font-size: 14px; "
+                                            "background: white; "
+                                            "border: 1px solid #4049c2; "
+                                            "margin: 3px;")
+                product_label.setFixedHeight(34)
+                task_layout.addWidget(product_label)
+                product_number += 1
+
+            # Кнопка для открытия окна редактирования задания
+
+            edit_button = QtWidgets.QPushButton("Открыть")
+            edit_button.clicked.connect(lambda checked, task_id=task['task_id']: self.open_task_editor(task_id))
+            # edit_button.setStyleSheet("margin-top: 10px;font-size: 16px")
+            task_layout.addWidget(edit_button, alignment=QtCore.Qt.AlignRight)
+            edit_button.setFixedSize(80, 30)  # ширина: 120px, высота: 40px
+            # edit_button.setStyleSheet("""
+            #     QPushButton
+            #     {
+            #         background-color: #f0f0f0;
+            #         border: 1px solid #808a9c;
+            #         font-size: 13px;
+            #     }
+            #     QPushButton:hover {
+            #         background-color: #dae5f7;
+            #         border: 1px solid #0a66fa;
+            #     }
+            #     QPushButton:pressed {
+            #         background-color: #d0d0d0;
+            #     }
+            #     QPushButton:focus {
+            #         outline: none;
+            #     }
+            # """)
+
+            # Добавляем рамку задания в общий layout
+            self.ui.layoutTask.addWidget(task_frame)
+
+        # Пустой заполнитель
+        self.empty_placeholder = QtWidgets.QWidget()
+        self.empty_placeholder.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+        self.ui.layoutTask.addWidget(self.empty_placeholder)  # Добавляем заполнитель в конец layout
+
+    def open_task_editor(self, task_id):
+        """
+        Открывает окно для просмотра и редактирования конкретного задания.
+        :param task_id: ID задания, которое нужно отредактировать.
+        """
+        # Здесь будет код открытия нового окна и загрузки данных по task_id
+        print(f"Открыть редактор для задания с ID: {task_id}")
 
 if __name__ == "__main__":
     import sys
     app = QtWidgets.QApplication(sys.argv)
-    NewTasks = QtWidgets.QMainWindow()
+    NewOrders = QtWidgets.QMainWindow()
     ui = Ui_NewTasks()
-    ui.setupUi(NewTasks)
-    NewTasks.show()
+    ui.setupUi(NewOrders)
+    NewOrders.show()
     sys.exit(app.exec_())

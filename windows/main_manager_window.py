@@ -3,7 +3,8 @@ from PyQt5.QtWidgets import QMessageBox, QStackedWidget, QWidget, QVBoxLayout, Q
 from task_filling import TaskFilling
 from tasks_list import TasksList
 from windows.search_design_document import SearchDesignDoc
-
+from orders_archive import OrdersArchive
+import resources_rc
 
 class Ui_MainWindowManager(object):
     def setupUi(self, MainWindowManager):
@@ -31,15 +32,22 @@ class Ui_MainWindowManager(object):
 
         # Правая часть верхней панели (лейбл и кнопка проверки)
         self.right_top_panel = QHBoxLayout()
+
         self.LbCheckOrders = QLabel()  # Лейбл с числом заказов
         font = QtGui.QFont()
         font.setPointSize(11)
         font.setBold(True)
         self.LbCheckOrders.setFont(font)
         self.LbCheckOrders.setAlignment(QtCore.Qt.AlignCenter)
-        self.BtnCheckOrders = QPushButton("Проверить")
+
+        self.BtnCheckOrders = QPushButton("Открыть")
+        self.BtnRefresh = QPushButton()
+        icon = QtGui.QIcon()
+        icon.addPixmap(QtGui.QPixmap(":/utils/icons/refresh.png"), QtGui.QIcon.Selected, QtGui.QIcon.On)
+        self.BtnRefresh.setIcon(icon)
 
         self.right_top_panel.addWidget(self.LbCheckOrders)
+        self.right_top_panel.addWidget(self.BtnRefresh)
         self.right_top_panel.addWidget(self.BtnCheckOrders)
 
         # Добавляем левую и правую части в верхнюю панель
@@ -84,7 +92,7 @@ class MainWindowManager(QtWidgets.QMainWindow):
         self.ui.BtnCheckOrders.clicked.connect(lambda: self.switch_window(self.check_orders_window))
         self.ui.BtnOrderBase.clicked.connect(lambda: self.switch_window(self.view_orders_window))
 
-        self.order_count = 0  # Начальное значение числа заказов
+        self.order_count = 1  # Начальное значение числа заказов
         self.update_order_count_label()
         self.ui.BtnCheckOrders.setEnabled(self.order_count != 0)  # Включение/отключение кнопки
 
@@ -95,24 +103,26 @@ class MainWindowManager(QtWidgets.QMainWindow):
         self.tasks_filling_window = TaskFilling()
         self.tasks_list_window = TasksList()
         self.search_design_doc_window = SearchDesignDoc(parent=None)
+        self.view_orders_window = OrdersArchive()
 
         # Добавление окон в QStackedWidget
         self.ui.stacked_widget.addWidget(self.empty_window)  # Добавляем пустое окно
         self.ui.stacked_widget.addWidget(self.tasks_filling_window)
         self.ui.stacked_widget.addWidget(self.tasks_list_window)
         self.ui.stacked_widget.addWidget(self.search_design_doc_window)
-
-        # Создание внутренних окон
-        self.new_task_window = self.create_new_task_window()
-        # self.search_design_doc_window = self.create_search_design_doc_window()
-        self.check_orders_window = self.create_check_orders()
-        self.view_orders_window = self.create_view_orders_window()
-
-        # Добавление внутренних окон в QStackedWidget
-        self.ui.stacked_widget.addWidget(self.new_task_window)
-        # self.ui.stacked_widget.addWidget(self.search_design_doc_window)
-        self.ui.stacked_widget.addWidget(self.check_orders_window)
         self.ui.stacked_widget.addWidget(self.view_orders_window)
+
+        # # Создание внутренних окон
+        # self.new_task_window = self.create_new_task_window()
+        # # self.search_design_doc_window = self.create_search_design_doc_window()
+        # self.check_orders_window = self.create_check_orders()
+        # self.view_orders_window = self.create_view_orders_window()
+        #
+        # # Добавление внутренних окон в QStackedWidget
+        # self.ui.stacked_widget.addWidget(self.new_task_window)
+        # # self.ui.stacked_widget.addWidget(self.search_design_doc_window)
+        # self.ui.stacked_widget.addWidget(self.check_orders_window)
+        # self.ui.stacked_widget.addWidget(self.view_orders_window)
 
         # Устанавливаем пустое окно как текущее
         self.ui.stacked_widget.setCurrentWidget(self.empty_window)

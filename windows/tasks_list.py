@@ -50,9 +50,18 @@ class Ui_TasksList(object):
         self.checkBoxPeriodOn = QtWidgets.QCheckBox("В период от", self.frame_3)
         header_layout.addWidget(self.checkBoxPeriodOn)
 
+        # self.dateEditStartPeriod = QtWidgets.QDateEdit(self.frame_3)
+        # self.dateEditStartPeriod.setCalendarPopup(True)
+        # self.dateEditStartPeriod.setFixedWidth(100)
+
+        self.current_date = datetime.now()
+        self.last_year_date = self.current_date.replace(year=self.current_date.year - 1)
+        self.last_year_qdate = QDate(self.last_year_date.year, self.last_year_date.month, self.last_year_date.day)
         self.dateEditStartPeriod = QtWidgets.QDateEdit(self.frame_3)
+
         self.dateEditStartPeriod.setCalendarPopup(True)
-        self.dateEditStartPeriod.setFixedWidth(100)
+        self.dateEditStartPeriod.setDate(QDate(self.last_year_qdate))
+        self.dateEditStartPeriod.setFixedWidth(110)
 
         header_layout.addWidget(self.dateEditStartPeriod)
 
@@ -61,7 +70,7 @@ class Ui_TasksList(object):
 
         self.dateEditEndPeriod = QtWidgets.QDateEdit(self.frame_3)
         self.dateEditEndPeriod.setCalendarPopup(True)
-        self.dateEditEndPeriod.setFixedWidth(100)
+        self.dateEditEndPeriod.setFixedWidth(110)
         self.dateEditEndPeriod.setDate(QDate.currentDate())
         header_layout.addWidget(self.dateEditEndPeriod)
 

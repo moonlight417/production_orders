@@ -1,6 +1,7 @@
 import sys
 from PyQt5.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QWidget, QPushButton
-from tab_widgets import MainTabWidget, CustomTabWidget
+from .main_tab_widget import MainTabWidget
+# from custom_tab_widget import CustomTabWidget
 from PyQt5 import QtWidgets
 from gui.ui_design_document_filling_form import Ui_DesignDocumentFillingForm
 
@@ -17,26 +18,26 @@ class DesignDocumentFillingForm(QtWidgets.QMainWindow):
         self.ui.gridLayout.addWidget(self.main_tab_widget, 0, 0, 1, 1)
 
         # Подключаем кнопки
-        self.ui.BtnEditTabName.clicked.connect(self.rename_tab)
-        self.ui.BtnAddDetail.clicked.connect(self.add_detail_tab)
-        self.ui.BtnAddAssemblyUnit.clicked.connect(self.add_assembly_unit_tab)
-        self.ui.BtnDelCurrentTab.clicked.connect(self.close_current_tab)
+        # self.ui.BtnEditTabName.clicked.connect(self.rename_current_tab)
+        # self.ui.BtnAddDetail.clicked.connect(self.add_detail_tab)
+        # self.ui.BtnAddAssemblyUnit.clicked.connect(self.add_assembly_unit_tab)
+        # self.ui.BtnDelCurrentTab.clicked.connect(self.close_current_tab)
 
-    def rename_tab(self):
+    def rename_current_tab(self):
         """Метод для вызова окна изменения названия текущей вкладки."""
-        self.main_tab_widget.rename_tab()
+        self.new.main_tab_widget.rename_tab()
 
     def add_detail_tab(self):
         """Метод для вызова окна добавления вкладки 'Деталь'."""
-        self.main_tab_widget.add_detail_tab()
+        self.new.main_tab_widget.add_detail_tab()
 
     def add_assembly_unit_tab(self):
         """Метод для вызова окна добавления вкладки 'Сборочная единица'."""
-        self.main_tab_widget.add_assembly_unit_tab()
+        self.new.main_tab_widget.add_assembly_unit_tab()
 
     def close_current_tab(self):
         """Метод для закрытия текущей вкладки."""
-        self.main_tab_widget.main_tab_widget.close_current_tab()  # Здесь вызываем метод у вложенного CustomTabWidget
+        self.new.main_tab_widget.main_tab_widget.close_current_tab()  # Здесь вызываем метод у вложенного CustomTabWidget
 
 
 if __name__ == "__main__":

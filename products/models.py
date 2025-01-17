@@ -4,11 +4,33 @@ from materials.models import SheetForm, RodForm
 
 
 class Drawing(models.Model):
-    parent = models.ForeignKey('self', null=True, blank=True, on_delete=models.CASCADE, related_name='children')
-    file = models.FileField(upload_to='drawings/')
+    parent = models.ForeignKey(
+        'self',
+        null=True,
+        blank=True,
+        on_delete=models.CASCADE,
+        related_name='children'
+    )
     mass = models.FloatField()
     assembly_unit = models.CharField(max_length=255)
     comment = models.TextField(null=True, blank=True)
+
+    def __str__(self):
+        return f"{self.assembly_unit} ({self.id})"
+
+
+class DrawingSheet(models.Model):
+    drawing = models.ForeignKey(
+        Drawing,
+        on_delete=models.CASCADE,
+        related_name='sheets'
+    )
+    file = models.FileField(upload_to='drawings/')
+    sheet_number = models.PositiveIntegerField()  # Номер листа
+
+    def __str__(self):
+        return f"Sheet {self.sheet_number} of Drawing {self.drawing.id}"
+
 
 class Product(models.Model):
     task = models.ForeignKey(Task, on_delete=models.CASCADE)
