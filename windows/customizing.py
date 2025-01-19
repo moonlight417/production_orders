@@ -3,7 +3,7 @@ from PyQt5.QtWidgets import QMessageBox, QStackedWidget, QWidget, QVBoxLayout, Q
 from task_filling import TaskFilling
 from tasks_list import TasksList
 from search_design_document import SearchDesignDoc
-from windows.design_document_filling_form import DesignDocumentFillingForm
+
 from new_tasks import NewTasks
 from customizing_materials import Materials
 from customizing_forms import Forms

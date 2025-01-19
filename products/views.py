@@ -1,7 +1,8 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from .models import Product
+from .models import Product, Drawing
+
 # from .serializers import ProductSerializer
 from orders.models import Task  # Проверка существования задания
 
@@ -53,3 +54,50 @@ class AddProductView(APIView):
             "task_id": task.id,
             "products": product_list
         }, status=status.HTTP_200_OK)
+
+    from rest_framework.views import APIView
+    from rest_framework.response import Response
+    from rest_framework import status
+    from .models import Drawing
+
+    class AddDrawingView(APIView):
+        def post(self, request):
+            data = request.data
+            doc_name = data.get("doc_name")
+            parent_id = data.get("parent")  # ID родителя
+            mass = data.get("mass")
+            comment = data.get("comment", "")  # По умолчанию пустая строка
+            assembly_unit = data.get("assembly_unit", False)  # По умолчанию False
+
+            # Проверка обязательных полей
+            if not doc_name or not mass:
+                return Response({
+                    "error": "Поля 'doc_name' и 'mass' обязательны.",
+                    "doc_name": doc_name,
+                    "mass": mass,
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            # Получение объекта родителя (если указан)
+            parent = None
+            if parent_id:
+                try:
+                    parent = Drawing.objects.get(id=parent_id)
+                except Drawing.DoesNotExist:
+                    return Response({
+                        "error": f"Родитель с ID {parent_id} не найден."
+                    }, status=status.HTTP_400_BAD_REQUEST)
+
+            # Создание чертежа
+            drawing = Drawing.objects.create(
+                doc_name=doc_name,
+                parent=parent,
+                mass=mass,
+                comment=comment,
+                assembly_unit=assembly_unit,
+            )
+
+            return Response({
+                "drawing_id": drawing.id,
+                "message": "Данные чертежа успешно сохранены."
+            }, status=status.HTTP_201_CREATED)
+

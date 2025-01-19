@@ -1,192 +1,155 @@
-from PyQt5.QtWidgets import (
-    QApplication, QWidget, QVBoxLayout, QHBoxLayout, QTabWidget, QPushButton,
-    QLabel, QScrollArea, QFrame, QMessageBox, QInputDialog, QRadioButton
-)
-from PyQt5.QtCore import pyqtSignal, Qt
+from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QPushButton, QLabel, QFileDialog, QTabWidget, QHBoxLayout, QDialog, QMessageBox
+from PyQt5.QtPrintSupport import QPrinter, QPrintDialog
+from PyQt5.QtGui import QPixmap, QTransform, QPainter
+from PyQt5.QtCore import Qt
 
 
-class CustomTabWidget(QTabWidget):
-    tab_closed = pyqtSignal(int)  # Сигнал для передачи индекса закрытой вкладки
+class PrintDialog(QDialog):
+    def __init__(self, image_path, parent=None):
+        super().__init__(parent)
+        self.image_path = image_path
+        self.init_ui()
+
+    def init_ui(self):
+        printer = QPrinter()
+        print_dialog = QPrintDialog(printer, self)
+        if print_dialog.exec_() == QPrintDialog.Accepted:
+            self.print_image(printer)
+
+    def print_image(self, printer):
+        pixmap = QPixmap(self.image_path)
+        if pixmap.isNull():
+            QMessageBox.critical(self, "Ошибка", "Невозможно загрузить изображение")
+            return
+        painter = QPainter(printer)
+        try:
+            rect = printer.pageRect()
+            scaled_pixmap = pixmap.scaled(rect.size(), Qt.KeepAspectRatio, Qt.SmoothTransformation)
+            painter.drawPixmap(rect, scaled_pixmap)
+        finally:
+            painter.end()
+
+
+class DrawingWidget(QWidget):
+    """Виджет для работы с изображением (загрузка, поворот, печать)."""
 
     def __init__(self):
         super().__init__()
+        self.image_label = QLabel(self)
+        self.image_label.setAlignment(Qt.AlignCenter)
+        self.pixmap = QPixmap()
+        self.current_angle = 0
 
-    def close_current_tab(self):
-        index = self.currentIndex()
-        if index != -1 and (not hasattr(self, 'protected_tabs') or index not in self.protected_tabs):
-            self.removeTab(index)
-            self.tab_closed.emit(index)  # Испускаем сигнал о закрытии вкладки
-        else:
-            QMessageBox.warning(self, "Предупреждение", "Нельзя удалить защищённую вкладку.")
+        layout = QVBoxLayout(self)
+        self.load_button = QPushButton("Load Image")
+        self.load_button.clicked.connect(self.open_file)
+        self.print_button = QPushButton("Print Image")
+        self.print_button.clicked.connect(self.open_printer_window)
+
+        layout.addWidget(self.load_button)
+        layout.addWidget(self.print_button)
+        layout.addWidget(self.image_label)
+
+    def open_file(self):
+        file_path, _ = QFileDialog.getOpenFileName(self, "Выберите файл", "../utils/drawings/", "Изображения (*.png *.jpg *.bmp *.gif)")
+        if file_path:
+            self.pixmap = QPixmap(file_path)
+            self.current_angle = 0
+            self.update_image()
+            self.current_image_path = file_path
+
+    def rotate_right(self):
+        if not self.pixmap.isNull():
+            self.current_angle = (self.current_angle + 90) % 360
+            self.update_image()
+
+    def rotate_left(self):
+        if not self.pixmap.isNull():
+            self.current_angle = (self.current_angle - 90) % 360
+            self.update_image()
+
+    def update_image(self):
+        if not self.pixmap.isNull():
+            transform = QTransform().rotate(self.current_angle)
+            rotated_pixmap = self.pixmap.transformed(transform, Qt.SmoothTransformation)
+            label_size = self.image_label.size()
+            scaled_pixmap = rotated_pixmap.scaled(label_size, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+            self.image_label.setPixmap(scaled_pixmap)
+
+    def open_printer_window(self):
+        if not hasattr(self, 'current_image_path') or not self.current_image_path:
+            QMessageBox.warning(self, "Ошибка", "Нет изображения для печати")
+            return
+        self.printer_window = PrintDialog(self.current_image_path)
+        self.printer_window.show()
 
 
-class MainTabWidget(QWidget):
+class InnerTabWidget(QWidget):
+    """Виджет с вложенным QTabWidget для каждой верхней вкладки."""
+
     def __init__(self):
         super().__init__()
         layout = QVBoxLayout(self)
+        self.inner_tab_widget = QTabWidget()
+        self.add_tab_button = QPushButton("Add Inner Tab")
+        self.add_tab_button.clicked.connect(self.add_inner_tab)
 
-        # Основной виджет с вкладками
-        self.main_tab_widget = CustomTabWidget()
-        self.main_tab_widget.tab_closed.connect(self.remove_from_scroll_area)
+        layout.addWidget(self.inner_tab_widget)
+        layout.addWidget(self.add_tab_button)
 
-        # Кнопки для управления вкладками
-        button_layout = QHBoxLayout()
-        add_assembly_button = QPushButton("+СБ")
-        add_assembly_button.clicked.connect(self.add_assembly_unit_tab)
+        self.add_inner_tab()
 
-        add_detail_button = QPushButton("+ Деталь")
-        add_detail_button.clicked.connect(self.add_detail_tab)
-
-        rename_tab_button = QPushButton("Переименовать вкладку")
-        rename_tab_button.clicked.connect(self.rename_current_tab)
-
-        close_tab_button = QPushButton("Закрыть текущую вкладку")
-        close_tab_button.clicked.connect(self.main_tab_widget.close_current_tab)
-
-        button_layout.addWidget(add_assembly_button)
-        button_layout.addWidget(add_detail_button)
-        button_layout.addWidget(rename_tab_button)
-        button_layout.addWidget(close_tab_button)
-
-        layout.addLayout(button_layout)
-        layout.addWidget(self.main_tab_widget)
-
-        # Список для хранения областей прокрутки каждой вкладки
-        self.scroll_areas = {}
-        # Список для хранения кнопок каждой вкладки
-        self.activate_buttons = {}
-        # Список для хранения типов вкладок
-        self.tab_types = {}
-
-    def add_assembly_unit_tab(self):
-        """Добавляет новую вкладку с названием 'Сборочная единица'."""
+    def add_inner_tab(self):
         tab = QWidget()
-        tab_name = "Сборочная единица"
-
-        # Создаём область прокрутки для вкладки
-        scroll_area = QScrollArea()
-        scroll_area.setWidgetResizable(True)
-        scroll_frame = QFrame()
-        scroll_layout = QVBoxLayout(scroll_frame)
-        scroll_area.setWidget(scroll_frame)
-
         tab_layout = QVBoxLayout(tab)
-        activate_button = QPushButton("Активировать принадлежность к СБ", self)
-        tab_layout.addWidget(activate_button)
-        tab_layout.addWidget(scroll_area)
+        drawing_widget = DrawingWidget()
+        rotate_left_btn = QPushButton("Rotate Left")
+        rotate_right_btn = QPushButton("Rotate Right")
 
-        self.main_tab_widget.addTab(tab, tab_name)
+        rotate_left_btn.clicked.connect(drawing_widget.rotate_left)
+        rotate_right_btn.clicked.connect(drawing_widget.rotate_right)
 
-        # Делаем новую вкладку текущей
-        new_index = self.main_tab_widget.count() - 1
-        self.main_tab_widget.setCurrentIndex(new_index)
+        tab_layout.addWidget(drawing_widget)
+        tab_layout.addWidget(rotate_left_btn)
+        tab_layout.addWidget(rotate_right_btn)
 
-        # Сохраняем область прокрутки для обновления
-        self.scroll_areas[new_index] = scroll_layout
-        self.tab_types[new_index] = "Сборочная единица"  # Запоминаем тип вкладки
-        self.activate_buttons[new_index] = activate_button  # Сохраняем кнопку для этой вкладки
+        tab_name = f"Inner Tab {self.inner_tab_widget.count() + 1}"
+        self.inner_tab_widget.addTab(tab, tab_name)
 
-        # Подключаем сигнал для активации кнопки
-        activate_button.clicked.connect(lambda: self.update_scroll_areas(new_index, True))
 
-        # Обновляем все области прокрутки
-        self.update_scroll_areas(new_index, False)
+class MainTabWidget(QMainWindow):
+    """Главное окно с верхним уровнем вкладок."""
+
+    def __init__(self):
+        super().__init__()
+        central_widget = QWidget()
+        layout = QVBoxLayout(central_widget)
+        self.main_tab_widget = QTabWidget()
+
+        self.add_detail_button = QPushButton("Add Detail Tab")
+        self.add_detail_button.clicked.connect(self.add_detail_tab)
+
+        self.add_assembly_unit_button = QPushButton("Add Assembly Unit Tab")
+        self.add_assembly_unit_button.clicked.connect(self.add_assembly_unit_tab)
+
+        layout.addWidget(self.main_tab_widget)
+        layout.addWidget(self.add_detail_button)
+        layout.addWidget(self.add_assembly_unit_button)
+        self.setCentralWidget(central_widget)
 
     def add_detail_tab(self):
-        """Добавляет новую вкладку с названием 'Деталь'."""
-        tab = QWidget()
-        tab_name = "Деталь"
+        tab = InnerTabWidget()
+        self.main_tab_widget.addTab(tab, "Деталь")
 
-        # Создаём область прокрутки для вкладки
-        scroll_area = QScrollArea()
-        scroll_area.setWidgetResizable(True)
-        scroll_frame = QFrame()
-        scroll_layout = QVBoxLayout(scroll_frame)
-        scroll_area.setWidget(scroll_frame)
-
-        tab_layout = QVBoxLayout(tab)
-        activate_button = QPushButton("Активировать принадлежность к СБ", self)
-        tab_layout.addWidget(activate_button)
-        tab_layout.addWidget(scroll_area)
-
-        self.main_tab_widget.addTab(tab, tab_name)
-
-        # Делаем новую вкладку текущей
-        new_index = self.main_tab_widget.count() - 1
-        self.main_tab_widget.setCurrentIndex(new_index)
-
-        # Сохраняем область прокрутки для обновления
-        self.scroll_areas[new_index] = scroll_layout
-        self.tab_types[new_index] = "Деталь"  # Запоминаем тип вкладки
-        self.activate_buttons[new_index] = activate_button  # Сохраняем кнопку для этой вкладки
-
-        # Подключаем сигнал для активации кнопки
-        activate_button.clicked.connect(lambda: self.update_scroll_areas(new_index, True))
-
-        # Обновляем все области прокрутки
-        self.update_scroll_areas(new_index, False)
-
-    def rename_current_tab(self):
-        """Переименовывает текущую вкладку и обновляет области прокрутки."""
-        current_index = self.main_tab_widget.currentIndex()
-        if current_index == -1:
-            QMessageBox.warning(self, "Предупреждение", "Выберите вкладку для переименования.")
-            return
-
-        current_name = self.main_tab_widget.tabText(current_index)
-        new_name, ok = QInputDialog.getText(self, "Переименовать вкладку", "Введите новое название:", text=current_name)
-
-        if ok and new_name:
-            self.main_tab_widget.setTabText(current_index, new_name)
-
-            # Обновляем область прокрутки для переименованной вкладки
-            self.update_scroll_areas(current_index, False)
-
-        elif not new_name:
-            QMessageBox.warning(self, "Предупреждение", "Название не может быть пустым.")
-
-    def update_scroll_areas(self, index, is_active):
-        """Обновляет содержимое области прокрутки в зависимости от активации кнопки в своей вкладке."""
-        scroll_layout = self.scroll_areas.get(index)
-        if not scroll_layout:
-            return
-
-        # Очищаем текущий layout
-        for i in reversed(range(scroll_layout.count())):
-            item = scroll_layout.itemAt(i)
-            if item and item.widget():
-                item.widget().deleteLater()
-
-        if is_active:
-            # Добавляем радиокнопки только для текущей вкладки
-            tab_names = [
-                self.main_tab_widget.tabText(i)
-                for i in range(self.main_tab_widget.count())
-                if i != index and self.tab_types[i] == "Сборочная единица"  # Исключаем текущую вкладку и "Деталь"
-            ]
-
-            for name in tab_names:
-                radio_button = QRadioButton(name, self)
-                scroll_layout.addWidget(radio_button)
-
-    def remove_from_scroll_area(self, index):
-        """Удаляет область прокрутки и связанные данные при закрытии вкладки."""
-        if index in self.scroll_areas:
-            del self.scroll_areas[index]
-        if index in self.tab_types:
-            del self.tab_types[index]
-        if index in self.activate_buttons:
-            del self.activate_buttons[index]
-
-        # Обновляем оставшиеся вкладки
-        self.update_scroll_areas(index, False)
+    def add_assembly_unit_tab(self):
+        tab = InnerTabWidget()
+        self.main_tab_widget.addTab(tab, "Сборочная единица")
 
 
 if __name__ == "__main__":
     import sys
+
     app = QApplication(sys.argv)
-    window = MainTabWidget()
-    window.show()
+    main_window = MainTabWidget()
+    main_window.show()
     sys.exit(app.exec_())
-
-
