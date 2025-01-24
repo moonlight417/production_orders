@@ -1,7 +1,10 @@
-from PyQt5.QtWidgets import QWidget, QLabel, QPushButton, QVBoxLayout, QHBoxLayout, QSpacerItem, QSizePolicy, QFileDialog, QMessageBox
+from PyQt5.QtWidgets import QWidget, QLabel, QPushButton, QVBoxLayout, QHBoxLayout, QSpacerItem, QSizePolicy, \
+    QFileDialog, QMessageBox, QCheckBox, QLineEdit
 from PyQt5.QtGui import QPixmap, QTransform
 from PyQt5.QtCore import Qt, QSize
-from print_dialog import PrintDialog
+from .print_dialog import PrintDialog
+import shutil
+import os
 
 class DrawingWidget(QWidget):
     def __init__(self):
@@ -13,36 +16,84 @@ class DrawingWidget(QWidget):
         self.init_ui()
 
     def init_ui(self):
+        # Основной горизонтальный лэйаут
         layout = QHBoxLayout(self)
+
+        # Лэйаут для панели кнопок
         button_panel = QVBoxLayout()
+
+        # Создаем кнопки
         load_button = QPushButton("Загрузить изображение")
+        load_button.setFixedWidth(180)
         load_button.clicked.connect(self.open_file)
+
         print_button = QPushButton("Печать изображения")
+        print_button.setFixedWidth(180)
         print_button.clicked.connect(self.open_printer_window)
+
         rotate_left_button = QPushButton("Повернуть влево")
+        rotate_left_button.setFixedWidth(180)
         rotate_left_button.clicked.connect(self.rotate_left)
+
         rotate_right_button = QPushButton("Повернуть вправо")
+        rotate_right_button.setFixedWidth(180)
         rotate_right_button.clicked.connect(self.rotate_right)
 
+        self.lineEditMass = QLineEdit()
+        self.lineEditMass.setFixedWidth(150)
+        self.lineEditMass.setPlaceholderText("Масса, кг")
+
+
+        self.check_box_is_actual = QCheckBox("Актуальность документа", self)
+
+        # Добавляем виджеты в вертикальный лэйаут
         button_panel.addWidget(load_button)
         button_panel.addWidget(print_button)
         button_panel.addWidget(rotate_left_button)
         button_panel.addWidget(rotate_right_button)
+        button_panel.addStretch()
+        button_panel.addWidget(self.lineEditMass)
+        button_panel.addStretch()  # Создаем пространство между кнопками и чекбоксом
+        button_panel.addWidget(self.check_box_is_actual)
 
-        spacer = QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding)
-        button_panel.addSpacerItem(spacer)
-
+        # Добавляем лэйауты и элементы в основной горизонтальный лэйаут
         layout.addLayout(button_panel)
         layout.addWidget(self.image_label)
+
+        # Устанавливаем лэйаут для окна
         self.setLayout(layout)
 
     def open_file(self):
-        file_path, _ = QFileDialog.getOpenFileName(self, "Выберите файл", "../utils/drawings/", "Изображения (*.png *.jpg *.bmp *.gif)")
+        # Открытие диалога выбора файла
+        file_path, _ = QFileDialog.getOpenFileName(self, "Выберите файл", "../utils/drawings/",
+                                                   "Изображения (*.png *.jpg *.bmp *.gif)")
+
         if file_path:
-            self.pixmap = QPixmap(file_path)
+            # Создаём путь к папке для хранения "архива" (например, папка 'archived_images' в директории проекта)
+            archive_folder = os.path.join(os.path.dirname(__file__), 'archived_images')
+
+            # Проверяем, существует ли папка, если нет, создаём её
+            if not os.path.exists(archive_folder):
+                os.makedirs(archive_folder)
+                print(f"Папка '{archive_folder}' была создана.")
+
+            # Получаем имя файла для сохранения
+            file_name = os.path.basename(file_path)
+
+            # Путь к новому месту хранения
+            destination_path = os.path.join(archive_folder, file_name)
+
+            shutil.copy(file_path, destination_path)
+            print(f"Файл был скопирован в: {destination_path}")
+
+            # Копируем файл в архивную папку
+            shutil.copy(file_path, destination_path)
+
+            # Загрузка изображения в QPixmap (если нужно для отображения)
+            self.pixmap = QPixmap(destination_path)
             self.current_angle = 0
             self.update_image()
-            self.current_image_path = file_path
+            self.current_image_path = destination_path
 
     def rotate_right(self):
         if not self.pixmap.isNull():
