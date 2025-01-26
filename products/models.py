@@ -64,27 +64,43 @@ class Tag(models.Model):
         return self.name
 
 
-# Модель для чертежей
 class Drawing(models.Model):
+    # Ссылка на основной документ
     main_document = models.ForeignKey(
         'MainDocument',
         on_delete=models.CASCADE,
         related_name='drawings',
-        null=True
+        null=True,
+        blank=True  # Основной документ может быть необязательным
     )
 
-    # Метод для проверки корректности данных
-    def clean(self):
-        # Валидация: если нет связанного документа, то должно быть заполнено название чертежа
-        if self.main_document is None and not self.doc_name:
-            raise ValidationError("Документ должен иметь связанный основной документ или название.")
+    # Ссылка на родительский чертеж
+    parent = models.ForeignKey(
+        'self',
+        on_delete=models.CASCADE,
+        related_name='children',
+        null=True,
+        blank=True,  # Родительский документ может быть необязательным
+        verbose_name="Родительский чертеж"
+    )
 
     doc_name = models.CharField(max_length=255, null=False, blank=False, default="Untitled")
     mass = models.FloatField()
     assembly_unit = models.BooleanField(default=False, verbose_name="СБ")
 
+    def clean(self):
+        # Если основной документ отсутствует, то либо название, либо родитель должны быть заполнены
+        if not self.main_document and not self.parent:
+            raise ValidationError(
+                "Чертеж должен быть связан либо с основным документом, либо с родительским чертежом."
+            )
+
     def __str__(self):
         return f"{self.doc_name} ({self.id})"
+
+    class Meta:
+        verbose_name = "Чертеж"
+        verbose_name_plural = "Чертежи"
 
 
 # Модель для листов чертежей
