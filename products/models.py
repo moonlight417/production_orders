@@ -85,7 +85,7 @@ class Drawing(models.Model):
     )
 
     doc_name = models.CharField(max_length=255, null=False, blank=False, default="Untitled")
-    mass = models.FloatField()
+    mass = models.FloatField(null=True, blank=True)
     assembly_unit = models.BooleanField(default=False, verbose_name="СБ")
 
     def clean(self):

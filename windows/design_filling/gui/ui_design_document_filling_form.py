@@ -76,10 +76,10 @@ class Ui_DesignDocumentFillingForm(object):
         self.horizontalLayout_5.setContentsMargins(0, -1, 10, -1)
         self.horizontalLayout_5.setSpacing(15)
         self.horizontalLayout_5.setObjectName("horizontalLayout_5")
-        self.textEditComents = QtWidgets.QTextEdit(self.widget)
-        self.textEditComents.setSizeAdjustPolicy(QtWidgets.QAbstractScrollArea.AdjustToContents)
-        self.textEditComents.setObjectName("textEditComents")
-        self.horizontalLayout_5.addWidget(self.textEditComents)
+        self.textEditComments = QtWidgets.QTextEdit(self.widget)
+        self.textEditComments.setSizeAdjustPolicy(QtWidgets.QAbstractScrollArea.AdjustToContents)
+        self.textEditComments.setObjectName("textEditComents")
+        self.horizontalLayout_5.addWidget(self.textEditComments)
         self.BtnSave = QtWidgets.QPushButton(self.widget)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
         sizePolicy.setHorizontalStretch(0)
@@ -109,5 +109,5 @@ class Ui_DesignDocumentFillingForm(object):
     def retranslateUi(self, DesignDocumentFillingForm):
         _translate = QtCore.QCoreApplication.translate
         DesignDocumentFillingForm.setWindowTitle(_translate("DesignDocumentFillingForm", "MainWindow"))
-        self.textEditComents.setPlaceholderText(_translate("DesignDocumentFillingForm", "Комментарии"))
+        self.textEditComments.setPlaceholderText(_translate("DesignDocumentFillingForm", "Комментарии"))
         self.BtnSave.setToolTip(_translate("DesignDocumentFillingForm", "Сохранить документ"))

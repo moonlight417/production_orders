@@ -4,7 +4,7 @@ from functools import partial
 
 from PyQt5.QtWidgets import (
     QApplication, QWidget, QVBoxLayout, QHBoxLayout, QTabWidget, QPushButton,
-    QLabel, QScrollArea, QFrame, QMessageBox, QInputDialog, QRadioButton, QCheckBox, QGridLayout, QLineEdit
+    QLabel, QScrollArea, QFrame, QMessageBox, QInputDialog, QRadioButton, QCheckBox, QGridLayout
 )
 from PyQt5.QtCore import Qt
 
@@ -23,7 +23,6 @@ class MainTabWidget(QWidget):
         self.initialize_ui()
 
         self.linked_tab = None  # Вкладка, связанная с главным именем
-        self.selected_radio_button = None
 
         # Данные по умолчанию
         # self.comment = "Комментарий к основному документу"
@@ -58,15 +57,14 @@ class MainTabWidget(QWidget):
         add_detail_button = QPushButton("+ Деталь")
         add_detail_button.clicked.connect(self.add_detail_tab)
 
-        rename_tab_button = QPushButton("Переименовать вкладку")
+        rename_tab_button = QPushButton("Назвать элемент")
         rename_tab_button.clicked.connect(self.rename_current_tab)
 
-        close_tab_button = QPushButton("Удалить текущую вкладку")
+        close_tab_button = QPushButton("Закрыть текущую вкладку")
         close_tab_button.clicked.connect(self.close_current_tab)
 
         save_button = QPushButton("Сохранить в БД")
-        save_button.clicked.connect(self.on_save_button_clicked)
-        # save_button.clicked.connect(self.save_tabs_data_to_db)
+        save_button.clicked.connect(self.save_to_db)
 
         button_layout.addWidget(self.label_main_name)
         button_layout.addWidget(add_assembly_button)
@@ -80,10 +78,6 @@ class MainTabWidget(QWidget):
 
         # Добавление защищённых вкладок
         self.add_protected_tabs()
-
-    def on_save_button_clicked(self):
-        tabs_data = self.get_tabs_data()
-        print(tabs_data)  # Для тестирования, заменить на сохранение в файл или обработку
 
     def add_protected_tabs(self):
         """Добавление защищённых вкладок."""
@@ -171,8 +165,8 @@ class MainTabWidget(QWidget):
             QMessageBox.warning(self, "Предупреждение", "Выберите вкладку для переименования.")
             return
 
-        self.current_name = self.main_tab_widget.tabText(current_index)
-        new_name, ok = QInputDialog.getText(self, "Переименовать вкладку", "Введите новое название:", text=self.current_name)
+        current_name = self.main_tab_widget.tabText(current_index)
+        new_name, ok = QInputDialog.getText(self, "Переименовать вкладку", "Введите новое название:", text=current_name)
 
         if ok and new_name:
             self.main_tab_widget.setTabText(current_index, new_name)
@@ -187,35 +181,22 @@ class MainTabWidget(QWidget):
             QMessageBox.warning(self, "Предупреждение", "Название не может быть пустым.")
 
     def close_current_tab(self):
-        """Закрывает текущую вкладку с подтверждением, если она не защищённая."""
+        """Закрывает текущую вкладку, если она не защищённая."""
         current_index = self.main_tab_widget.currentIndex()
         if current_index == -1:
             return
 
         tab = self.main_tab_widget.widget(current_index)
-
-        # Проверка на защищённую вкладку
         if tab in self.protected_tabs:
             QMessageBox.warning(self, "Предупреждение", "Нельзя удалить защищённую вкладку.")
             return
 
-        # Показываем подтверждение удаления
-        reply = QMessageBox.question(
-            self, "Подтверждение удаления",
-            "Вы уверены, что хотите удалить текущую вкладку?",
-            QMessageBox.Yes | QMessageBox.No
-        )
-
-        if reply == QMessageBox.No:
-            return
-
-        # Если вкладка связана, сбрасываем её данные
+        # Проверяем, является ли удаляемая вкладка связанной
         if tab == self.linked_tab:
             self.main_name = ""  # Сбрасываем основное имя
             self.update_main_name()
             self.linked_tab = None  # Сбрасываем ссылку на связанную вкладку
 
-        # Удаляем вкладку
         self.main_tab_widget.removeTab(current_index)
         self.update_main_name()
 
@@ -252,17 +233,8 @@ class MainTabWidget(QWidget):
             for name in tab_names:
                 radio_button = QRadioButton(name, self)
                 radio_button.setEnabled(self.check_boxes[tab].isChecked())
-                radio_button.toggled.connect(
-                    partial(self.on_radio_button_toggled, radio_button, tab))  # Подключаем обработчик
                 scroll_layout.addWidget(radio_button)
                 self.radio_buttons[tab].append(radio_button)
-
-    def on_radio_button_toggled(self, radio_button, tab):
-        """Обрабатывает изменение состояния радиокнопки."""
-        if radio_button.isChecked():
-            # Сохраняем имя выбранной радиокнопки
-            self.selected_radio_button = radio_button.text()
-            print(f"Выбрана радиокнопка: {self.selected_radio_button}")
 
     def check_and_disable(self, tab):
         """Обновляет состояние радиокнопок в зависимости от состояния чекбокса."""
@@ -314,96 +286,35 @@ class MainTabWidget(QWidget):
         # Обновляем содержимое главной сборочной единицы
         self.update_main_name()
 
-    def get_tabs_data(self):
-        tabs_data = []
-
-        # Проходим по всем вкладкам верхнего уровня
-        for i in range(self.main_tab_widget.count()):
-            # Получаем виджет текущей вкладки
-            tab = self.main_tab_widget.widget(i)
-
-            # Пропускаем вкладку "Теги"
-            if self.main_tab_widget.tabText(i) == "Теги":
-                continue
-
-            # Ищем поле ввода массы в дочерних вкладках
-            mass_input = self._find_mass_input(tab)
-            # Найдем объект Drawing и передадим его ID
-            # parent_drawing_id = Drawing.objects.get(doc_name=self.selected_radio_button).id
-
-            # Найдем объект Drawing по имени или ID, привязанному к радиокнопке
-            # parent_drawing = Drawing.objects.get(doc_name=self.selected_radio_button)
-
-
-            # Собираем данные вкладки
-            tab_data = {
-                'doc_name': self.main_tab_widget.tabText(i),  # Имя вкладки
-                'mass': mass_input.text() if mass_input else None,  # Масса
-                'assembly_unit': tab.is_assembly_unit if hasattr(tab, 'is_assembly_unit') else False,
-                # Сборочная единица
-                # 'parent': self._get_parent_value(tab)  # Родительская радиокнопка
-                'parent': self.selected_radio_button if tab in self.radio_buttons and tab in self.check_boxes and
-                                                        self.check_boxes[tab].isChecked() else None  # Родитель
-
-                # # Теперь передаем объект Drawing как родительский
-                # 'parent': parent_drawing if tab in self.radio_buttons and tab in self.check_boxes and self.check_boxes[
-                #     tab].isChecked() else None
-
-                # # Передаем ID родительского чертежа
-                # 'parent': parent_drawing_id if tab in self.radio_buttons and tab in self.check_boxes and
-                #                                self.check_boxes[
-                #                                    tab].isChecked() else None
-            }
-
-            tabs_data.append(tab_data)
-
-        return tabs_data
-
-    def _find_mass_input(self, parent_widget):
-        """
-        Рекурсивно ищет self.lineEditMass в дочерних виджетах.
-        :param parent_widget: Родительский виджет, в котором искать.
-        :return: Найденный QLineEdit или None.
-        """
-        # Если текущий виджет имеет атрибут lineEditMass, возвращаем его
-        if hasattr(parent_widget, 'lineEditMass'):
-            return parent_widget.lineEditMass
-
-        # Если у виджета есть дочерние элементы, ищем среди них
-        for child in parent_widget.children():
-            result = self._find_mass_input(child)
-            if result:
-                return result
-
-        return None
-
-
     def save_to_db(self):
-        """Метод сохранения данных в базу данных с обработкой ошибок."""
-        # Проверка наличия связанной вкладки
-        if self.linked_tab is None:
-            QMessageBox.warning(self, "Ошибка", "Связанная вкладка не выбрана. Проверьте корректность данных.")
-            return
-
-        # Проверка наличия тегов
-        tag_names = self.tags_tab_content.get_tag_list()
-        if not tag_names:
-            QMessageBox.warning(self, "Ошибка", "Необходимо добавить хотя бы один тег.")
-            return
-
-        # Получение данных из интерфейса
+        # Проверяем, существует ли связанная вкладка
+        # if self.linked_tab is None:
+        #     QMessageBox.warning(self, "Ошибка", "Связанная вкладка не выбрана. Проверьте корректность данных.")
+        #     return
+        #
         is_assembly_unit = self.linked_tab.is_assembly_unit
         main_name = self.label_main_name.text()
         comment = self.ui.textEditComments.toPlainText()
 
+
+        # Получаем текстовые значения тегов из tag_list
+        try:
+            tag_names = self.tags_tab_content.get_tag_list()
+            print("Теги:", tag_names)
+        except Exception as e:
+            print(f"Ошибка при создании списка тегов: {e}")
+
         try:
             # Создание основного документа
             main_doc = MainDocument.objects.create(
-                main_name=main_name,
-                comment=comment,
+                main_name = main_name,
+                comment = comment,
             )
 
             # Добавление тегов
+            if not tag_names:
+                print("Список тегов пустой. Пропускаем добавление тегов.")
+
             for tag_name in tag_names:
                 tag, created = Tag.objects.get_or_create(name=tag_name)
                 main_doc.tags.add(tag)
@@ -436,92 +347,5 @@ class MainTabWidget(QWidget):
         except Exception as e:
             QMessageBox.critical(None, "Ошибка", f"Произошла ошибка при сохранении: {e}")
             print(f"Ошибка при сохранении: {e}")
-
-    def save_tabs_data_to_db(self):
-        """Распаковывает список словарей и добавляет данные в соответствующие таблицы базы данных."""
-
-        """Выводит данные всех вкладок в консоль."""
-        tabs_data = self.get_tabs_data()  # Получаем список словарей
-        for tab_data in tabs_data:  # Проходим по всем данным вкладок
-            print(tab_data)  # Выводим каждую запись
-
-        # Диагностика: выводим данные для проверки
-        print("Данные для сохранения:", tabs_data)
-
-        # Проверка на пустые данные
-        if not tabs_data:
-            QMessageBox.warning(self, "Ошибка", "Нет данных для сохранения.")
-            print("Отсутствуют корректные данные для сохранения.")
-            return
-
-        # Процесс добавления данных
-        for tab_data in tabs_data:
-            doc_name = tab_data.get('doc_name')
-            mass = tab_data.get('mass')
-            assembly_unit = tab_data.get('assembly_unit')
-            parent = tab_data.get('parent')
-
-            # Печать данных для диагностики
-            print(f"Проверка записи: doc_name={doc_name}, mass={mass}, assembly_unit={assembly_unit}, parent={parent}")
-
-            # Проверка на наличие обязательных полей
-            if not doc_name or mass is None or assembly_unit is None:
-                print(f"Пропущена запись с некорректными данными (отсутствуют обязательные поля): {tab_data}")
-                continue  # Пропускаем записи с некорректными данными
-
-            # Очищаем данные от пробелов (если они присутствуют)
-            mass = mass.strip() if isinstance(mass, str) else str(mass).strip()
-
-            # Преобразуем массу в числовой формат
-            try:
-                mass = float(mass)  # Преобразуем в float
-            except ValueError:
-                print(f"Некорректная масса для записи (не удалось преобразовать): {tab_data}")
-                mass = 0.0  # Если не удается преобразовать, ставим значение по умолчанию
-
-            # Печать после преобразования массы
-            print(f"Масса после преобразования: {mass}")
-
-            # Дополнительная проверка после преобразования массы
-            if mass <= 0:
-                print(f"Масса должна быть положительным числом. Пропущена запись: {tab_data}")
-                continue
-
-            # Создание или получение основного документа
-            main_doc, created = MainDocument.objects.get_or_create(main_name=self.main_name)
-
-            # Добавление тегов
-            tag_names = self.tags_tab_content.get_tag_list()  # Получаем теги из интерфейса
-            for tag_name in tag_names:
-                tag, created_tag = Tag.objects.get_or_create(name=tag_name)
-                main_doc.tags.add(tag)
-
-            # Создание чертежа, связанного с основным документом
-            drawing = Drawing.objects.create(
-                main_document=main_doc,
-                doc_name=doc_name,
-                mass=mass,
-                assembly_unit=assembly_unit,
-                parent=parent  # Если есть родительский чертеж, связываем его
-            )
-
-            # Создание листа чертежа, связанного с чертежом
-            drawing_sheet = DrawingSheet.objects.create(
-                drawing=drawing,
-                file=self.file,
-                sheet_number=self.sheet_number,
-                is_actual=self.is_actual,
-            )
-
-            print(f"Чертеж '{doc_name}' успешно сохранён.")
-
-        QMessageBox.information(None, "Успех", "Документы и чертежи успешно сохранены в базе данных.")
-
-    def print_tabs_data(self):
-        """Выводит данные всех вкладок в консоль."""
-        tabs_data = self.get_tabs_data()  # Получаем список словарей
-        for tab_data in tabs_data:  # Проходим по всем данным вкладок
-            print(tab_data)  # Выводим каждую запись
-
 
     

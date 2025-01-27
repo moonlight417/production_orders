@@ -37,6 +37,7 @@ class TagsTabContent(QWidget):
         tag_layout.addWidget(tag_input)
         tag_layout.addWidget(delete_button)
         self.scroll_layout.addLayout(tag_layout)
+        tag_input.setFocus()
 
         # Сохраняем в список каждый добавленный тег (пока пустой)
         self.tag_list.append(tag_input)

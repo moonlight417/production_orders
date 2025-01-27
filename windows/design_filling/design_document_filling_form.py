@@ -19,12 +19,13 @@ class DesignDocumentFillingForm(QtWidgets.QMainWindow):
         self.ui = Ui_DesignDocumentFillingForm()
         self.ui.setupUi(self)
 
-        # Создаем основной виджет с двумя уровнями вкладок и добавляем его в gridLayout
-        self.main_tab_widget = MainTabWidget()
+        # Передаем self.ui в MainTabWidget
+        self.main_tab_widget = MainTabWidget(self.ui)
         self.ui.gridLayout.addWidget(self.main_tab_widget, 0, 0, 1, 1)
 
-        # Подключаем кнопки
+        # Подключаем кнопку сохранения
         self.ui.BtnSave.clicked.connect(self.main_tab_widget.save_to_db)
+        # self.comment = self.ui.textEditComments.toPlainText()
 
 
 
