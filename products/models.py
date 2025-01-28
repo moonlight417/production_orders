@@ -84,8 +84,8 @@ class Drawing(models.Model):
         verbose_name="Родительский чертеж"
     )
 
-    doc_name = models.CharField(max_length=255, null=False, blank=False, default="Untitled")
-    mass = models.FloatField()
+    doc_name = models.CharField(max_length=255, null=False, blank=False, default="Untitled", unique=True)
+    mass = models.FloatField(null=True, blank=True)
     assembly_unit = models.BooleanField(default=False, verbose_name="СБ")
 
     def clean(self):
