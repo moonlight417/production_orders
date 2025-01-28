@@ -1,5 +1,6 @@
 import sys
 import os
+from django.db import transaction
 from functools import partial
 
 from PyQt5.QtWidgets import (
@@ -67,6 +68,7 @@ class MainTabWidget(QWidget):
         save_button = QPushButton("Сохранить в БД")
         save_button.clicked.connect(self.on_save_button_clicked)
         # save_button.clicked.connect(self.save_tabs_data_to_db)
+        save_button.clicked.connect(self.save_to_db)
 
         button_layout.addWidget(self.label_main_name)
         button_layout.addWidget(add_assembly_button)
@@ -315,47 +317,70 @@ class MainTabWidget(QWidget):
         self.update_main_name()
 
     def get_tabs_data(self):
+        from django.db import transaction
         tabs_data = []
 
-        # Проходим по всем вкладкам верхнего уровня
-        for i in range(self.main_tab_widget.count()):
-            # Получаем виджет текущей вкладки
-            tab = self.main_tab_widget.widget(i)
+        try:
+            with transaction.atomic():  # Используем транзакцию для безопасности операций с базой данных
+                parent_drawing = None  # Здесь будет храниться объект родителя
+                parent_id = None  # Здесь будет храниться ID родителя
 
-            # Пропускаем вкладку "Теги"
-            if self.main_tab_widget.tabText(i) == "Теги":
-                continue
+                # Шаг 1: Сохранение родительского документа (если выбрана радиокнопка)
+                if self.selected_radio_button:  # Проверяем, выбрана ли радиокнопка
+                    parent_name = self.selected_radio_button  # Имя родительского документа
 
-            # Ищем поле ввода массы в дочерних вкладках
-            mass_input = self._find_mass_input(tab)
-            # Найдем объект Drawing и передадим его ID
-            # parent_drawing_id = Drawing.objects.get(doc_name=self.selected_radio_button).id
+                    # Попробуем найти объект с таким именем
+                    parent_drawing = Drawing.objects.filter(doc_name=parent_name).first()
 
-            # Найдем объект Drawing по имени или ID, привязанному к радиокнопке
-            # parent_drawing = Drawing.objects.get(doc_name=self.selected_radio_button)
+                    if not parent_drawing:
+                        # Если объект не найден, создаем его
+                        parent_drawing = Drawing.objects.create(
+                            doc_name=parent_name,
+                            mass=0,  # Обязательно передаем массу, даже если временно она равна 0
+                            main_document=self.get_main_document(),  # Получаем ссылку на главный документ
+                            assembly_unit=True  # Для родительского документа всегда True
+                        )
 
+                    parent_id = parent_drawing.id  # Получаем ID родителя
+                    print(f"Родительский документ '{parent_name}' сохранен с ID: {parent_id}")
 
-            # Собираем данные вкладки
-            tab_data = {
-                'doc_name': self.main_tab_widget.tabText(i),  # Имя вкладки
-                'mass': mass_input.text() if mass_input else None,  # Масса
-                'assembly_unit': tab.is_assembly_unit if hasattr(tab, 'is_assembly_unit') else False,
-                # Сборочная единица
-                # 'parent': self._get_parent_value(tab)  # Родительская радиокнопка
-                'parent': self.selected_radio_button if tab in self.radio_buttons and tab in self.check_boxes and
-                                                        self.check_boxes[tab].isChecked() else None  # Родитель
+                # Шаг 2: Проходим по всем вкладкам верхнего уровня
+                for i in range(self.main_tab_widget.count()):
+                    # Получаем виджет текущей вкладки
+                    tab = self.main_tab_widget.widget(i)
 
-                # # Теперь передаем объект Drawing как родительский
-                # 'parent': parent_drawing if tab in self.radio_buttons and tab in self.check_boxes and self.check_boxes[
-                #     tab].isChecked() else None
+                    # Пропускаем вкладку "Теги"
+                    if self.main_tab_widget.tabText(i) == "Теги":
+                        continue
 
-                # # Передаем ID родительского чертежа
-                # 'parent': parent_drawing_id if tab in self.radio_buttons and tab in self.check_boxes and
-                #                                self.check_boxes[
-                #                                    tab].isChecked() else None
-            }
+                    # Ищем поле ввода массы в дочерних вкладках
+                    mass_input = self._find_mass_input(tab)
 
-            tabs_data.append(tab_data)
+                    # Определяем, является ли вкладка сборочной единицей
+                    is_assembly_unit = hasattr(tab, 'assembly_unit') and tab.assembly_unit
+
+                    # Определяем, является ли вкладка дочерней
+                    is_child = tab in self.radio_buttons and tab in self.check_boxes and self.check_boxes[
+                        tab].isChecked()
+
+                    # Если вкладка дочерняя, определяем родителя
+                    parent = parent_id if is_child else None
+
+                    # Шаг 3: Запись данных вкладки
+                    tab_data = {
+                        'doc_name': self.main_tab_widget.tabText(i),  # Имя вкладки
+                        'mass': mass_input.text() if mass_input else None,  # Масса
+                        'assembly_unit': is_assembly_unit,  # True для сборок, False для деталей
+                        'parent': parent,  # ID родительского элемента, если есть
+                    }
+
+                    # Добавляем данные вкладки в общий список
+                    tabs_data.append(tab_data)
+
+                print("Собранные данные вкладок:", tabs_data)
+
+        except Exception as e:
+            print(f"Ошибка при обработке данных вкладок: {e}")
 
         return tabs_data
 
@@ -377,7 +402,6 @@ class MainTabWidget(QWidget):
 
         return None
 
-
     def save_to_db(self):
         """Метод сохранения данных в базу данных с обработкой ошибок."""
         # Проверка наличия связанной вкладки
@@ -392,40 +416,83 @@ class MainTabWidget(QWidget):
             return
 
         # Получение данных из интерфейса
-        is_assembly_unit = self.linked_tab.is_assembly_unit
         main_name = self.label_main_name.text()
         comment = self.ui.textEditComments.toPlainText()
 
+        # Получение данных вкладок
+        tabs_data = self.get_tabs_data()
+
+        # Отладка для проверки данных вкладок
+        print(f"Собранные данные вкладок: {tabs_data}")
+
         try:
-            # Создание основного документа
-            main_doc = MainDocument.objects.create(
-                main_name=main_name,
-                comment=comment,
-            )
+            # Создаем транзакцию, чтобы все изменения были выполнены атомарно
+            with transaction.atomic():
+                # Шаг 1: Создаем основной документ
+                main_doc = MainDocument.objects.create(
+                    main_name=main_name,
+                    comment=comment,
+                )
 
-            # Добавление тегов
-            for tag_name in tag_names:
-                tag, created = Tag.objects.get_or_create(name=tag_name)
-                main_doc.tags.add(tag)
+                # Шаг 2: Добавляем теги
+                for tag_name in tag_names:
+                    tag, created = Tag.objects.get_or_create(name=tag_name)
+                    main_doc.tags.add(tag)
 
-            # Создание чертежа, связанного с основным документом
-            drawing = Drawing.objects.create(
-                main_document=main_doc,
-                doc_name=self.doc_name,
-                mass=self.mass,
-                assembly_unit=is_assembly_unit,
-            )
+                # Шаг 3: Разделяем вкладки на родительские и дочерние
+                parent_tabs = [tab for tab in tabs_data if tab['parent'] is None]
+                child_tabs = [tab for tab in tabs_data if tab['parent'] is not None]
 
-            # Создание листа чертежа, связанного с чертежом
-            drawing_sheet = DrawingSheet.objects.create(
-                drawing=drawing,
-                file=self.file,
-                sheet_number=self.sheet_number,
-                is_actual=self.is_actual,
-            )
+                # Словарь для хранения родительских чертежей
+                parent_drawings = {}
 
-            QMessageBox.information(None, "Успех", "Документ успешно сохранён в базе данных.")
-            print(f"Задача '{self.main_name}' и чертеж '{self.doc_name}' успешно сохранены.")
+                # Шаг 4: Сохраняем родительские документы
+                for parent_tab in parent_tabs:
+                    # Убедимся, что поле assembly_unit у родителя всегда True
+                    assembly_unit = parent_tab.get('assembly_unit', False)
+                    if not assembly_unit:  # Если значение неверное, явно задаем True
+                        assembly_unit = True
+
+                    # Обработка массы: преобразуем в float или задаем None
+                    mass = float(parent_tab['mass']) if parent_tab['mass'] else None
+
+                    # Создаем или находим родительский документ
+                    drawing = Drawing.objects.filter(doc_name=parent_tab['doc_name']).first()
+
+                    if not drawing:
+                        drawing = Drawing.objects.create(
+                            main_document=main_doc,  # Связываем с основным документом
+                            doc_name=parent_tab['doc_name'],  # Имя документа
+                            mass=mass,  # Масса
+                            assembly_unit=assembly_unit,  # Сборочная единица
+                            parent=None,  # Родительский документ отсутствует
+                        )
+
+                    # Сохраняем в словарь с ключом по ID
+                    parent_drawings[drawing.id] = drawing
+
+                # Шаг 5: Сохраняем дочерние документы
+                for child_tab in child_tabs:
+                    # Определяем родительский документ через его ID
+                    parent_drawing = parent_drawings.get(child_tab['parent'])
+
+                    if not parent_drawing:
+                        raise ValueError(f"Не найден родительский документ для {child_tab['doc_name']}")
+
+                    # Обработка массы: преобразуем в float или задаем None
+                    mass = float(child_tab['mass']) if child_tab['mass'] else None
+
+                    # Создаем дочерний документ
+                    Drawing.objects.create(
+                        main_document=main_doc,  # Связываем с основным документом
+                        doc_name=child_tab['doc_name'],  # Имя документа
+                        mass=mass,  # Масса
+                        assembly_unit=child_tab['assembly_unit'],  # Сборочная единица
+                        parent=parent_drawing,  # Ссылка на родительский документ
+                    )
+
+                QMessageBox.information(None, "Успех", "Документ и данные вкладок успешно сохранены в базе данных.")
+                print(f"Основной документ '{main_name}' и связанные данные вкладок успешно сохранены.")
 
         except IntegrityError as e:
             QMessageBox.critical(None, "Ошибка", f"Ошибка сохранения данных: {e}")
@@ -437,85 +504,115 @@ class MainTabWidget(QWidget):
             QMessageBox.critical(None, "Ошибка", f"Произошла ошибка при сохранении: {e}")
             print(f"Ошибка при сохранении: {e}")
 
-    def save_tabs_data_to_db(self):
-        """Распаковывает список словарей и добавляет данные в соответствующие таблицы базы данных."""
+    # def save_tabs_data_to_db(self):
+    #     try:
+    #         with transaction.atomic():
+    #             # Шаг 1: Сохранить родительский документ
+    #             parent_document = Drawing(
+    #                 doc_name=self.main_name,  # Основное имя из интерфейса
+    #                 mass=None,  # Если масса у родителя не задается, оставляем None
+    #                 is_assembly_unit=True  # Указываем, что это сборочная единица
+    #             )
+    #             parent_document.save()
+    #             parent_id = parent_document.id
+    #             print(f"Родитель сохранен с ID: {parent_id}")
+    #
+    #             # Шаг 2: Обойти вкладки и сохранить данные дочерних документов
+    #             for tab_data in self.get_tabs_data():
+    #                 if tab_data['doc_name'] != "Теги":  # Пропускаем вкладку "Теги"
+    #                     child_document = Drawing(
+    #                         doc_name=tab_data['doc_name'],
+    #                         mass=tab_data['mass'],
+    #                         is_assembly_unit=tab_data['assembly_unit'],
+    #                         parent_id=parent_id  # Связь с родителем
+    #                     )
+    #                     child_document.save()
+    #                     print(f"Сохранен дочерний документ '{child_document.doc_name}' с ID {child_document.id}")
+    #
+    #         QMessageBox.information(self, "Успешно", "Данные успешно сохранены в базу данных.")
+    #     except (IntegrityError, ValidationError) as e:
+    #         print(f"Ошибка сохранения: {e}")
+    #         QMessageBox.critical(self, "Ошибка", "Произошла ошибка при сохранении данных.")
 
-        """Выводит данные всех вкладок в консоль."""
-        tabs_data = self.get_tabs_data()  # Получаем список словарей
-        for tab_data in tabs_data:  # Проходим по всем данным вкладок
-            print(tab_data)  # Выводим каждую запись
-
-        # Диагностика: выводим данные для проверки
-        print("Данные для сохранения:", tabs_data)
-
-        # Проверка на пустые данные
-        if not tabs_data:
-            QMessageBox.warning(self, "Ошибка", "Нет данных для сохранения.")
-            print("Отсутствуют корректные данные для сохранения.")
-            return
-
-        # Процесс добавления данных
-        for tab_data in tabs_data:
-            doc_name = tab_data.get('doc_name')
-            mass = tab_data.get('mass')
-            assembly_unit = tab_data.get('assembly_unit')
-            parent = tab_data.get('parent')
-
-            # Печать данных для диагностики
-            print(f"Проверка записи: doc_name={doc_name}, mass={mass}, assembly_unit={assembly_unit}, parent={parent}")
-
-            # Проверка на наличие обязательных полей
-            if not doc_name or mass is None or assembly_unit is None:
-                print(f"Пропущена запись с некорректными данными (отсутствуют обязательные поля): {tab_data}")
-                continue  # Пропускаем записи с некорректными данными
-
-            # Очищаем данные от пробелов (если они присутствуют)
-            mass = mass.strip() if isinstance(mass, str) else str(mass).strip()
-
-            # Преобразуем массу в числовой формат
-            try:
-                mass = float(mass)  # Преобразуем в float
-            except ValueError:
-                print(f"Некорректная масса для записи (не удалось преобразовать): {tab_data}")
-                mass = 0.0  # Если не удается преобразовать, ставим значение по умолчанию
-
-            # Печать после преобразования массы
-            print(f"Масса после преобразования: {mass}")
-
-            # Дополнительная проверка после преобразования массы
-            if mass <= 0:
-                print(f"Масса должна быть положительным числом. Пропущена запись: {tab_data}")
-                continue
-
-            # Создание или получение основного документа
-            main_doc, created = MainDocument.objects.get_or_create(main_name=self.main_name)
-
-            # Добавление тегов
-            tag_names = self.tags_tab_content.get_tag_list()  # Получаем теги из интерфейса
-            for tag_name in tag_names:
-                tag, created_tag = Tag.objects.get_or_create(name=tag_name)
-                main_doc.tags.add(tag)
-
-            # Создание чертежа, связанного с основным документом
-            drawing = Drawing.objects.create(
-                main_document=main_doc,
-                doc_name=doc_name,
-                mass=mass,
-                assembly_unit=assembly_unit,
-                parent=parent  # Если есть родительский чертеж, связываем его
-            )
-
-            # Создание листа чертежа, связанного с чертежом
-            drawing_sheet = DrawingSheet.objects.create(
-                drawing=drawing,
-                file=self.file,
-                sheet_number=self.sheet_number,
-                is_actual=self.is_actual,
-            )
-
-            print(f"Чертеж '{doc_name}' успешно сохранён.")
-
-        QMessageBox.information(None, "Успех", "Документы и чертежи успешно сохранены в базе данных.")
+    # def save_tabs_data_to_db(self):
+    #     """Распаковывает список словарей и добавляет данные в соответствующие таблицы базы данных."""
+    #
+    #     """Выводит данные всех вкладок в консоль."""
+    #     tabs_data = self.get_tabs_data()  # Получаем список словарей
+    #     for tab_data in tabs_data:  # Проходим по всем данным вкладок
+    #         print(tab_data)  # Выводим каждую запись
+    #
+    #     # Диагностика: выводим данные для проверки
+    #     print("Данные для сохранения:", tabs_data)
+    #
+    #     # Проверка на пустые данные
+    #     if not tabs_data:
+    #         QMessageBox.warning(self, "Ошибка", "Нет данных для сохранения.")
+    #         print("Отсутствуют корректные данные для сохранения.")
+    #         return
+    #
+    #     # Процесс добавления данных
+    #     for tab_data in tabs_data:
+    #         doc_name = tab_data.get('doc_name')
+    #         mass = tab_data.get('mass')
+    #         assembly_unit = tab_data.get('assembly_unit')
+    #         parent = tab_data.get('parent')
+    #
+    #         # Печать данных для диагностики
+    #         print(f"Проверка записи: doc_name={doc_name}, mass={mass}, assembly_unit={assembly_unit}, parent={parent}")
+    #
+    #         # Проверка на наличие обязательных полей
+    #         if not doc_name or mass is None or assembly_unit is None:
+    #             print(f"Пропущена запись с некорректными данными (отсутствуют обязательные поля): {tab_data}")
+    #             continue  # Пропускаем записи с некорректными данными
+    #
+    #         # Очищаем данные от пробелов (если они присутствуют)
+    #         mass = mass.strip() if isinstance(mass, str) else str(mass).strip()
+    #
+    #         # Преобразуем массу в числовой формат
+    #         try:
+    #             mass = float(mass)  # Преобразуем в float
+    #         except ValueError:
+    #             print(f"Некорректная масса для записи (не удалось преобразовать): {tab_data}")
+    #             mass = 0.0  # Если не удается преобразовать, ставим значение по умолчанию
+    #
+    #         # Печать после преобразования массы
+    #         print(f"Масса после преобразования: {mass}")
+    #
+    #         # Дополнительная проверка после преобразования массы
+    #         if mass <= 0:
+    #             print(f"Масса должна быть положительным числом. Пропущена запись: {tab_data}")
+    #             continue
+    #
+    #         # Создание или получение основного документа
+    #         main_doc, created = MainDocument.objects.get_or_create(main_name=self.main_name)
+    #
+    #         # Добавление тегов
+    #         tag_names = self.tags_tab_content.get_tag_list()  # Получаем теги из интерфейса
+    #         for tag_name in tag_names:
+    #             tag, created_tag = Tag.objects.get_or_create(name=tag_name)
+    #             main_doc.tags.add(tag)
+    #
+    #         # Создание чертежа, связанного с основным документом
+    #         drawing = Drawing.objects.create(
+    #             main_document=main_doc,
+    #             doc_name=doc_name,
+    #             mass=mass,
+    #             assembly_unit=assembly_unit,
+    #             parent=parent  # Если есть родительский чертеж, связываем его
+    #         )
+    #
+    #         # Создание листа чертежа, связанного с чертежом
+    #         drawing_sheet = DrawingSheet.objects.create(
+    #             drawing=drawing,
+    #             file=self.file,
+    #             sheet_number=self.sheet_number,
+    #             is_actual=self.is_actual,
+    #         )
+    #
+    #         print(f"Чертеж '{doc_name}' успешно сохранён.")
+    #
+    #     QMessageBox.information(None, "Успех", "Документы и чертежи успешно сохранены в базе данных.")
 
     def print_tabs_data(self):
         """Выводит данные всех вкладок в консоль."""
