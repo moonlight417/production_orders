@@ -92,7 +92,7 @@ class DrawingWidget(QWidget):
         file_path, _ = QFileDialog.getOpenFileName(
             self,
             "Выберите файл чертежа",
-            "",  # ✅ Теперь можно выбирать из любой папки
+            "",
             "Изображения (*.png *.jpg *.bmp *.gif);;Все файлы (*)"
         )
 
@@ -102,27 +102,20 @@ class DrawingWidget(QWidget):
 
         print(f"📄 Выбран файл: {file_path}")
 
-        # Создаем папку архива, если её нет
         archive_folder = os.path.join(os.path.dirname(__file__), 'archived_images')
         if not os.path.exists(archive_folder):
             os.makedirs(archive_folder)
             print(f"📂 Папка '{archive_folder}' была создана.")
 
-        # Получаем имя файла
         file_name = os.path.basename(file_path)
         destination_path = os.path.join(archive_folder, file_name)
 
         print(f"📂 Копируем файл в: {destination_path}")
 
         try:
-            if not os.path.exists(file_path):
-                print(f"❌ Файл {file_path} не найден!")
-                return
-
             shutil.copy(file_path, destination_path)
             print(f"✅ Файл успешно скопирован: {destination_path}")
 
-            # Загружаем изображение
             self.pixmap = QPixmap(destination_path)
             self.current_angle = 0
 
@@ -131,7 +124,7 @@ class DrawingWidget(QWidget):
                 return
 
             self.update_image()
-            self.current_image_path = destination_path  # ✅ Теперь путь всегда сохраняется
+            self.current_image_path = destination_path
             print(f"✅ Путь к файлу сохранен в `current_image_path`: {self.current_image_path}")
 
         except Exception as e:
@@ -188,5 +181,7 @@ class DrawingWidget(QWidget):
             # Сохраняем изображение в том же месте, где находится исходный файл
             rotated_pixmap.save(self.current_image_path)
             print(f"Изображение сохранено с новым поворотом: {self.current_image_path}")
+
+
 
 
