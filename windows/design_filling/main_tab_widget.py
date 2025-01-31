@@ -320,8 +320,8 @@ class MainTabWidget(QWidget):
                         continue  # Пропускаем вкладку "Теги"
 
                     tab_name = self.main_tab_widget.tabText(i)
-                    mass_input = self._find_mass_input(tab)
-                    mass = float(mass_input.text()) if mass_input and mass_input.text() else None
+                    # mass_input = self._find_mass_input(tab)
+                    # mass = float(mass_input.text()) if mass_input and mass_input.text() else None
 
                     # ✅ Определяем, является ли вкладка дочерней (если у нее есть родитель)
                     is_child = tab in self.radio_buttons and tab in self.check_boxes and self.check_boxes[
@@ -335,7 +335,7 @@ class MainTabWidget(QWidget):
                     # Сохраняем данные вкладки
                     tab_data = {
                         'doc_name': tab_name,
-                        'mass': mass,
+                        # 'mass': mass,
                         'parent': parent  # ✅ Сохраняем только родительскую связь
                     }
                     tabs_data.append(tab_data)
@@ -352,23 +352,23 @@ class MainTabWidget(QWidget):
 
         return tabs_data, main_parent_name
 
-    def _find_mass_input(self, parent_widget):
-        """
-        Рекурсивно ищет self.lineEditMass в дочерних виджетах.
-        :param parent_widget: Родительский виджет, в котором искать.
-        :return: Найденный QLineEdit или None.
-        """
-        # Если текущий виджет имеет атрибут lineEditMass, возвращаем его
-        if hasattr(parent_widget, 'lineEditMass'):
-            return parent_widget.lineEditMass
-
-        # Если у виджета есть дочерние элементы, ищем среди них
-        for child in parent_widget.children():
-            result = self._find_mass_input(child)
-            if result:
-                return result
-
-        return None
+    # def _find_mass_input(self, parent_widget):
+    #     """
+    #     Рекурсивно ищет self.lineEditMass в дочерних виджетах.
+    #     :param parent_widget: Родительский виджет, в котором искать.
+    #     :return: Найденный QLineEdit или None.
+    #     """
+    #     # Если текущий виджет имеет атрибут lineEditMass, возвращаем его
+    #     if hasattr(parent_widget, 'lineEditMass'):
+    #         return parent_widget.lineEditMass
+    #
+    #     # Если у виджета есть дочерние элементы, ищем среди них
+    #     for child in parent_widget.children():
+    #         result = self._find_mass_input(child)
+    #         if result:
+    #             return result
+    #
+    #     return None
 
     def save_to_db(self):
         """Сохраняет данные вкладок в базу данных."""
@@ -405,7 +405,7 @@ class MainTabWidget(QWidget):
                 for parent_tab in parent_tabs:
                     drawing, _ = Drawing.objects.get_or_create(
                         doc_name=parent_tab['doc_name'],
-                        defaults={'main_document': main_doc, 'mass': parent_tab['mass'], 'parent': None}
+                        defaults={'main_document': main_doc, 'parent': None}
                     )
                     parent_drawings[drawing.doc_name] = drawing
 
@@ -420,7 +420,7 @@ class MainTabWidget(QWidget):
 
                     drawing, _ = Drawing.objects.get_or_create(
                         doc_name=child_tab['doc_name'],
-                        defaults={'main_document': main_doc, 'mass': child_tab['mass'], 'parent': parent_drawing}
+                        defaults={'main_document': main_doc, 'parent': parent_drawing}
                     )
 
                     parent_drawings[drawing.doc_name] = drawing  # ✅ Добавляем дочерний `Drawing` в parent_drawings
@@ -446,6 +446,7 @@ class MainTabWidget(QWidget):
                     for sheet_data in inner_tabs_data:
                         file_path = sheet_data.get("file")
                         is_actual = sheet_data.get("is_actual", False)
+                        mass = sheet_data.get("mass", None)
 
                         if file_path:
                             drawing = parent_drawings.get(tab_data['doc_name'])  # Проверяем связь!
@@ -457,7 +458,8 @@ class MainTabWidget(QWidget):
                             DrawingSheet.objects.create(
                                 drawing=drawing,
                                 file=file_path,
-                                is_actual=is_actual
+                                is_actual=is_actual,
+                                mass=mass
                             )
 
             QMessageBox.information(None, "Успех", "Документ и данные вкладок успешно сохранены в базе данных.")
@@ -472,47 +474,6 @@ class MainTabWidget(QWidget):
         except Exception as e:
             QMessageBox.critical(None, "Ошибка", f"Произошла ошибка при сохранении: {e}")
             print(f"Ошибка при сохранении: {e}")
-
-    def save_drawing_sheets(self, drawing):
-        """Сохраняет файлы чертежей и их актуальность для данного чертежа."""
-
-        # ✅ Проверяем, есть ли self.current_image_path
-        if not hasattr(self, 'current_image_path') or not self.current_image_path:
-            print(f"⚠️ Ошибка: `current_image_path` отсутствует! Чертеж '{drawing.doc_name}' будет без файла.")
-            file_path = None  # ❌ Нет файла
-        else:
-            file_path = self.current_image_path  # ✅ Берем путь из `open_file()`
-
-        # ✅ Проверяем чекбокс актуальности
-        is_actual = False  # По умолчанию
-        if hasattr(self, 'linked_tab') and hasattr(self.linked_tab, 'drawing_widget'):
-            if hasattr(self.linked_tab.drawing_widget, 'check_box_is_actual'):
-                is_actual = self.linked_tab.drawing_widget.check_box_is_actual.isChecked()
-            else:
-                print("⚠️ `drawing_widget` не содержит чекбокс актуальности!")
-        else:
-            print("⚠️ `linked_tab` не содержит `drawing_widget`!")
-
-        # ✅ Сохраняем путь относительно `archived_images`
-        archive_folder = os.path.join(os.path.dirname(__file__), 'archived_images')
-        relative_path = os.path.relpath(file_path, archive_folder) if file_path else None
-
-        print(
-            f"📄 Сохраняем чертеж: {relative_path if relative_path else '❌ ФАЙЛ ОТСУТСТВУЕТ'} (Актуальность: {is_actual})")
-
-        try:
-            # ✅ Создаем запись в `DrawingSheet`
-            DrawingSheet.objects.create(
-                drawing=drawing,
-                file=os.path.join("archived_images", relative_path) if file_path else "",  # ✅ Сохраняем путь к файлу
-                is_actual=is_actual,  # ✅ Сохраняем актуальность
-            )
-
-            print(
-                f"✅ Чертеж сохранен: archived_images/{relative_path if relative_path else '❌ ФАЙЛ ОТСУТСТВУЕТ'} (Актуальность: {is_actual})")
-
-        except Exception as e:
-            print(f"❌ Ошибка при сохранении чертежа: {e}")
 
     def print_tabs_data(self):
         """Выводит данные всех вкладок в консоль."""

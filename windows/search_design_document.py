@@ -1,7 +1,9 @@
 
 from PyQt5 import QtCore, QtGui, QtWidgets
-from PyQt5.QtWidgets import QMessageBox
+from PyQt5.QtWidgets import QMessageBox, QFrame, QVBoxLayout, QLabel, QPushButton, QWidget, QSizePolicy
 import resources_rc
+from products.models import MainDocument, Tag, Drawing, DrawingSheet
+from windows.document_editor import DocumentEditor
 
 
 class Ui_SearchDesignDoc(object):
@@ -176,7 +178,8 @@ class SearchDesignDoc(QtWidgets.QMainWindow):
         self.ui.setupUi(self)
         self.parent = parent  # Сохраняем ссылку на родительское окно
 
-
+        self.ui.BtnSearchByName.clicked.connect(self.search_design_document_by_main_name)
+        self.ui.BtnSearchByTag.clicked.connect(self.search_design_document_by_tag)
         # self.ui.BtnBack.clicked.connect(self.go_back)
         # self.ui.BtnAddNewDoc.clicked.connect(self.design_document_filling_window)
 
@@ -192,6 +195,113 @@ class SearchDesignDoc(QtWidgets.QMainWindow):
     # def go_back(self):
     #     self.parent.show()  # Показываем родительское окно
     #     self.close()  # Закрываем дочернее окно
+
+    from PyQt5.QtWidgets import QMessageBox
+    from products.models import MainDocument  # Импорт модели
+
+    from PyQt5.QtWidgets import QMessageBox, QLabel, QPushButton, QFrame, QWidget, QSizePolicy, QVBoxLayout
+    from PyQt5 import QtWidgets, QtCore
+    from products.models import MainDocument
+
+    def search_design_document_by_main_name(self):
+        """Ищет конструкторский документ в базе данных по имени главного документа."""
+        document_main_name = self.ui.lineEditSearchByName.text().strip()
+
+        if not document_main_name:
+            QMessageBox.warning(self, "Ошибка", "Введите название документа.")
+            return
+
+        try:
+            # 🔹 Ищем документы напрямую в базе данных (по вхождению текста)
+            documents = MainDocument.objects.filter(main_name__icontains=document_main_name)
+
+            if documents.exists():
+                # 🔹 Формируем список результатов
+                data = [
+                    {"id": doc.id, "name": doc.main_name, "comment": doc.comment}
+                    for doc in documents
+                ]
+                self.update_document_list(data)  # Обновляем интерфейс
+            else:
+                QMessageBox.information(self, "Результат", "Документ не найден.")
+
+        except Exception as e:
+            QMessageBox.critical(self, "Ошибка", f"Ошибка поиска: {e}")
+
+    def update_document_list(self, documents):
+        """
+        Обновление списка конструкторских документов в прокручиваемой области.
+        :param documents: Список найденных конструкторских документов.
+        """
+        # Очистка текущего списка
+        for i in reversed(range(self.ui.layoutTask.count())):
+            widget = self.ui.layoutTask.itemAt(i).widget()
+            if widget:
+                widget.deleteLater()
+
+        # Добавление новых документов
+        for document in reversed(documents):
+            # Создаем рамку для документа
+            document_frame = QFrame()
+            document_frame.setFrameShape(QFrame.StyledPanel)
+            document_frame.setStyleSheet("border: 1.5px solid #666666; padding: 1px; margin: 1px;")
+
+            # Вертикальный layout для документа
+            document_layout = QVBoxLayout(document_frame)
+
+            # Верхняя часть документа: название и комментарий
+            document_info = QLabel(f"Документ: {document['name']} / Комментарий: {document['comment']}")
+            document_info.setStyleSheet(
+                "font-size: 14px; font-weight: bold; background: white; border: 1px solid #ff0f0f; margin: 3px;")
+            document_info.setFixedHeight(34)
+            document_layout.addWidget(document_info)
+
+            # Кнопка для открытия окна редактирования документа
+            edit_button = QPushButton("Открыть")
+            edit_button.clicked.connect(lambda checked, doc_id=document['id']: self.open_document_editor(doc_id))
+            document_layout.addWidget(edit_button, alignment=QtCore.Qt.AlignRight)
+            edit_button.setFixedSize(80, 30)  # ширина: 80px, высота: 30px
+
+            # Добавляем рамку документа в общий layout
+            self.ui.layoutTask.addWidget(document_frame)
+
+        # Пустой заполнитель
+        self.empty_placeholder = QWidget()
+        self.empty_placeholder.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.ui.layoutTask.addWidget(self.empty_placeholder)  # Добавляем заполнитель в конец layout
+
+    def search_design_document_by_tag(self):
+        """Ищет конструкторские документы по тегу."""
+        tag_name = self.ui.lineEditSearchByTag.text().strip()
+
+        if not tag_name:
+            QMessageBox.warning(self, "Ошибка", "Введите название тега.")
+            return
+
+        try:
+            # 🔹 Ищем документы, связанные с тегом
+            documents = MainDocument.objects.filter(tags__name__icontains=tag_name).distinct()
+
+            if documents.exists():
+                # 🔹 Формируем список результатов
+                data = [
+                    {"id": doc.id, "name": doc.main_name, "comment": doc.comment}
+                    for doc in documents
+                ]
+                self.update_document_list(data)  # Обновляем интерфейс
+            else:
+                QMessageBox.information(self, "Результат", "Документы с таким тегом не найдены.")
+
+        except Exception as e:
+            QMessageBox.critical(self, "Ошибка", f"Ошибка поиска: {e}")
+
+    def open_document_editor(self, doc_id):
+        """Открывает редактор документа внутри текущего окна."""
+        print(f"📂 Открываем редактор документа с ID: {doc_id}")
+        self.document_editor = DocumentEditor(doc_id, self)
+        print("✅ Окно DocumentEditor создано, сейчас откроем его...")
+        self.document_editor.exec_()
+        print("✅ Окно DocumentEditor закрыто")
 
 
 if __name__ == "__main__":

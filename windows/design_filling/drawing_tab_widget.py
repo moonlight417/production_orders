@@ -116,18 +116,26 @@ class UnifiedDrawingTabWidget(QWidget):
     def get_inner_tabs_data(self):
         """Собирает информацию о чертежах."""
         inner_tabs_data = []
+
         for i in range(self.inner_tab_widget.count()):
             inner_tab = self.inner_tab_widget.widget(i)
             drawing_widget = inner_tab.findChild(QLabel)
 
             if drawing_widget and hasattr(drawing_widget, "current_image_path"):
                 file_path = drawing_widget.current_image_path
-                is_actual = inner_tab.findChild(QCheckBox).isChecked()
+                is_actual_checkbox = inner_tab.findChild(QCheckBox)
+                is_actual = is_actual_checkbox.isChecked() if is_actual_checkbox else False
+
+                # 🔹 Теперь ищем `QLineEdit` внутри конкретного листа!
+                mass_input = inner_tab.findChild(QLineEdit)
+                mass = float(mass_input.text()) if mass_input and mass_input.text().strip() else None
 
                 inner_tabs_data.append({
                     "file": file_path,
-                    "is_actual": is_actual
+                    "is_actual": is_actual,
+                    "mass": mass,
                 })
-                print(f"📄 Собран чертёж: {file_path} (Актуальность: {is_actual})")
+                print(f"📄 Собран чертёж: {file_path} (Актуальность: {is_actual}), масса: {mass}")
 
         return inner_tabs_data
+
