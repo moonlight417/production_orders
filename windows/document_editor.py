@@ -1,6 +1,6 @@
 import os
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QTextEdit, QMessageBox, QDialog, \
-    QScrollArea
+    QScrollArea, QLayout
 from PyQt5.QtGui import QPixmap, QCursor
 from PyQt5.QtCore import Qt
 from print_dialog import PrintDialog
@@ -59,18 +59,20 @@ class DocumentEditor(QWidget):
         main_layout = QHBoxLayout(self)
 
         # 📂 Левая часть (Чертёж)
-        left_layout = QVBoxLayout()
+        self.left_layout = QVBoxLayout()  # ✅ Теперь `left_layout` сохранён в `self`
 
         # Заголовок документа
         self.label = QLabel(f"<b>Документ:</b> {self.document.main_name}")
         self.label.setContentsMargins(0, 0, 0, 0)  # Убираем внешние отступы
-        left_layout.addWidget(self.label)
+        self.label.setStyleSheet("margin: 0px; padding: 0px; font-size: 14pt;")  # Убираем внутренние отступы
+        self.label.setFixedHeight(30)  # Фиксированная высота, чтобы не растягивался
+        self.left_layout.addWidget(self.label)
 
         # Поле для отображения чертежа
         self.drawing_label = QLabel("📂 Чертёж отсутствует")
         self.drawing_label.setMouseTracking(True)  # Разрешаем отслеживание движения мыши
         self.drawing_label.setCursor(QCursor(Qt.PointingHandCursor))  # Меняем курсор на лупу
-        left_layout.addWidget(self.drawing_label)
+        self.left_layout.addWidget(self.drawing_label)
 
         button_layout = QHBoxLayout()
 
@@ -102,8 +104,8 @@ class DocumentEditor(QWidget):
         self.back_button.clicked.connect(self.go_back)
         button_layout.addWidget(self.back_button)
 
-        left_layout.addLayout(button_layout)
-        main_layout.addLayout(left_layout, stretch=2)  # Левая часть занимает 2/3 экрана
+        self.left_layout.addLayout(button_layout)
+        main_layout.addLayout(self.left_layout, stretch=2)  # Левая часть занимает 2/3 экрана
 
         # 📜 Правая часть (Данные документа)
         self.scroll_area = QScrollArea()
@@ -119,29 +121,46 @@ class DocumentEditor(QWidget):
 
         self.setLayout(main_layout)
 
+    from PyQt5.QtWidgets import QLayout  # Убедитесь, что импортировали QLayout
+
     def load_drawing_image(self):
         """Загружает чертёж из базы и отображает его."""
         try:
             drawing_sheet = DrawingSheet.objects.filter(drawing__main_document=self.document, is_actual=True).first()
             if drawing_sheet and drawing_sheet.file:
-                file_path = os.path.join("E:/Programming/production_orders/windows/design_filling", drawing_sheet.file.name)
+                file_path = os.path.join("E:/Programming/production_orders/windows/design_filling",
+                                         drawing_sheet.file.name)
+                print(f"📂 Загружаем чертёж из: {file_path}")
+
                 if os.path.exists(file_path):
+                    print("✅ Файл найден, пробуем загрузить в QPixmap")
                     self.pixmap = QPixmap(file_path)
+
                     if not self.pixmap.isNull():
-                        self.drawing_label.setPixmap(self.pixmap.scaled(500, 500, Qt.KeepAspectRatio))
+                        print("✅ Чертёж успешно загружен в QPixmap")
+                        self.drawing_label.setPixmap(self.pixmap.scaled(600, 600, Qt.KeepAspectRatio))
+
+                        # ✅ Проверяем, существует ли `self.left_layout`
+                        if hasattr(self, 'left_layout'):
+                            self.left_layout.setSizeConstraint(QLayout.SetFixedSize)  # Останавливаем растягивание
+                        else:
+                            print("⚠️ Ошибка: `self.left_layout` не существует!")
+
                         return file_path
                     else:
+                        print("❌ Ошибка: QPixmap вернул пустое изображение")
                         self.drawing_label.setText("⚠️ Ошибка загрузки изображения")
                 else:
+                    print("❌ Ошибка: Файл не найден")
                     self.drawing_label.setText("❌ Файл не найден")
         except Exception as e:
-            self.drawing_label.setText("❌ Ошибка загрузки чертежа")
             print(f"❌ Ошибка загрузки чертежа: {e}")
+            self.drawing_label.setText("❌ Ошибка загрузки чертежа")
 
         return None
 
     def load_document_data(self):
-        """Загружает и отображает данные документа в правой части."""
+        """Загружает и отображает данные документа в правой части (QScrollArea)."""
         self.scroll_layout.setAlignment(Qt.AlignTop)
 
         # 📌 Основная информация
@@ -151,34 +170,16 @@ class DocumentEditor(QWidget):
 
         # 🔖 Теги
         tags = self.document.tags.all()
-        if tags:
-            tag_names = ", ".join(tag.name for tag in tags)
-        else:
-            tag_names = "—"
+        tag_names = ", ".join(tag.name for tag in tags) if tags else "—"
         self.scroll_layout.addWidget(QLabel(f"🏷️ Теги: {tag_names}"))
 
-        # 📌 Связанные чертежи
-        self.scroll_layout.addWidget(QLabel("<b>Чертежи:</b>"))
-        drawings = Drawing.objects.filter(main_document=self.document)
-        if drawings.exists():
-            for drawing in drawings:
-                drawing_label = QLabel(f"📜 {drawing.doc_name}")
-                self.scroll_layout.addWidget(drawing_label)
-        else:
-            self.scroll_layout.addWidget(QLabel("Нет чертежей"))
-
-        # 📌 Листы чертежей
-        self.scroll_layout.addWidget(QLabel("<b>Листы чертежей:</b>"))
-        sheets = DrawingSheet.objects.filter(drawing__main_document=self.document)
-        if sheets.exists():
-            for sheet in sheets:
-                sheet_label = QLabel(f"📄 Лист: {sheet.file.name} (Актуальность: {sheet.is_actual}, Масса: {sheet.mass or '—'} кг)")
-                self.scroll_layout.addWidget(sheet_label)
-        else:
-            self.scroll_layout.addWidget(QLabel("Нет листов чертежей"))
+        # 📜 Загружаем иерархию родитель-потомок
+        self.load_hierarchy()
 
         # 🔁 Обновляем макет
         self.scroll_content.setLayout(self.scroll_layout)
+
+
 
     def open_zoomed_window(self):
         """Открывает окно с увеличенным чертежом."""
@@ -188,6 +189,88 @@ class DocumentEditor(QWidget):
 
         zoomed_window = ZoomedDrawingWindow(self.pixmap, self)
         zoomed_window.exec_()
+
+    def load_hierarchy(self):
+        """Загружает иерархию документов, добавляя кнопки с отступами для родительских и дочерних чертежей."""
+        self.scroll_layout.setAlignment(Qt.AlignTop)
+
+        self.scroll_layout.addWidget(QLabel("<b>Иерархия чертежей:</b>"))
+
+        # 🔍 Получаем ВСЕ корневые чертежи (без родителя)
+        root_drawings = Drawing.objects.filter(main_document=self.document, parent=None)
+
+        for drawing in root_drawings:
+            self.add_drawing_button(drawing, 0)  # Родители идут с уровнем 0
+
+    def add_drawing_button(self, drawing, level):
+        """Создаёт кнопку чертежа в иерархии с отступами для дочерних элементов."""
+
+        # 🔍 Определяем цвет кнопки
+        sheet = DrawingSheet.objects.filter(drawing=drawing, is_actual=True).first()
+        if sheet and sheet.mass is not None:
+            color = "green"  # ✅ Актуальный с массой
+            mass_text = f" ⚖️ {sheet.mass} кг"
+        elif sheet:
+            color = "yellow"  # ⚠️ Актуальный, но без массы
+            mass_text = " ❌ Без массы"
+        else:
+            color = "red"  # ⛔ Неактуальный
+            mass_text = " ⛔ Неактуальный"
+
+        # 🔹 Создаём кнопку
+        button = QPushButton(f"{' ' * (level * 4)}📄 {drawing.doc_name}{mass_text}")
+        button.clicked.connect(lambda: self.load_new_drawing(drawing))
+
+        # 🎨 Применяем цвет кнопки
+        if color == "green":
+            button.setStyleSheet(f"background-color: #DFFFD6; color: black; padding-left: {level * 20}px;")
+        elif color == "yellow":
+            button.setStyleSheet(f"background-color: #FFFFCC; color: black; padding-left: {level * 20}px;")
+        elif color == "red":
+            button.setStyleSheet(f"background-color: #FFC0CB; color: black; padding-left: {level * 20}px;")
+
+        self.scroll_layout.addWidget(button)
+
+        # 🔽 Добавляем дочерние чертежи с увеличенным уровнем отступа
+        child_drawings = Drawing.objects.filter(parent=drawing)
+        for child in child_drawings:
+            self.add_drawing_button(child, level + 1)  # Увеличиваем уровень вложенности
+
+    def load_new_drawing(self, drawing):
+        """Загружает новый чертёж в левую часть экрана."""
+        self.label.setText(f"<b>Документ:</b> {drawing.doc_name}")
+
+        drawing_sheet = DrawingSheet.objects.filter(drawing=drawing, is_actual=True).first()
+        if drawing_sheet and drawing_sheet.file:
+            file_path = os.path.join("E:/Programming/production_orders/windows/design_filling", drawing_sheet.file.name)
+            if os.path.exists(file_path):
+                self.pixmap = QPixmap(file_path)
+                if not self.pixmap.isNull():
+                    self.drawing_label.setPixmap(self.pixmap.scaled(600, 600, Qt.KeepAspectRatio))
+                else:
+                    self.drawing_label.setText("⚠️ Ошибка загрузки изображения")
+            else:
+                self.drawing_label.setText("❌ Файл не найден")
+        else:
+            self.drawing_label.setText("📂 Чертёж отсутствует")
+
+    def load_new_document(self, doc_id):
+        """Переключает текущий документ и загружает новый чертёж."""
+        print(f"🔄 Загружаем новый документ ID: {doc_id}")
+
+        try:
+            self.document = MainDocument.objects.get(id=doc_id)
+            self.label.setText(f"<b>Документ:</b> {self.document.main_name}")
+
+            # ✅ Загружаем чертёж и обновляем иерархию
+            self.load_drawing_image()
+            self.load_hierarchy()
+
+            print(f"✅ Документ {self.document.main_name} загружен!")
+
+        except MainDocument.DoesNotExist:
+            QMessageBox.critical(self, "Ошибка", f"Документ с ID {doc_id} не найден!")
+            print(f"❌ Документ с ID {doc_id} не найден!")
 
     def open_printer_window(self):
         """Открывает окно печати чертежа."""
