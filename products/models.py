@@ -85,8 +85,8 @@ class Drawing(models.Model):
     )
 
     doc_name = models.CharField(max_length=255, null=False, blank=False, default="Untitled", unique=True)
-    mass = models.FloatField(null=True, blank=True)
-    assembly_unit = models.BooleanField(default=False, verbose_name="СБ")
+
+    # assembly_unit = models.BooleanField(default=False, verbose_name="СБ")
 
     def clean(self):
         # Если основной документ отсутствует, то либо название, либо родитель должны быть заполнены
@@ -111,8 +111,9 @@ class DrawingSheet(models.Model):
         related_name='sheets'
     )
     file = models.FileField(upload_to='drawings/')
-    sheet_number = models.PositiveIntegerField()  # Номер листа
+    # sheet_number = models.PositiveIntegerField()  # Номер листа
     is_actual = models.BooleanField(default=True, verbose_name="Актуальность")  # Поле актуальности
+    mass = models.FloatField(null=True, blank=True)
 
     def __str__(self):
         return f"Sheet {self.sheet_number} of Drawing {self.drawing.doc_name}"

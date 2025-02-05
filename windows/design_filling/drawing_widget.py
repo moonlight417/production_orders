@@ -1,7 +1,8 @@
 from PyQt5.QtWidgets import QWidget, QLabel, QPushButton, QVBoxLayout, QHBoxLayout, QFileDialog, QMessageBox, QCheckBox, QLineEdit
 from PyQt5.QtGui import QPixmap, QTransform
 from PyQt5.QtCore import Qt, QSize
-
+from PyQt5.QtWidgets import QFileDialog
+from PyQt5.QtGui import QPixmap
 from . import inner_tab_widget
 from .print_dialog import PrintDialog
 import shutil
@@ -81,35 +82,53 @@ class DrawingWidget(QWidget):
         """
         self.lineEditMass.setVisible(state == Qt.Checked)
 
+    import os
+    import shutil
+    from PyQt5.QtWidgets import QFileDialog
+    from PyQt5.QtGui import QPixmap
+
     def open_file(self):
-        # Открытие диалога выбора файла
-        file_path, _ = QFileDialog.getOpenFileName(self, "Выберите файл", "../utils/drawings/",
-                                                   "Изображения (*.png *.jpg *.bmp *.gif)")
+        """Открывает файл изображения из любого места, копирует его в `archived_images` и сохраняет путь."""
+        file_path, _ = QFileDialog.getOpenFileName(
+            self,
+            "Выберите файл чертежа",
+            "",
+            "Изображения (*.png *.jpg *.bmp *.gif);;Все файлы (*)"
+        )
 
-        if file_path:
-            # Создаём путь к папке для хранения "архива" (например, папка 'archived_images' в директории проекта)
-            archive_folder = os.path.join(os.path.dirname(__file__), 'archived_images')
+        if not file_path:
+            print("⚠️ Файл не выбран. Операция отменена.")
+            return
 
-            # Проверяем, существует ли папка, если нет, создаём её
-            if not os.path.exists(archive_folder):
-                os.makedirs(archive_folder)
-                print(f"Папка '{archive_folder}' была создана.")
+        print(f"📄 Выбран файл: {file_path}")
 
-            # Получаем имя файла для сохранения
-            file_name = os.path.basename(file_path)
+        archive_folder = os.path.join(os.path.dirname(__file__), 'archived_images')
+        if not os.path.exists(archive_folder):
+            os.makedirs(archive_folder)
+            print(f"📂 Папка '{archive_folder}' была создана.")
 
-            # Путь к новому месту хранения
-            destination_path = os.path.join(archive_folder, file_name)
+        file_name = os.path.basename(file_path)
+        destination_path = os.path.join(archive_folder, file_name)
 
-            # Сохраняем оригинал в архиве
+        print(f"📂 Копируем файл в: {destination_path}")
+
+        try:
             shutil.copy(file_path, destination_path)
-            print(f"Файл был скопирован в: {destination_path}")
+            print(f"✅ Файл успешно скопирован: {destination_path}")
 
-            # Загружаем изображение в QPixmap
             self.pixmap = QPixmap(destination_path)
             self.current_angle = 0
+
+            if self.pixmap.isNull():
+                print(f"❌ Ошибка загрузки изображения: {destination_path}")
+                return
+
             self.update_image()
             self.current_image_path = destination_path
+            print(f"✅ Путь к файлу сохранен в `current_image_path`: {self.current_image_path}")
+
+        except Exception as e:
+            print(f"❌ Ошибка при обработке файла: {e}")
 
     def rotate_right(self):
         if not self.pixmap.isNull():
@@ -162,5 +181,7 @@ class DrawingWidget(QWidget):
             # Сохраняем изображение в том же месте, где находится исходный файл
             rotated_pixmap.save(self.current_image_path)
             print(f"Изображение сохранено с новым поворотом: {self.current_image_path}")
+
+
 
 

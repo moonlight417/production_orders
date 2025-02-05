@@ -44,5 +44,53 @@ class InnerTabWidget(QWidget):
         else:
             QMessageBox.warning(self, "Ошибка", "Нет вкладки для удаления.")
 
+    def get_inner_tabs_data(self, parent_tab):
+        """Собирает данные о чертежах из внутренних вкладок."""
+        inner_tabs_data = []
+
+        #  Проверяем, есть ли `inner_tab_widget` у `parent_tab`
+        if not hasattr(parent_tab, "inner_tab_widget") or not parent_tab.inner_tab_widget:
+            print(
+                f"⚠️ Ошибка: `inner_tab_widget` отсутствует в `{getattr(parent_tab, 'doc_name', 'Неизвестная вкладка')}`!")
+            return []
+
+        inner_tab_widget = parent_tab.inner_tab_widget
+
+        #  Проверяем, содержит ли `inner_tab_widget` нужный объект
+        if not hasattr(inner_tab_widget, "inner_tab_widget") or not inner_tab_widget.inner_tab_widget:
+            print(
+                f"⚠️ Ошибка: `inner_tab_widget.inner_tab_widget` отсутствует в `{getattr(parent_tab, 'doc_name', 'Неизвестная вкладка')}`!")
+            return []
+
+        inner_tab_widget = inner_tab_widget.inner_tab_widget  # Теперь это точно `QTabWidget`
+
+        #  Проверяем, поддерживает ли `inner_tab_widget` метод `count()`
+        if not hasattr(inner_tab_widget, "count"):
+            print(
+                f"⚠️ Ошибка: `inner_tab_widget` не поддерживает `count()` в `{getattr(parent_tab, 'doc_name', 'Неизвестная вкладка')}`!")
+            return []
+
+        #  Перебираем все внутренние вкладки
+        for i in range(inner_tab_widget.count()):
+            inner_tab = inner_tab_widget.widget(i)
+
+            #  Проверяем, содержит ли вкладка `drawing_widget`
+            if hasattr(inner_tab, "drawing_widget"):
+                drawing_widget = inner_tab.drawing_widget
+
+                #  Получаем путь к файлу и актуальность
+                file_path = getattr(drawing_widget, "current_image_path", None)
+                is_actual = getattr(drawing_widget, "check_box_is_actual", None)
+                is_actual = is_actual.isChecked() if is_actual else False
+
+                #  Добавляем данные в список
+                inner_tabs_data.append({
+                    "file": file_path,
+                    "is_actual": is_actual
+                })
+
+                print(f"📄 Собран чертеж: {file_path} (Актуальность: {is_actual})")
+
+        return inner_tabs_data
 
 
