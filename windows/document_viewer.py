@@ -1,6 +1,6 @@
 import os
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QTextEdit, QMessageBox, QDialog, \
-    QScrollArea, QLayout
+    QScrollArea, QLayout, QSpacerItem, QSizePolicy
 from PyQt5.QtGui import QPixmap, QCursor
 from PyQt5.QtCore import Qt
 from print_dialog import PrintDialog
@@ -14,6 +14,7 @@ from PyQt5.QtGui import QPixmap, QCursor
 from PyQt5.QtCore import Qt
 from print_dialog import PrintDialog
 from products.models import DrawingSheet, MainDocument, Drawing, Tag
+# from windows.design_edit.design_document_edit_form import DesignDocumentEditForm
 
 
 class ZoomedDrawingWindow(QDialog):
@@ -39,14 +40,14 @@ class ZoomedDrawingWindow(QDialog):
         # Устанавливаем QLabel в качестве содержимого для QScrollArea
         scroll_area.setWidget(self.image_label)
 
-class DocumentEditor(QWidget):
+class DocumentViewer(QWidget):
     """Редактирование конструкторского документа с увеличением чертежа."""
 
     def __init__(self, doc_id, parent=None):
         super().__init__(parent)
         self.doc_id = doc_id
         self.parent = parent  # Сохраняем родительский `QStackedWidget`
-        self.setWindowTitle(f"Просмотр документа (ID: {self.doc_id})")
+        self.setWindowTitle(f"Редактирование документа (ID: {self.doc_id})")
 
         # 📄 Загружаем документ из базы
         try:
@@ -96,9 +97,9 @@ class DocumentEditor(QWidget):
 
         # Кнопки "Сохранить" и "Назад"
 
-        self.save_button = QPushButton("Сохранить")
-        self.save_button.clicked.connect(self.save_document)
-        button_layout.addWidget(self.save_button)
+        self.edit_button = QPushButton("Редактировать")
+        # self.edit_button.clicked.connect(self.open_edit_window)
+        button_layout.addWidget(self.edit_button)
 
         self.back_button = QPushButton("Назад")  # 🔹 Кнопка возврата
         self.back_button.clicked.connect(self.go_back)
@@ -126,12 +127,19 @@ class DocumentEditor(QWidget):
     def load_drawing_image(self):
         """Загружает чертёж из базы и отображает его."""
         try:
+            # 🔍 Загружаем чертёж, фильтруя по актуальности
             drawing_sheet = DrawingSheet.objects.filter(drawing__main_document=self.document, is_actual=True).first()
+
+            # Проверка наличия листа чертежа и файла
             if drawing_sheet and drawing_sheet.file:
-                file_path = os.path.join("E:/Programming/production_orders/windows/design_filling",
+                # Новая логика с обновленным путем
+                file_path = os.path.join("F:/AS_Folder/production_orders/windows/design_filling",
                                          drawing_sheet.file.name)
+
+                # Проверим путь и выведем его для отладки
                 print(f"📂 Загружаем чертёж из: {file_path}")
 
+                # Убедитесь, что файл существует по новому пути
                 if os.path.exists(file_path):
                     print("✅ Файл найден, пробуем загрузить в QPixmap")
                     self.pixmap = QPixmap(file_path)
@@ -139,20 +147,17 @@ class DocumentEditor(QWidget):
                     if not self.pixmap.isNull():
                         print("✅ Чертёж успешно загружен в QPixmap")
                         self.drawing_label.setPixmap(self.pixmap.scaled(600, 600, Qt.KeepAspectRatio))
-
-                        # ✅ Проверяем, существует ли `self.left_layout`
-                        if hasattr(self, 'left_layout'):
-                            self.left_layout.setSizeConstraint(QLayout.SetFixedSize)  # Останавливаем растягивание
-                        else:
-                            print("⚠️ Ошибка: `self.left_layout` не существует!")
-
-                        return file_path
+                        self.current_image_path = file_path  # Обновляем путь к файлу
+                        print(f"🔄 Путь к изображению для печати: {self.current_image_path}")
                     else:
                         print("❌ Ошибка: QPixmap вернул пустое изображение")
                         self.drawing_label.setText("⚠️ Ошибка загрузки изображения")
                 else:
-                    print("❌ Ошибка: Файл не найден")
+                    print(f"❌ Ошибка: Файл не найден по пути: {file_path}")
                     self.drawing_label.setText("❌ Файл не найден")
+            else:
+                print("❌ Ошибка: Чертёж отсутствует или неактуален")
+                self.drawing_label.setText("📂 Чертёж отсутствует")
         except Exception as e:
             print(f"❌ Ошибка загрузки чертежа: {e}")
             self.drawing_label.setText("❌ Ошибка загрузки чертежа")
@@ -176,10 +181,23 @@ class DocumentEditor(QWidget):
         # 📜 Загружаем иерархию родитель-потомок
         self.load_hierarchy()
 
+        spacer = QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding)
+        self.scroll_layout.addItem(spacer)
+
+       #  # Поле для комментария
+       #  self.comment_edit = QTextEdit()
+       #  self.comment_edit.setMaximumHeight(50)
+       #  self.comment_edit.setText(f"🗒 Комментарий: {self.document.comment or ""}")
+       #  self.scroll_layout.addWidget(self.comment_edit)
+       #
+       # # Поле для тегов
+       #  self.tag_edit = QTextEdit()
+       #  self.tag_edit.setMaximumHeight(50)
+       #  self.tag_edit.setText(f"🏷️ Теги: {tag_names}")
+       #  self.scroll_layout.addWidget(self.tag_edit)
+
         # 🔁 Обновляем макет
         self.scroll_content.setLayout(self.scroll_layout)
-
-
 
     def open_zoomed_window(self):
         """Открывает окно с увеличенным чертежом."""
@@ -242,7 +260,7 @@ class DocumentEditor(QWidget):
 
         drawing_sheet = DrawingSheet.objects.filter(drawing=drawing, is_actual=True).first()
         if drawing_sheet and drawing_sheet.file:
-            file_path = os.path.join("E:/Programming/production_orders/windows/design_filling", drawing_sheet.file.name)
+            file_path = os.path.join("F:/AS_Folder/production_orders/windows/design_filling", drawing_sheet.file.name)
             if os.path.exists(file_path):
                 self.pixmap = QPixmap(file_path)
                 if not self.pixmap.isNull():
@@ -274,24 +292,40 @@ class DocumentEditor(QWidget):
 
     def open_printer_window(self):
         """Открывает окно печати чертежа."""
+        print(f"🔄 Текущий путь к изображению перед печатью: {self.current_image_path}")
+
         if not self.current_image_path:
             QMessageBox.warning(self, "Ошибка", "Нет изображения для печати.")
+            print("❌ Нет изображения для печати (путь не задан).")
             return
+
+        # Дополнительная проверка существования файла
+        if not os.path.exists(self.current_image_path):
+            QMessageBox.warning(self, "Ошибка", "Файл не найден для печати.")
+            print(f"❌ Файл не найден для печати по пути: {self.current_image_path}")
+            return
+
+        # Если путь к файлу существует, то открываем окно печати
+        print(f"✅ Печать будет выполняться для файла: {self.current_image_path}")
         self.printer_window = PrintDialog(self.current_image_path)
         self.printer_window.exec_()
 
-    def save_document(self):
-        """Сохраняет изменения в документе."""
-        try:
-            self.document.comment = self.comment_edit.toPlainText()
-            self.document.save()
-            QMessageBox.information(self, "Успех", "Комментарий обновлён!")
-            self.go_back()
-        except Exception as e:
-            QMessageBox.critical(self, "Ошибка", f"Не удалось сохранить документ: {e}")
+    # def open_edit_window(self,id):
+    #     self.edit_window = DesignDocumentEditForm()
+    #     self.edit_window.show()
+
+    # def save_document(self):
+    #     """Сохраняет изменения в документе."""
+    #     try:
+    #         self.document.comment = self.comment_edit.toPlainText()
+    #         self.document.save()
+    #         QMessageBox.information(self, "Успех", "Комментарий обновлён!")
+    #         self.go_back()
+    #     except Exception as e:
+    #         QMessageBox.critical(self, "Ошибка", f"Не удалось сохранить документ: {e}")
 
     def go_back(self):
-        """Переключает `QStackedWidget` обратно на поиск документов."""
+        """🏳 Переключает `QStackedWidget` обратно на поиск документов."""
         self.parent.go_back_to_search()
 
 

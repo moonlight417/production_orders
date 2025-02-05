@@ -1,51 +1,61 @@
-from PyQt5.QtWidgets import QDialog, QMessageBox, QLabel, QVBoxLayout
+import os
+from PyQt5.QtWidgets import QDialog, QMessageBox, QLabel, QVBoxLayout, QPushButton
 from PyQt5.QtGui import QPixmap, QPainter
 from PyQt5.QtPrintSupport import QPrinter, QPrintDialog
 from PyQt5.QtCore import Qt
 
 
 class PrintDialog(QDialog):
-    """Диалоговое окно печати с выводом результата."""
-
     def __init__(self, image_path, parent=None):
         super().__init__(parent)
-        self.image_path = image_path
         self.setWindowTitle("Печать чертежа")
 
-        # ✅ Вызываем печать сразу
-        self.init_ui()
-        self.print_image()
+        # Проверяем, существует ли файл
+        if not os.path.exists(image_path):
+            QMessageBox.warning(self, "Ошибка", "Файл не найден для печати.")
+            self.reject()  # Закрыть диалог
 
-    def init_ui(self):
-        """Создаёт интерфейс."""
-        self.layout = QVBoxLayout(self)
-        self.label = QLabel("Идёт печать...")
-        self.layout.addWidget(self.label)
-        self.setLayout(self.layout)
+        self.image_path = image_path
+        self.pixmap = QPixmap(self.image_path)
+
+        # Убедитесь, что изображение загружено корректно
+        if self.pixmap.isNull():
+            QMessageBox.warning(self, "Ошибка", "Не удалось загрузить изображение для печати.")
+            self.reject()
+
+        # Создаём элемент для отображения изображения
+        image_label = QLabel(self)
+        image_label.setPixmap(self.pixmap)
+        image_label.setAlignment(Qt.AlignCenter)
+
+        # Добавляем кнопку для печати
+        print_button = QPushButton("Печать", self)
+        print_button.clicked.connect(self.print_image)
+
+        layout = QVBoxLayout()
+        layout.addWidget(image_label)
+        layout.addWidget(print_button)
+        self.setLayout(layout)
 
     def print_image(self):
-        """Открывает диалог печати и отображает результат."""
+        """Функция для печати изображения."""
         printer = QPrinter()
-        print_dialog = QPrintDialog(printer, self)
+        printer.setPageSize(QPrinter.A4)
 
-        if print_dialog.exec_() == QPrintDialog.Accepted:
-            pixmap = QPixmap(self.image_path)
-            if pixmap.isNull():
-                self.label.setText("❌ Ошибка: Невозможно загрузить изображение!")
-                return
+        # Создаём QPainter для печати
+        painter = QPainter(printer)
 
-            painter = QPainter(printer)
-            rect = printer.pageRect()
-            scaled_pixmap = pixmap.scaled(rect.size(), Qt.KeepAspectRatio, Qt.SmoothTransformation)
+        if not painter.begin(printer):
+            QMessageBox.warning(self, "Ошибка", "Не удалось подключиться к принтеру.")
+            return
 
-            x_offset = (rect.width() - scaled_pixmap.width()) // 2
-            y_offset = (rect.height() - scaled_pixmap.height()) // 2
+        # Масштабируем изображение по размеру страницы
+        painter.drawPixmap(0, 0, self.pixmap.scaled(printer.pageRect().width(), printer.pageRect().height(),
+                                                    Qt.KeepAspectRatio))
+        painter.end()
 
-            painter.drawPixmap(x_offset, y_offset, scaled_pixmap)
-            painter.end()
+        QMessageBox.information(self, "Печать", "Чертёж отправлен на печать!")
+        self.accept()  # Закрыть диалог после печати
 
-            self.label.setText("✅ Чертёж успешно отправлен на печать!")  # ✅ Меняем текст в окне
-        else:
-            self.label.setText("❌ Печать отменена.")  # ❌ Показываем, что пользователь отменил печать
 
 
