@@ -68,7 +68,7 @@ class Ui_PasswordChange(object):
 
         self.comboBoxRole = QtWidgets.QComboBox(self.centralwidget)
         # self.comboBoxRole.setGeometry(210, 30, 100, 20)
-        self.comboBoxRole.addItems(["Менеджер", "Инженер", "Производство", "Админ"])
+        self.comboBoxRole.addItems(["Менеджер", "Инженер", "Производство"])
 
         self.comboBoxRole.setStyleSheet("""
                 QComboBox {

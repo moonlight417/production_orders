@@ -9,6 +9,8 @@ from orders_archive import OrdersArchive
 import sys
 import os
 
+from windows.customizing_materials import Materials
+
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "e:/Programming/production_orders/")))
 from windows.design_filling.design_document_filling_form import DesignDocumentFillingForm
 
@@ -29,11 +31,13 @@ class Ui_MainWindowEngineer(object):
         self.BtnOrderBase = QtWidgets.QPushButton("База заказов")
         self.BtnDrowingArchive = QtWidgets.QPushButton("Архив КД")
         self.BtnAddNewDesignDoc = QtWidgets.QPushButton("Новый КД")
+        self.BtnMaterials = QtWidgets.QPushButton("Материалы")
 
         self.left_top_panel.addWidget(self.BtnViewTasks)
         self.left_top_panel.addWidget(self.BtnOrderBase)
         self.left_top_panel.addWidget(self.BtnDrowingArchive)
         self.left_top_panel.addWidget(self.BtnAddNewDesignDoc)
+        self.left_top_panel.addWidget(self.BtnMaterials)
 
         # Правая часть верхней панели (лейбл и кнопка проверки)
         self.right_top_panel = QHBoxLayout()
@@ -96,6 +100,7 @@ class MainWindowEngineer(QtWidgets.QMainWindow):
         self.ui.BtnDrowingArchive.clicked.connect(lambda: self.switch_window(self.search_design_doc_window))
         self.ui.BtnCheckOrders.clicked.connect(lambda: self.switch_window(self.new_tasks_list_window))
         self.ui.BtnOrderBase.clicked.connect(lambda: self.switch_window(self.view_orders_window))
+        self.ui.BtnMaterials.clicked.connect(lambda: self.switch_window(self.materials_window))
 
         self.new_tasks = 1  # Начальное значение числа заказов
         self.update_order_count_label()
@@ -108,6 +113,7 @@ class MainWindowEngineer(QtWidgets.QMainWindow):
         self.search_design_doc_window = SearchDesignDoc(parent=None)
         self.new_tasks_list_window = NewTasks(parent=None)
         self.view_orders_window = OrdersArchive()
+        self.materials_window = Materials()
 
         # Добавление окон в QStackedWidget
         self.ui.stacked_widget.addWidget(self.empty_window)
@@ -115,6 +121,7 @@ class MainWindowEngineer(QtWidgets.QMainWindow):
         self.ui.stacked_widget.addWidget(self.tasks_list_window)
         self.ui.stacked_widget.addWidget(self.search_design_doc_window)
         self.ui.stacked_widget.addWidget(self.view_orders_window)
+        self.ui.stacked_widget.addWidget(self.materials_window)
         self.ui.stacked_widget.addWidget(self.new_tasks_list_window)
 
         # Устанавливаем пустое окно как текущее

@@ -1,6 +1,8 @@
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 import resources_rc
+from materials.models import Material
+
 
 class Ui_Materials(object):
     def setupUi(self, Materials):
@@ -28,6 +30,9 @@ class Ui_Materials(object):
         self.label_title = QtWidgets.QLabel(self.header_widget)
         self.label_title.setMaximumSize(QtCore.QSize(16777215, 16777215))
         self.label_title.setObjectName("label")
+        font = self.label_title.font()
+        font.setPointSize(18)
+        self.label_title.setFont(font)
         self.horizontalLayout.addWidget(self.label_title)
 
         spacerItem1 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
@@ -92,109 +97,151 @@ class Ui_Materials(object):
         self.BtnAddMaterial.setText(_translate("Materials", "Добавить запись"))
         self.BtnSaveChangesMaterial.setText(_translate("Materials", "Сохранить изменения"))
 
+
 class Materials(QtWidgets.QMainWindow):
     def __init__(self):
         super().__init__()
         self.ui = Ui_Materials()
         self.ui.setupUi(self)
 
-        # Кнопки
+        # Загрузка существующих материалов при инициализации
+        self.load_materials()
+
+        # Подключаем кнопки
         self.ui.BtnAddMaterial.clicked.connect(self.add_material_line)
+        self.ui.BtnSaveChangesMaterial.clicked.connect(self.save_changes)
 
-        # # Пустой заполнитель
-        # spacerItem2 = QtWidgets.QSpacerItem(20, 423, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
-        # self.ui.verticalLayout_3.addItem(spacerItem2)
-
-        # Пустой заполнитель снизу
+        # Заполнитель снизу
         self.bottom_spacer = QtWidgets.QSpacerItem(20, 20, QtWidgets.QSizePolicy.Minimum,
                                                    QtWidgets.QSizePolicy.Expanding)
         self.ui.verticalLayout_3.addItem(self.bottom_spacer)
 
-    def add_material_line(self):
-        print("Метод add_material_line вызван")
-        try:
-            # Создаём новый виджет для строки материала
-            widget_4 = QtWidgets.QWidget(self.ui.scrollAreaWidgetContents)
-            widget_4.setObjectName("widget_4")
+    def load_materials(self):
+        """Загрузка материалов из базы данных в интерфейс"""
+        materials = Material.objects.all()
+        for material in materials:
+            self.add_material_line(material)
 
-            horizontalLayout_3 = QtWidgets.QHBoxLayout(widget_4)
-            horizontalLayout_3.setObjectName("horizontalLayout_3")
+    def add_material_line(self, material=None):
+        """Добавление строки с материалом (новая или существующая запись)"""
+        try:
+            widget = QtWidgets.QWidget(self.ui.scrollAreaWidgetContents)
+            widget.setObjectName("material_widget")
+            layout = QtWidgets.QHBoxLayout(widget)
 
             # Поля для ввода
-            lineEditNameMaterial = QtWidgets.QLineEdit(widget_4)
-            lineEditNameMaterial.setMaximumSize(QtCore.QSize(150, 16777215))
-            font = QtGui.QFont()
-            font.setPointSize(11)
-            lineEditNameMaterial.setFont(font)
-            lineEditNameMaterial.setText("")
-            lineEditNameMaterial.setObjectName("lineEditNameMaterial")
-            lineEditNameMaterial.setPlaceholderText("Материал")
-            horizontalLayout_3.addWidget(lineEditNameMaterial)
+            name_edit = QtWidgets.QLineEdit(widget)
+            name_edit.setPlaceholderText("Материал")
+            name_edit.setFixedWidth(200)  # Устанавливаем фиксированную ширину 200 пикселей
 
-            lineEditGostMaterial = QtWidgets.QLineEdit(widget_4)
-            lineEditGostMaterial.setMaximumSize(QtCore.QSize(180, 16777215))
-            lineEditGostMaterial.setFont(font)
-            lineEditGostMaterial.setText("")
-            lineEditGostMaterial.setObjectName("lineEditGostMaterial")
-            lineEditGostMaterial.setPlaceholderText("ГОСТ ...")
-            horizontalLayout_3.addWidget(lineEditGostMaterial)
+            gost_edit = QtWidgets.QLineEdit(widget)
+            gost_edit.setPlaceholderText("ГОСТ")
+            gost_edit.setFixedWidth(200)  # Устанавливаем фиксированную ширину 200 пикселей
 
-            lineEditDensity = QtWidgets.QLineEdit(widget_4)
-            lineEditDensity.setMaximumSize(QtCore.QSize(50, 16777215))
-            lineEditDensity.setFont(font)
-            lineEditDensity.setText("")
-            lineEditDensity.setObjectName("lineEditDensity")
-            lineEditDensity.setPlaceholderText("кг/м³")
-            horizontalLayout_3.addWidget(lineEditDensity)
+            density_edit = QtWidgets.QLineEdit(widget)
+            density_edit.setPlaceholderText("кг/м³")
+            density_edit.setFixedWidth(70)  # Устанавливаем фиксированную ширину 100 пикселей
 
-            lineEditLinkToSite = QtWidgets.QLineEdit(widget_4)
-            lineEditLinkToSite.setFont(font)
-            lineEditLinkToSite.setText("")
-            lineEditLinkToSite.setObjectName("lineEditLinkToSite")
-            lineEditLinkToSite.setPlaceholderText("Ссылка на сайт")
-            horizontalLayout_3.addWidget(lineEditLinkToSite)
+            link_edit = QtWidgets.QLineEdit(widget)
+            link_edit.setPlaceholderText("Ссылка")
+            # link_edit.setFixedWidth(300)  # Устанавливаем фиксированную ширину 300 пикселей
 
-            # Кнопка удаления строки
+            # Если передан существующий материал - заполняем поля
+            if material:
+                name_edit.setText(material.name)
+                gost_edit.setText(material.standard)
+                density_edit.setText(str(material.density))
+                link_edit.setText(material.website_link)
+                widget.material = material  # Сохраняем ссылку на объект
+
+            # Сохраняем ссылки на поля в виджете
+            widget.line_edits = (name_edit, gost_edit, density_edit, link_edit)
+
+            # Кнопка удаления
             btn_delete = QtWidgets.QPushButton()
-            btn_delete.setFixedSize(26, 26)
-            icon = QtGui.QIcon()
-            icon.addPixmap(QtGui.QPixmap(":/utils/icons/x-square.svg"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
-            btn_delete.setIcon(icon)
-            btn_delete.setIconSize(QtCore.QSize(16, 16))
-            horizontalLayout_3.addWidget(btn_delete)
+            btn_delete.setIcon(QtGui.QIcon(":/utils/icons/x-square.svg"))
+            btn_delete.setFixedWidth(40)
+            btn_delete.clicked.connect(lambda: self.delete_material_line(widget))
 
-            # Привязка кнопки удаления к функции
-            btn_delete.clicked.connect(lambda: self.delete_material_line(widget_4))
+            # Добавляем элементы в layout
+            layout.addWidget(name_edit)
+            layout.addWidget(gost_edit)
+            layout.addWidget(density_edit)
+            layout.addWidget(link_edit)
+            layout.addWidget(btn_delete)
 
-            # Добавляем новый виджет перед заполнителем
-            self.ui.verticalLayout_3.insertWidget(self.ui.verticalLayout_3.count() - 1, widget_4)
-            print("Строка добавлена успешно.")
-
-            # Обновляем размер scrollArea
-            self.ui.scrollAreaWidgetContents.adjustSize()
+            # Вставляем перед заполнителем
+            self.ui.verticalLayout_3.insertWidget(
+                self.ui.verticalLayout_3.count() - 1,
+                widget
+            )
 
         except Exception as e:
-            print(f"Ошибка в add_material_line: {e}")
+            print(f"Ошибка при добавлении строки: {e}")
 
-    def delete_material_line(self, widget_4):
-        """Удаление строки материала и обновление интерфейса"""
+    def save_changes(self):
+        """Сохранение всех изменений в базе данных"""
         try:
-            layout = self.ui.verticalLayout_3
+            existing_materials = set(Material.objects.all())
+            used_materials = set()
 
-            # Проверяем, есть ли виджет в Layout
-            if layout.indexOf(widget_4) != -1:
-                layout.removeWidget(widget_4)
-                widget_4.setParent(None)
+            # Обрабатываем все строки
+            for i in range(self.ui.verticalLayout_3.count()):
+                item = self.ui.verticalLayout_3.itemAt(i)
+                if item.widget() and hasattr(item.widget(), 'line_edits'):
+                    widget = item.widget()
+                    name, gost, density, link = [field.text() for field in widget.line_edits]
 
-                # Отложенное удаление виджета
-                QtCore.QTimer.singleShot(0, widget_4.deleteLater)
-                print("Строка успешно удалена.")
+                    # Валидация плотности
+                    try:
+                        density_value = float(density) if density else 0.0
+                    except ValueError:
+                        QtWidgets.QMessageBox.warning(
+                            self,
+                            "Ошибка",
+                            "Некорректное значение плотности!"
+                        )
+                        return
 
-            # Обновляем размер scrollArea
-            self.ui.scrollAreaWidgetContents.adjustSize()
+                    # Обновление или создание материала
+                    if hasattr(widget, 'material'):
+                        material = widget.material
+                        material.name = name
+                        material.standard = gost
+                        material.density = density_value
+                        material.website_link = link
+                        used_materials.add(material)
+                    else:
+                        material = Material.objects.create(
+                            name=name,
+                            standard=gost,
+                            density=density_value,
+                            website_link=link
+                        )
+                        used_materials.add(material)
+
+            # Удаление отсутствующих материалов
+            for material in existing_materials - used_materials:
+                material.delete()
+
+            QtWidgets.QMessageBox.information(
+                self,
+                "Успех",
+                "Все изменения успешно сохранены!"
+            )
+
         except Exception as e:
-            print(f"Ошибка в delete_material_line: {e}")
+            QtWidgets.QMessageBox.critical(
+                self,
+                "Ошибка",
+                f"Ошибка при сохранении: {str(e)}"
+            )
 
+    def delete_material_line(self, widget):
+        """Удаление строки материала из интерфейса"""
+        self.ui.verticalLayout_3.removeWidget(widget)
+        widget.deleteLater()
+        self.ui.scrollAreaWidgetContents.adjustSize()
 
 if __name__ == "__main__":
     import sys

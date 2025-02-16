@@ -1,65 +1,58 @@
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel, QScrollArea, QFrame, QLineEdit, QPushButton, QHBoxLayout, QSizePolicy
-from PyQt5.QtCore import Qt
+from PyQt5 import QtWidgets, QtCore
+from products.models import Tag, MainDocument
 
-class TagsTabContent(QWidget):
+
+class TagsTabContent(QtWidgets.QWidget):
     def __init__(self):
         super().__init__()
-        main_layout = QVBoxLayout(self)
+        self.setup_ui()
 
-        scroll_area = QScrollArea(self)
-        scroll_area.setWidgetResizable(True)
+    def setup_ui(self):
+        layout = QtWidgets.QVBoxLayout(self)
+        self.scroll_area = QtWidgets.QScrollArea()
+        self.scroll_area.setWidgetResizable(True)
 
-        self.scroll_content = QWidget()
-        self.scroll_layout = QVBoxLayout(self.scroll_content)
-        self.scroll_layout.setAlignment(Qt.AlignTop)
+        self.scroll_content = QtWidgets.QWidget()
+        self.scroll_layout = QtWidgets.QVBoxLayout(self.scroll_content)
 
-        scroll_area.setWidget(self.scroll_content)
+        self.add_tag_button = QtWidgets.QPushButton("Добавить тег")
+        self.add_tag_button.clicked.connect(self.add_tag_input)
 
-        add_tag_button = QPushButton("Добавить новый тег")
-        add_tag_button.clicked.connect(self.add_tag_input)
+        layout.addWidget(self.scroll_area)
+        layout.addWidget(self.add_tag_button)
 
-        main_layout.addWidget(scroll_area)
-        main_layout.addWidget(add_tag_button)
-        self.setLayout(main_layout)
-
-        # Список для хранения всех введённых тегов
-        self.tag_list = []
+        self.tag_inputs = []
 
     def add_tag_input(self):
-        tag_layout = QHBoxLayout()
-        tag_input = QLineEdit()
-        tag_input.setPlaceholderText("Введите содержание тега")
-        tag_input.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-
-        delete_button = QPushButton("Удалить")
-        delete_button.clicked.connect(lambda: self.remove_tag_input(tag_layout, tag_input))
+        tag_layout = QtWidgets.QHBoxLayout()
+        tag_input = QtWidgets.QLineEdit()
+        delete_button = QtWidgets.QPushButton("Удалить")
 
         tag_layout.addWidget(tag_input)
         tag_layout.addWidget(delete_button)
         self.scroll_layout.addLayout(tag_layout)
-        tag_input.setFocus()
 
-        # Сохраняем в список каждый добавленный тег (пока пустой)
-        self.tag_list.append(tag_input)
+        delete_button.clicked.connect(lambda: self.remove_tag_input(tag_layout))
+        self.tag_inputs.append(tag_input)
 
-        # Добавление тега - выводим список тегов сразу для отладки
-        print(self.get_tag_list())
+    def remove_tag_input(self, layout):
+        while layout.count():
+            item = layout.takeAt(0)
+            if item.widget():
+                item.widget().deleteLater()
+        self.scroll_layout.removeItem(layout)
 
-    def remove_tag_input(self, tag_layout, tag_input):
-        while tag_layout.count():
-            child = tag_layout.takeAt(0)
-            if child.widget():
-                child.widget().deleteLater()
-        self.scroll_layout.removeItem(tag_layout)
-
-        # Удаляем тег из списка
-        if tag_input in self.tag_list:
-            self.tag_list.remove(tag_input)
+    def load_tags_from_db(self, main_id):
+        try:
+            document = MainDocument.objects.get(id=main_id)
+            for tag in document.tags.all():
+                self.add_tag_input()
+                self.tag_inputs[-1].setText(tag.name)
+        except MainDocument.DoesNotExist:
+            QtWidgets.QMessageBox.critical(self, "Ошибка", "Документ не найден!")
 
     def get_tag_list(self):
-        # Возвращаем список значений введённых тегов
-        return [tag_input.text() for tag_input in self.tag_list if tag_input.text()]
-
+        return [tag_input.text() for tag_input in self.tag_inputs if tag_input.text()]
 
 
 

@@ -87,6 +87,9 @@ class Drawing(models.Model):
     doc_name = models.CharField(max_length=255, null=False, blank=False, default="Untitled", unique=True)
 
     # assembly_unit = models.BooleanField(default=False, verbose_name="СБ")
+    def save(self, *args, **kwargs):
+        self.clean()  # Вызов валидации при сохранении
+        super().save(*args, **kwargs)
 
     def clean(self):
         # Если основной документ отсутствует, то либо название, либо родитель должны быть заполнены
@@ -111,12 +114,13 @@ class DrawingSheet(models.Model):
         related_name='sheets'
     )
     file = models.FileField(upload_to='drawings/')
-    # sheet_number = models.PositiveIntegerField()  # Номер листа
-    is_actual = models.BooleanField(default=True, verbose_name="Актуальность")  # Поле актуальности
+    is_actual = models.BooleanField(default=True, verbose_name="Актуальность")
     mass = models.FloatField(null=True, blank=True)
+    # created_at = models.DateTimeField(auto_now_add=True)  # Добавлено новое поле
 
-    def __str__(self):
-        return f"Sheet {self.sheet_number} of Drawing {self.drawing.doc_name}"
+    # @property
+    # def sheet_number(self):
+    #     return self.drawing.sheets.filter(created_at__lt=self.created_at).count() + 1
 
 class Product(models.Model):
     task = models.ForeignKey(Task, on_delete=models.CASCADE)
