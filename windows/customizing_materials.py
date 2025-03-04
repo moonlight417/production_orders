@@ -2,7 +2,7 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 import resources_rc
 from materials.models import Material
-
+import webbrowser
 
 class Ui_Materials(object):
     def setupUi(self, Materials):
@@ -157,17 +157,26 @@ class Materials(QtWidgets.QMainWindow):
             # Сохраняем ссылки на поля в виджете
             widget.line_edits = (name_edit, gost_edit, density_edit, link_edit)
 
+            # Кнопка открытия сайта
+            btn_open_link = QtWidgets.QPushButton()
+            btn_open_link.setText("website")
+            # btn_open_link.setIcon(QtGui.QIcon(":/utils/icons/site.svg"))
+            btn_open_link.setFixedWidth(70)
+            btn_open_link.clicked.connect(lambda: self.open_link(link_edit.text()))
+
             # Кнопка удаления
             btn_delete = QtWidgets.QPushButton()
             btn_delete.setIcon(QtGui.QIcon(":/utils/icons/x-square.svg"))
             btn_delete.setFixedWidth(40)
-            btn_delete.clicked.connect(lambda: self.delete_material_line(widget))
+            btn_delete.clicked.connect(lambda: self.confirm_delete_material(widget))
+            # btn_delete.clicked.connect(lambda: self.delete_material_line(widget))
 
             # Добавляем элементы в layout
             layout.addWidget(name_edit)
             layout.addWidget(gost_edit)
             layout.addWidget(density_edit)
             layout.addWidget(link_edit)
+            layout.addWidget(btn_open_link)
             layout.addWidget(btn_delete)
 
             # Вставляем перед заполнителем
@@ -178,6 +187,26 @@ class Materials(QtWidgets.QMainWindow):
 
         except Exception as e:
             print(f"Ошибка при добавлении строки: {e}")
+
+    def open_link(self, url):
+        """Открывает ссылку в браузере"""
+        if url:  # Проверяем, что URL не пустой
+            webbrowser.open(url)  # Открываем URL в браузере
+        else:
+            QtWidgets.QMessageBox.warning(self, "Ошибка", "Ссылка не указана!")
+
+    def confirm_delete_material(self, widget):
+        """Подтверждение удаления материала"""
+        reply = QtWidgets.QMessageBox.question(
+            self,
+            "Подтверждение удаления",
+            "Вы действительно хотите удалить материал?",
+            QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No,
+            QtWidgets.QMessageBox.No
+        )
+
+        if reply == QtWidgets.QMessageBox.Yes:
+            self.delete_material_line(widget)  # Удаляем материал, если пользователь подтвердил
 
     def save_changes(self):
         """Сохранение всех изменений в базе данных"""

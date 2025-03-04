@@ -10,6 +10,7 @@ import sys
 import os
 
 from windows.customizing_materials import Materials
+from windows.order_dev.order_dev_main import OrderDev
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "e:/Programming/production_orders/")))
 from windows.design_filling.design_document_filling_form import DesignDocumentFillingForm
@@ -111,9 +112,10 @@ class MainWindowEngineer(QtWidgets.QMainWindow):
         self.design_document_filling_window = DesignDocumentFillingForm()
         self.tasks_list_window = TasksList()
         self.search_design_doc_window = SearchDesignDoc(parent=None)
-        self.new_tasks_list_window = NewTasks(parent=None)
+        self.new_tasks_list_window = NewTasks(parent=self)  # Передаем ссылку на родительское окно
         self.view_orders_window = OrdersArchive()
         self.materials_window = Materials()
+        self.order_dev_window = OrderDev()  # Создаем экземпляр OrderDev
 
         # Добавление окон в QStackedWidget
         self.ui.stacked_widget.addWidget(self.empty_window)
@@ -123,6 +125,7 @@ class MainWindowEngineer(QtWidgets.QMainWindow):
         self.ui.stacked_widget.addWidget(self.view_orders_window)
         self.ui.stacked_widget.addWidget(self.materials_window)
         self.ui.stacked_widget.addWidget(self.new_tasks_list_window)
+        self.ui.stacked_widget.addWidget(self.order_dev_window)  # Добавляем OrderDev в стек
 
         # Устанавливаем пустое окно как текущее
         self.ui.stacked_widget.setCurrentWidget(self.empty_window)
@@ -146,12 +149,7 @@ class MainWindowEngineer(QtWidgets.QMainWindow):
             QMessageBox.critical(self, "Ошибка", f"Не удалось открыть окно выбора роли: {e}")
 
 
-if __name__ == "__main__":
-    import sys
-    app = QtWidgets.QApplication(sys.argv)
-    window = MainWindowEngineer()
-    window.show()
-    sys.exit(app.exec_())
+
 
 
 

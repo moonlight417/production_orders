@@ -24,7 +24,7 @@ class DesignDocumentFillingForm(QtWidgets.QMainWindow):
         self.ui.gridLayout.addWidget(self.main_tab_widget, 0, 0, 1, 1)
 
         # Подключаем кнопку сохранения
-        self.ui.BtnSave.clicked.connect(self.main_tab_widget.save_to_db)
+        # self.ui.BtnSave.clicked.connect(self.main_tab_widget.save_to_db)
         # self.comment = self.ui.textEditComments.toPlainText()
 
 
