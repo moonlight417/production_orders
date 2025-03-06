@@ -31,6 +31,11 @@ class AddCustomerAndTaskView(APIView):
             order_invoice_date=order_date
         )
 
+        # # Обновляем счетчик новых заданий
+        # task_counter, _ = TaskCounter.objects.get_or_create(id=1)  # Предполагаем, что у нас только один счетчик
+        # task_counter.count += 1
+        # task_counter.save()
+
         return Response({
             "customer_id": customer.id,
             "task_id": task.id,
@@ -91,3 +96,63 @@ class CustomerDataView(APIView):
             return Response(data, status=200)
         except Customer.DoesNotExist:
             return Response({"error": "Заказчик не найден."}, status=404)
+
+
+class StartTaskView(APIView):
+    def post(self, request, task_id):
+        # Получаем задание
+        task = Task.objects.get(id=task_id)
+
+        # # Уменьшаем счетчик новых заданий
+        # task_counter = TaskCounter.objects.get(id=1)
+        # if task_counter.count > 0:
+        #     task_counter.count -= 1
+        #     task_counter.save()
+
+        # Логика для начала работы над заданием
+        # ...
+
+        return Response({"message": "Задание начато."}, status=status.HTTP_200_OK)
+
+# class TaskCounterView(APIView):
+#     def get(self, request):
+#         task_counter = TaskCounter.objects.get(id=1)  # Предполагаем, что у нас только один счетчик
+#         return Response({"count": task_counter.count}, status=status.HTTP_200_OK)
+
+
+class NewTasksView(APIView):
+    def get(self, request):
+        # Получаем новые задания из базы данных
+        new_tasks = Task.objects.filter(status='new')  # Предполагаем, что у вас есть поле status
+        tasks_data = []
+
+        for task in new_tasks:
+            # Получаем данные о заказчике
+            customer_name = task.customer.organization_name if task.customer else "Неизвестно"
+
+            # Получаем данные о продуктах
+            products = Product.objects.filter(task=task)
+            products_data = [{'name': product.name, 'quantity': product.quantity_in_task} for product in products]
+
+            # Формируем данные о задании
+            tasks_data.append({
+                'id': task.id,  # Добавляем ID задания
+                'invoice_number': task.invoice_number,
+                'customer_name': customer_name,
+                'order_invoice_date': task.order_invoice_date,
+                'products': products_data
+            })
+
+        return Response(tasks_data)
+
+class UpdateTaskStatusView(APIView):
+    def post(self, request, task_id):
+        try:
+            task = Task.objects.get(id=task_id)
+            task.status = 'opened'  # Изменяем статус на 'opened'
+            task.save()
+            return Response({"message": "Статус задания обновлен."}, status=status.HTTP_200_OK)
+        except Task.DoesNotExist:
+            return Response({"error": "Задание не найдено."}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

@@ -5,10 +5,13 @@ from employees.models import Employee
 class Customer(models.Model):
     organization_name = models.CharField(max_length=255)
 
+from django.db import models
+
 class Task(models.Model):
-    customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
+    invoice_number = models.CharField(max_length=100)
     order_invoice_date = models.DateField()
-    invoice_number = models.CharField(max_length=255)
+    customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
+    status = models.CharField(max_length=20, choices=[('new', 'New'), ('opened', 'Opened')], default='new')
 
 class Order(models.Model):
     product = models.ForeignKey('products.Product', on_delete=models.CASCADE)
@@ -21,4 +24,6 @@ class Order(models.Model):
 class TaskEmployee(models.Model):
     order = models.ForeignKey(Task, on_delete=models.CASCADE)
     employee = models.ForeignKey(Employee, on_delete=models.CASCADE)
+
+
 

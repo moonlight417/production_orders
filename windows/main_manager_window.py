@@ -46,29 +46,31 @@ class Ui_MainWindowManager(object):
         icon.addPixmap(QtGui.QPixmap(":/utils/icons/refresh.png"), QtGui.QIcon.Selected, QtGui.QIcon.On)
         self.BtnRefresh.setIcon(icon)
 
+        self.BtnRoleSelection = QPushButton("К выбору роли")
+
         self.right_top_panel.addWidget(self.LbCheckOrders)
         self.right_top_panel.addWidget(self.BtnRefresh)
         self.right_top_panel.addWidget(self.BtnCheckOrders)
 
+
         # Добавляем левую и правую части в верхнюю панель
         self.top_panel.addLayout(self.left_top_panel)
-        self.top_panel.addStretch()  # Отступ между левой и правой частью
+        self.top_panel.addStretch()  # Отступ между левой и центральной частью
         self.top_panel.addLayout(self.right_top_panel)
+        self.top_panel.addStretch()  # Отступ между центральной и правой частью
+        self.top_panel.addWidget(self.BtnRoleSelection)
 
         # Стек для переключаемых окон
         self.stacked_widget = QStackedWidget()
         self.stacked_widget.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
 
         # Нижняя панель с кнопкой "Назад"
-        self.bottom_panel = QHBoxLayout()
-        self.BtnRoleSelection = QPushButton("К выбору роли")
-        self.bottom_panel.addStretch()  # Добавляем отступ, чтобы кнопка была справа
-        self.bottom_panel.addWidget(self.BtnRoleSelection)
+
 
         # Добавляем все элементы в главный layout
         self.main_layout.addLayout(self.top_panel)
         self.main_layout.addWidget(self.stacked_widget)
-        self.main_layout.addLayout(self.bottom_panel)
+        # self.main_layout.addLayout(self.bottom_panel)
 
         MainWindowManager.setCentralWidget(self.centralwidget)
         self.retranslateUi(MainWindowManager)
@@ -111,18 +113,6 @@ class MainWindowManager(QtWidgets.QMainWindow):
         self.ui.stacked_widget.addWidget(self.tasks_list_window)
         self.ui.stacked_widget.addWidget(self.search_design_doc_window)
         self.ui.stacked_widget.addWidget(self.view_orders_window)
-
-        # # Создание внутренних окон
-        # self.new_task_window = self.create_new_task_window()
-        # # self.search_design_doc_window = self.create_search_design_doc_window()
-        # self.check_orders_window = self.create_check_orders()
-        # self.view_orders_window = self.create_view_orders_window()
-        #
-        # # Добавление внутренних окон в QStackedWidget
-        # self.ui.stacked_widget.addWidget(self.new_task_window)
-        # # self.ui.stacked_widget.addWidget(self.search_design_doc_window)
-        # self.ui.stacked_widget.addWidget(self.check_orders_window)
-        # self.ui.stacked_widget.addWidget(self.view_orders_window)
 
         # Устанавливаем пустое окно как текущее
         self.ui.stacked_widget.setCurrentWidget(self.empty_window)

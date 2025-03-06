@@ -1,61 +1,95 @@
-import os
-from PyQt5.QtWidgets import QDialog, QMessageBox, QLabel, QVBoxLayout, QPushButton
-from PyQt5.QtGui import QPixmap, QPainter
+# print_dialog.py
+from PyQt5.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QScrollArea, QMessageBox, QSlider
+from PyQt5.QtGui import QPixmap, QPainter, QTransform
 from PyQt5.QtPrintSupport import QPrinter, QPrintDialog
-from PyQt5.QtCore import Qt
-
+from PyQt5.QtCore import Qt, QRectF
 
 class PrintDialog(QDialog):
-    def __init__(self, image_path, parent=None):
+    def __init__(self, pixmap, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Печать чертежа")
+        self.pixmap = pixmap  # Исходное изображение
 
-        # Проверяем, существует ли файл
-        if not os.path.exists(image_path):
-            QMessageBox.warning(self, "Ошибка", "Файл не найден для печати.")
-            self.reject()  # Закрыть диалог
+        # Основной layout
+        main_layout = QVBoxLayout(self)
 
-        self.image_path = image_path
-        self.pixmap = QPixmap(self.image_path)
+        # Кнопки управления печатью
+        control_layout = QHBoxLayout()
 
-        # Убедитесь, что изображение загружено корректно
-        if self.pixmap.isNull():
-            QMessageBox.warning(self, "Ошибка", "Не удалось загрузить изображение для печати.")
-            self.reject()
+        # Кнопка поворота влево
+        self.rotate_left_button = QPushButton("↺ Повернуть влево")
+        self.rotate_left_button.clicked.connect(self.rotate_left)
+        control_layout.addWidget(self.rotate_left_button)
 
-        # Создаём элемент для отображения изображения
-        image_label = QLabel(self)
-        image_label.setPixmap(self.pixmap)
-        image_label.setAlignment(Qt.AlignCenter)
+        # Кнопка поворота вправо
+        self.rotate_right_button = QPushButton("↻ Повернуть вправо")
+        self.rotate_right_button.clicked.connect(self.rotate_right)
+        control_layout.addWidget(self.rotate_right_button)
 
-        # Добавляем кнопку для печати
-        print_button = QPushButton("Печать", self)
-        print_button.clicked.connect(self.print_image)
+        # Слайдер для масштабирования
+        self.scale_slider = QSlider(Qt.Horizontal)
+        self.scale_slider.setMinimum(50)  # 50% масштаб
+        self.scale_slider.setMaximum(200)  # 200% масштаб
+        self.scale_slider.setValue(100)  # Начальное значение 100%
+        self.scale_slider.valueChanged.connect(self.scale_image)
+        control_layout.addWidget(QLabel("Масштаб:"))
+        control_layout.addWidget(self.scale_slider)
 
-        layout = QVBoxLayout()
-        layout.addWidget(image_label)
-        layout.addWidget(print_button)
-        self.setLayout(layout)
+        main_layout.addLayout(control_layout)
+
+        # Кнопка печати
+        self.print_button = QPushButton("🖨 Печать")
+        self.print_button.clicked.connect(self.print_image)
+        main_layout.addWidget(self.print_button)
+
+        self.setLayout(main_layout)
+
+    def rotate_left(self):
+        """Поворачивает изображение на 90 градусов влево."""
+        self.current_angle -= 90
+        self.update_image()
+
+    def rotate_right(self):
+        """Поворачивает изображение на 90 градусов вправо."""
+        self.current_angle += 90
+        self.update_image()
+
+    def scale_image(self):
+        """Масштабирует изображение."""
+        self.scale_factor = self.scale_slider.value() / 100.0
+        self.update_image()
+
+    def update_image(self):
+        """Обновляет изображение с учетом поворота и масштабирования."""
+        transform = QTransform().rotate(self.current_angle)
+        scaled_pixmap = self.pixmap.scaled(
+            self.pixmap.size() * self.scale_factor,
+            Qt.KeepAspectRatio,
+            Qt.SmoothTransformation
+        )
+        self.rotated_pixmap = scaled_pixmap.transformed(transform, Qt.SmoothTransformation)
+        self.image_label.setPixmap(self.rotated_pixmap)
 
     def print_image(self):
-        """Функция для печати изображения."""
-        printer = QPrinter()
-        printer.setPageSize(QPrinter.A4)
+        """Печатает изображение с выбором принтера."""
+        printer = QPrinter(QPrinter.HighResolution)
+        print_dialog = QPrintDialog(printer, self)
 
-        # Создаём QPainter для печати
-        painter = QPainter(printer)
+        if print_dialog.exec_() == QPrintDialog.Accepted:
+            try:
+                painter = QPainter(printer)
+                if not painter.begin(printer):
+                    QMessageBox.warning(self, "Ошибка", "Не удалось подключиться к принтеру.")
+                    return
 
-        if not painter.begin(printer):
-            QMessageBox.warning(self, "Ошибка", "Не удалось подключиться к принтеру.")
-            return
+                # Масштабируем изображение под размер страницы
+                page_rect = printer.pageRect(QPrinter.DevicePixel)
+                image_rect = QRectF(self.rotated_pixmap.rect())
 
-        # Масштабируем изображение по размеру страницы
-        painter.drawPixmap(0, 0, self.pixmap.scaled(printer.pageRect().width(), printer.pageRect().height(),
-                                                    Qt.KeepAspectRatio))
-        painter.end()
+                # Рисуем изображение на принтере
+                painter.drawPixmap(page_rect, self.rotated_pixmap, image_rect)
+                painter.end()
 
-        QMessageBox.information(self, "Печать", "Чертёж отправлен на печать!")
-        self.accept()  # Закрыть диалог после печати
-
-
-
+                QMessageBox.information(self, "Успех", "Чертёж отправлен на печать!")
+            except Exception as e:
+                QMessageBox.critical(self, "Ошибка", f"Ошибка при печати: {str(e)}")

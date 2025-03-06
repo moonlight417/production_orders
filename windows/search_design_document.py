@@ -23,11 +23,11 @@ class SearchDesignDoc(QtWidgets.QMainWindow):
         self.setup_search_ui(self.page_search)
 
         #  Вторая страница: Редактор документа
-        self.page_editor = QWidget()
+        self.page_viewer = QWidget()
 
         #  Добавляем обе страницы в стек
         self.stack.addWidget(self.page_search)  # Индекс 0
-        self.stack.addWidget(self.page_editor)  # Индекс 1
+        self.stack.addWidget(self.page_viewer)  # Индекс 1
 
         #  Переключаемся на страницу поиска при запуске
         self.stack.setCurrentIndex(0)
@@ -101,7 +101,7 @@ class SearchDesignDoc(QtWidgets.QMainWindow):
         try:
             documents = MainDocument.objects.filter(main_name__icontains=document_main_name)
             if documents.exists():
-                data = [{"id": doc.id, "name": doc.main_name, "comment": doc.comment} for doc in documents]
+                data = [{"id": doc.id, "name": doc.main_name} for doc in documents]
                 self.update_document_list(data)
             else:
                 QMessageBox.information(self, "Результат", "Документ не найден.")
@@ -121,12 +121,12 @@ class SearchDesignDoc(QtWidgets.QMainWindow):
         for document in reversed(documents):
             document_frame = QFrame()
             document_layout = QVBoxLayout(document_frame)
-            document_info = QLabel(f"Документ: {document['name']} / Комментарий: {document['comment']}")
+            document_info = QLabel(f"Документ: {document['name']}")
             document_layout.addWidget(document_info)
 
-            edit_button = QPushButton("Открыть")
-            edit_button.clicked.connect(partial(self.open_document_editor, document['id']))  # ✅ Используем partial
-            document_layout.addWidget(edit_button)
+            view_button = QPushButton("Открыть")
+            view_button.clicked.connect(partial(self.open_document_viewer, document['id']))  # ✅ Используем partial
+            document_layout.addWidget(view_button)
 
             self.layoutTask.addWidget(document_frame)
 
@@ -134,24 +134,24 @@ class SearchDesignDoc(QtWidgets.QMainWindow):
         self.empty_placeholder.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.layoutTask.addWidget(self.empty_placeholder)
 
-    def open_document_editor(self, doc_id):
+    def open_document_viewer(self, doc_id):
         """Открывает редактор документа в QStackedWidget."""
         print(f"📂 Открываем редактор документа с ID: {doc_id}")
 
         # ✅ Проверяем, есть ли уже `DocumentEditor`
-        if hasattr(self, "editor") and self.editor:
-            self.editor.deleteLater()  # Удаляем предыдущий редактор
-            print("🗑️ Удаляем предыдущий экземпляр DocumentEditor")
+        if hasattr(self, "viewer") and self.viewer:
+            self.viewer.deleteLater()  # Удаляем предыдущий редактор
+            print("🗑️ Удаляем предыдущий экземпляр DocumentViewer")
 
         # ✅ Создаём новый экземпляр DocumentEditor
-        self.editor = DocumentViewer(doc_id, self)
-        if not self.page_editor.layout():
-            self.page_editor.setLayout(QVBoxLayout())
+        self.viewer = DocumentViewer(doc_id, self)
+        if not self.page_viewer.layout():
+            self.page_viewer.setLayout(QVBoxLayout())
 
-        self.page_editor.layout().addWidget(self.editor)
+        self.page_viewer.layout().addWidget(self.viewer)
 
         # ✅ Переключаемся на страницу редактора
-        self.stack.setCurrentWidget(self.page_editor)
+        self.stack.setCurrentWidget(self.page_viewer)
 
     def go_back_to_search(self):
         """Возвращает на страницу поиска."""

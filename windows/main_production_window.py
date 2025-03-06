@@ -1,3 +1,11 @@
+import os
+import django
+from django.core.exceptions import ImproperlyConfigured
+
+# Указываем путь к настройкам Django
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'base.settings')  # Замените 'base.settings' на путь к вашим настройкам Django
+django.setup()
+
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import QMessageBox, QStackedWidget, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton
 from task_filling import TaskFilling
@@ -21,12 +29,12 @@ class Ui_MainWindowProduction(object):
 
         # Левая часть верхней панели (основные кнопки)
         self.left_top_panel = QHBoxLayout()
-        # self.BtnViewTasks = QtWidgets.QPushButton("Задания")
+        self.BtnViewTasks = QtWidgets.QPushButton("Задания")
         self.BtnOrderBase = QtWidgets.QPushButton("База заказов")
         self.BtnDrowingArchive = QtWidgets.QPushButton("Архив КД")
         # self.BtnAddNewDesignDoc = QtWidgets.QPushButton("Новый КД")
 
-        # self.left_top_panel.addWidget(self.BtnViewTasks)
+        self.left_top_panel.addWidget(self.BtnViewTasks)
         self.left_top_panel.addWidget(self.BtnOrderBase)
         self.left_top_panel.addWidget(self.BtnDrowingArchive)
         # self.left_top_panel.addWidget(self.BtnAddNewDesignDoc)
@@ -45,6 +53,7 @@ class Ui_MainWindowProduction(object):
         icon = QtGui.QIcon()
         icon.addPixmap(QtGui.QPixmap(":/utils/icons/refresh.png"), QtGui.QIcon.Selected, QtGui.QIcon.On)
         self.BtnRefresh.setIcon(icon)
+        self.BtnRoleSelection = QPushButton("К выбору роли")
 
         self.right_top_panel.addWidget(self.LbCheckOrders)
         self.right_top_panel.addWidget(self.BtnRefresh)
@@ -52,23 +61,30 @@ class Ui_MainWindowProduction(object):
 
         # Добавляем левую и правую части в верхнюю панель
         self.top_panel.addLayout(self.left_top_panel)
-        self.top_panel.addStretch()  # Отступ между левой и правой частью
+        self.top_panel.addStretch()  # Отступ между левой и центральной частью
         self.top_panel.addLayout(self.right_top_panel)
+        self.top_panel.addStretch()  # Отступ между центральной и правой частью
+        self.top_panel.addWidget(self.BtnRoleSelection)
+
+        # # Добавляем левую и правую части в верхнюю панель
+        # self.top_panel.addLayout(self.left_top_panel)
+        # self.top_panel.addStretch()  # Отступ между левой и правой частью
+        # self.top_panel.addLayout(self.right_top_panel)
 
         # Стек для переключаемых окон
         self.stacked_widget = QStackedWidget()
         self.stacked_widget.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
 
-        # Нижняя панель с кнопкой "Назад"
-        self.bottom_panel = QHBoxLayout()
-        self.BtnRoleSelection = QPushButton("К выбору роли")
-        self.bottom_panel.addStretch()  # Добавляем отступ, чтобы кнопка была справа
-        self.bottom_panel.addWidget(self.BtnRoleSelection)
+        # # Нижняя панель с кнопкой "Назад"
+        # self.bottom_panel = QHBoxLayout()
+        # # self.BtnRoleSelection = QPushButton("К выбору роли")
+        # self.bottom_panel.addStretch()  # Добавляем отступ, чтобы кнопка была справа
+        # self.bottom_panel.addWidget(self.BtnRoleSelection)
 
         # Добавляем все элементы в главный layout
         self.main_layout.addLayout(self.top_panel)
         self.main_layout.addWidget(self.stacked_widget)
-        self.main_layout.addLayout(self.bottom_panel)
+        # self.main_layout.addLayout(self.bottom_panel)
 
         MainWindowProduction.setCentralWidget(self.centralwidget)
         self.retranslateUi(MainWindowProduction)
@@ -85,8 +101,7 @@ class MainWindowProduction(QtWidgets.QMainWindow):
         self.ui.setupUi(self)
 
         # Подключение кнопок к методам
-        # self.ui.BtnAddNewDesignDoc.clicked.connect(lambda: self.switch_window(self.design_document_filling_window))
-        # self.ui.BtnViewTasks.clicked.connect(lambda: self.switch_window(self.tasks_list_window))
+        self.ui.BtnViewTasks.clicked.connect(lambda: self.switch_window(self.tasks_list_window))
         self.ui.BtnRoleSelection.clicked.connect(self.back_role_selection)
         self.ui.BtnDrowingArchive.clicked.connect(lambda: self.switch_window(self.search_design_doc_window))
         self.ui.BtnCheckOrders.clicked.connect(lambda: self.switch_window(self.new_orders_list_window))
@@ -98,7 +113,6 @@ class MainWindowProduction(QtWidgets.QMainWindow):
 
         # Создание экземпляров окон
         self.empty_window = QWidget()
-        self.design_document_filling_window = DesignDocumentFillingForm(parent=None)
         self.tasks_list_window = TasksList()
         self.search_design_doc_window = SearchDesignDoc(parent=None)
         self.new_orders_list_window = NewOrders(parent=None)
@@ -110,7 +124,6 @@ class MainWindowProduction(QtWidgets.QMainWindow):
 
         # Добавление окон в QStackedWidget
         self.ui.stacked_widget.addWidget(self.empty_window)
-        self.ui.stacked_widget.addWidget(self.design_document_filling_window)
         self.ui.stacked_widget.addWidget(self.tasks_list_window)
         self.ui.stacked_widget.addWidget(self.search_design_doc_window)
         self.ui.stacked_widget.addWidget(self.check_orders_window)
@@ -124,15 +137,6 @@ class MainWindowProduction(QtWidgets.QMainWindow):
     def switch_window(self, window):
         """Переключение на указанное окно"""
         self.ui.stacked_widget.setCurrentWidget(window)
-
-
-    # def design_document_filling_window(self):
-    #     """Создание окна 'Новый КД'"""
-    #     window = QWidget()
-    #     layout = QVBoxLayout(window)
-    #     label = QLabel("Окно: Новый КД")
-    #     layout.addWidget(label)
-    #     return window
 
     def create_tasks_list_window(self):
         """Создание окна 'Список заданий'"""

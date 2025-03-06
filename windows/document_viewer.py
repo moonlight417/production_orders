@@ -1,217 +1,237 @@
+# document_viewer.py
 import os
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QTextEdit, QMessageBox, QDialog, \
-    QScrollArea, QLayout, QSpacerItem, QSizePolicy
-from PyQt5.QtGui import QPixmap, QCursor
-from PyQt5.QtCore import Qt
-from print_dialog import PrintDialog
 
-from products.models import DrawingSheet, MainDocument
-import os
+from PyQt5.QtPrintSupport import QPrinter, QPrintDialog
 from PyQt5.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QTextEdit, QMessageBox, QDialog, QScrollArea, QFrame
+    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QTextEdit, QMessageBox, QDialog,
+    QScrollArea, QFrame, QSlider, QSpacerItem, QSizePolicy
 )
-from PyQt5.QtGui import QPixmap, QCursor
-from PyQt5.QtCore import Qt
-from print_dialog import PrintDialog
+from PyQt5.QtGui import QPixmap, QCursor, QPainter, QTransform
+from PyQt5.QtCore import Qt, QRectF
 from products.models import DrawingSheet, MainDocument, Drawing, Tag
-
-
-class ZoomedDrawingWindow(QDialog):
-    """Окно для отображения увеличенной версии чертежа с прокруткой."""
-
-    def __init__(self, pixmap, parent=None):
-        super().__init__(parent)
-        self.setWindowTitle("🔍 Увеличенный чертёж")
-        self.setFixedSize(800, 800)  # Увеличенный размер окна
-        self.setWindowFlags(Qt.Window)
-
-        # Создаём QScrollArea для добавления прокрутки
-        scroll_area = QScrollArea(self)
-        scroll_area.setWidgetResizable(True)  # Разрешаем изменение размера области прокрутки
-        layout = QVBoxLayout(self)
-        layout.addWidget(scroll_area)
-
-        # Создаём QLabel для отображения изображения
-        self.image_label = QLabel(self)
-        self.image_label.setPixmap(pixmap)
-        self.image_label.setAlignment(Qt.AlignCenter)
-
-        # Устанавливаем QLabel в качестве содержимого для QScrollArea
-        scroll_area.setWidget(self.image_label)
+from print_dialog import PrintDialog  # Импортируем класс PrintDialog из другого файла
+# from windows.design_edit.design_document_edit_form import DesignDocumentEditForm
 
 class DocumentViewer(QWidget):
-    """Редактирование конструкторского документа с увеличением чертежа."""
+    """Редактирование конструкторского документа с функциями поворота, масштабирования и печати чертежа."""
 
     def __init__(self, doc_id, parent=None):
         super().__init__(parent)
         self.doc_id = doc_id
         self.parent = parent  # Сохраняем родительский `QStackedWidget`
-        self.setWindowTitle(f"Редактирование документа (ID: {self.doc_id})")
+        self.setWindowTitle(f"Просмотр документа (ID: {self.doc_id})")
 
         # 📄 Загружаем документ из базы
         try:
             self.document = MainDocument.objects.get(id=self.doc_id)
         except MainDocument.DoesNotExist:
             QMessageBox.critical(self, "Ошибка", f"Документ с ID {self.doc_id} не найден!")
+            self.close()  # Закрываем виджет, если документ не найден
             return
 
         # 🏗️ Основной layout
         main_layout = QHBoxLayout(self)
 
         # 📂 Левая часть (Чертёж)
-        self.left_layout = QVBoxLayout()  # ✅ Теперь `left_layout` сохранён в `self`
+        self.left_layout = QVBoxLayout()
 
-        # Заголовок документа
-        self.label = QLabel(f"<b>Документ:</b> {self.document.main_name}")
-        self.label.setContentsMargins(0, 0, 0, 0)  # Убираем внешние отступы
-        self.label.setStyleSheet("margin: 0px; padding: 0px; font-size: 14pt;")  # Убираем внутренние отступы
-        self.label.setFixedHeight(30)  # Фиксированная высота, чтобы не растягивался
-        self.left_layout.addWidget(self.label)
+        # Область прокрутки для чертежа
+        self.scroll_area = QScrollArea()
+        self.scroll_area.setWidgetResizable(True)
+        self.image_widget = QWidget()
+        self.image_layout = QVBoxLayout(self.image_widget)
+        self.image_layout.setAlignment(Qt.AlignCenter)
 
         # Поле для отображения чертежа
         self.drawing_label = QLabel("📂 Чертёж отсутствует")
         self.drawing_label.setMouseTracking(True)  # Разрешаем отслеживание движения мыши
         self.drawing_label.setCursor(QCursor(Qt.PointingHandCursor))  # Меняем курсор на лупу
-        self.left_layout.addWidget(self.drawing_label)
+        self.image_layout.addWidget(self.drawing_label)
+        self.scroll_area.setWidget(self.image_widget)
+        self.left_layout.addWidget(self.scroll_area)
 
-        button_layout = QHBoxLayout()
+        # Элементы управления
+        control_layout = QHBoxLayout()
 
-        # Загружаем чертёж
-        self.current_image_path = self.load_drawing_image()
+        # Кнопка "↺ Повернуть влево"
+        self.rotate_left_button = QPushButton("↺")
+        self.rotate_left_button.clicked.connect(self.rotate_left)
+        control_layout.addWidget(self.rotate_left_button)
 
-        # Кнопка "🔍 Увеличить"
-        self.zoom_button = QPushButton("🔍 Увеличить чертёж")
-        self.zoom_button.clicked.connect(self.open_zoomed_window)
-        button_layout.addWidget(self.zoom_button)
+        # Кнопка "↻ Повернуть вправо"
+        self.rotate_right_button = QPushButton("↻")
+        self.rotate_right_button.clicked.connect(self.rotate_right)
+        control_layout.addWidget(self.rotate_right_button)
 
-        # Кнопка "Печать"
+        # Слайдер для масштабирования
+        self.scale_slider = QSlider(Qt.Horizontal)
+        self.scale_slider.setMinimum(50)  # 50% масштаб
+        self.scale_slider.setMaximum(200)  # 200% масштаб
+        self.scale_slider.setValue(100)  # Начальное значение 100%
+        self.scale_slider.valueChanged.connect(self.scale_image)
+        control_layout.addWidget(QLabel("Масштаб:"))
+        control_layout.addWidget(self.scale_slider)
+
+        # # Кнопка "Редактировать"
+        # self.edit_button = QPushButton("Редактировать")
+        # self.edit_button.clicked.connect(self.open_edit_window)
+        # control_layout.addWidget(self.edit_button)
+
+        # Кнопка печати
         self.print_button = QPushButton("🖨 Печать")
-        self.print_button.clicked.connect(self.open_printer_window)
-        button_layout.addWidget(self.print_button)
+        self.print_button.clicked.connect(self.print_image)
+        control_layout.addWidget(self.print_button)
 
-        # # Поле для комментария
-        # self.comment_edit = QTextEdit()
-        # self.comment_edit.setText(self.document.comment or "")
-        # left_layout.addWidget(self.comment_edit)
+        # Кнопка удаления
+        self.delete_button = QPushButton("Удалить")
+        self.delete_button.clicked.connect(self.delete_document)
+        control_layout.addWidget(self.delete_button)
 
-        # Кнопки "Сохранить" и "Назад"
-
-        self.edit_button = QPushButton("Редактировать")
-        # self.edit_button.clicked.connect(self.save_document)
-        button_layout.addWidget(self.edit_button)
-
-        self.back_button = QPushButton("Назад")  # 🔹 Кнопка возврата
+        # Кнопка возврата
+        self.back_button = QPushButton("Назад")
         self.back_button.clicked.connect(self.go_back)
-        button_layout.addWidget(self.back_button)
+        control_layout.addWidget(self.back_button)
 
-        self.left_layout.addLayout(button_layout)
+        self.left_layout.addLayout(control_layout)
         main_layout.addLayout(self.left_layout, stretch=2)  # Левая часть занимает 2/3 экрана
 
         # 📜 Правая часть (Данные документа)
-        self.scroll_area = QScrollArea()
-        self.scroll_area.setWidgetResizable(True)
-        self.scroll_content = QWidget()
-        self.scroll_layout = QVBoxLayout(self.scroll_content)
+        self.right_layout = QVBoxLayout()
+
+        self.scroll_area_info = QScrollArea()
+        self.scroll_area_info.setWidgetResizable(True)
+        self.scroll_content_info = QWidget()
+        self.scroll_layout_info = QVBoxLayout(self.scroll_content_info)
 
         # Загружаем данные документа
         self.load_document_data()
 
-        self.scroll_area.setWidget(self.scroll_content)
-        main_layout.addWidget(self.scroll_area, stretch=1)  # Правая часть занимает 1/3 экрана
+        self.scroll_area_info.setWidget(self.scroll_content_info)
+        self.right_layout.addWidget(self.scroll_area_info)
+
+        main_layout.addLayout(self.right_layout, stretch=1)  # Правая часть занимает 1/3 экрана
 
         self.setLayout(main_layout)
 
-    from PyQt5.QtWidgets import QLayout  # Убедитесь, что импортировали QLayout
+        # Инициализация переменных для управления изображением
+        self.current_image_path = self.load_drawing_image()
+        self.pixmap = QPixmap(self.current_image_path) if self.current_image_path else QPixmap()
+        self.angle = 0
+        self.scale_factor = 1.0
+
+        # Обновляем изображение
+        self.update_image()
 
     def load_drawing_image(self):
-        """Загружает чертёж из базы и отображает его."""
+        """Загружает чертёж из базы и возвращает путь к файлу."""
         try:
-            # 🔍 Загружаем чертёж, фильтруя по актуальности
-            drawing_sheet = DrawingSheet.objects.filter(drawing__main_document=self.document, is_actual=True).first()
+            # Получаем корневую директорию проекта
+            base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-            # Проверка наличия листа чертежа и файла
+            # Загружаем актуальный чертёж
+            drawing_sheet = DrawingSheet.objects.filter(
+                drawing__main_document=self.document,
+                is_actual=True
+            ).first()
+
             if drawing_sheet and drawing_sheet.file:
-                # Новая логика с обновленным путем
-                file_path = os.path.join("F:/AS_Folder/production_orders/windows/design_filling",
-                                         drawing_sheet.file.name)
+                # Формируем абсолютный путь к файлу
+                file_path = os.path.join(base_dir, drawing_sheet.file.name)
+                print(f"🔄 Проверка пути к файлу: {file_path}")
 
-                # Проверим путь и выведем его для отладки
-                print(f"📂 Загружаем чертёж из: {file_path}")
-
-                # Убедитесь, что файл существует по новому пути
                 if os.path.exists(file_path):
-                    print("✅ Файл найден, пробуем загрузить в QPixmap")
-                    self.pixmap = QPixmap(file_path)
-
-                    if not self.pixmap.isNull():
-                        print("✅ Чертёж успешно загружен в QPixmap")
-                        self.drawing_label.setPixmap(self.pixmap.scaled(600, 600, Qt.KeepAspectRatio))
-                        self.current_image_path = file_path  # Обновляем путь к файлу
-                        print(f"🔄 Путь к изображению для печати: {self.current_image_path}")
-                    else:
-                        print("❌ Ошибка: QPixmap вернул пустое изображение")
-                        self.drawing_label.setText("⚠️ Ошибка загрузки изображения")
+                    print("✅ Изображение успешно загружено")
+                    return file_path
                 else:
-                    print(f"❌ Ошибка: Файл не найден по пути: {file_path}")
-                    self.drawing_label.setText("❌ Файл не найден")
+                    print(f"❌ Файл не найден: {file_path}")
             else:
-                print("❌ Ошибка: Чертёж отсутствует или неактуален")
-                self.drawing_label.setText("📂 Чертёж отсутствует")
+                print("❌ Нет актуального чертежа")
         except Exception as e:
-            print(f"❌ Ошибка загрузки чертежа: {e}")
-            self.drawing_label.setText("❌ Ошибка загрузки чертежа")
-
+            print(f"❌ Ошибка при загрузке: {str(e)}")
         return None
 
     def load_document_data(self):
         """Загружает и отображает данные документа в правой части (QScrollArea)."""
-        self.scroll_layout.setAlignment(Qt.AlignTop)
+        self.scroll_layout_info.setAlignment(Qt.AlignTop)
 
         # 📌 Основная информация
-        self.scroll_layout.addWidget(QLabel("<b>Информация о документе:</b>"))
-        self.scroll_layout.addWidget(QLabel(f"📄 Название: {self.document.main_name}"))
-        self.scroll_layout.addWidget(QLabel(f"🗒 Комментарий: {self.document.comment or '—'}"))
+        self.scroll_layout_info.addWidget(QLabel("<b>Информация о документе:</b>"))
+        self.scroll_layout_info.addWidget(QLabel(f"📄 Название: {self.document.main_name}"))
+        self.scroll_layout_info.addWidget(QLabel(f"🗒 Комментарий: {self.document.comment or '—'}"))
 
         # 🔖 Теги
         tags = self.document.tags.all()
         tag_names = ", ".join(tag.name for tag in tags) if tags else "—"
-        self.scroll_layout.addWidget(QLabel(f"🏷️ Теги: {tag_names}"))
+        self.scroll_layout_info.addWidget(QLabel(f"🏷️ Теги: {tag_names}"))
 
         # 📜 Загружаем иерархию родитель-потомок
         self.load_hierarchy()
 
         spacer = QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding)
-        self.scroll_layout.addItem(spacer)
+        self.scroll_layout_info.addItem(spacer)
 
-       #  # Поле для комментария
-       #  self.comment_edit = QTextEdit()
-       #  self.comment_edit.setMaximumHeight(50)
-       #  self.comment_edit.setText(f"🗒 Комментарий: {self.document.comment or ""}")
-       #  self.scroll_layout.addWidget(self.comment_edit)
-       #
-       # # Поле для тегов
-       #  self.tag_edit = QTextEdit()
-       #  self.tag_edit.setMaximumHeight(50)
-       #  self.tag_edit.setText(f"🏷️ Теги: {tag_names}")
-       #  self.scroll_layout.addWidget(self.tag_edit)
+    def zoom_image(self):
+        """Увеличивает изображение на 10%."""
+        self.scale_factor += 0.1
+        self.update_image()
 
-        # 🔁 Обновляем макет
-        self.scroll_content.setLayout(self.scroll_layout)
+    def rotate_left(self):
+        """Поворачивает изображение на 90 градусов влево."""
+        self.angle -= 90
+        self.update_image()
 
-    def open_zoomed_window(self):
-        """Открывает окно с увеличенным чертежом."""
-        if not hasattr(self, 'pixmap') or self.pixmap.isNull():
-            QMessageBox.warning(self, "Ошибка", "Нет изображения для увеличения.")
-            return
+    def rotate_right(self):
+        """Поворачивает изображение на 90 градусов вправо."""
+        self.angle += 90
+        self.update_image()
 
-        zoomed_window = ZoomedDrawingWindow(self.pixmap, self)
-        zoomed_window.exec_()
+    def scale_image(self, value):
+        """Масштабирует изображение в соответствии со значением слайдера."""
+        self.scale_factor = value / 100.0
+        self.update_image()
+
+    def update_image(self):
+        """Обновляет изображение с учетом поворота и масштабирования."""
+        if not self.pixmap.isNull():
+            transform = QTransform().rotate(self.angle)
+            scaled_pixmap = self.pixmap.scaled(
+                self.pixmap.size() * self.scale_factor,
+                Qt.KeepAspectRatio,
+                Qt.SmoothTransformation
+            )
+            rotated_pixmap = scaled_pixmap.transformed(transform, Qt.SmoothTransformation)
+            self.drawing_label.setPixmap(rotated_pixmap)
+
+    def print_image(self):
+        """Печатает изображение с выбором принтера."""
+        if not self.pixmap.isNull():
+            printer = QPrinter(QPrinter.HighResolution)
+            print_dialog = QPrintDialog(printer, self)
+
+            if print_dialog.exec_() == QPrintDialog.Accepted:
+                try:
+                    painter = QPainter(printer)
+                    if not painter.isActive():
+                        QMessageBox.warning(self, "Ошибка", "Не удалось подключиться к принтеру.")
+                        return
+
+                    # Масштабируем изображение под размер страницы
+                    page_rect = printer.pageRect(QPrinter.DevicePixel)
+                    image_rect = QRectF(self.pixmap.rect())
+
+                    # Рисуем изображение на принтере
+                    painter.drawPixmap(page_rect, self.pixmap, image_rect)
+                    painter.end()
+
+                    QMessageBox.information(self, "Успех", "Чертёж отправлен на печать!")
+                except Exception as e:
+                    QMessageBox.critical(self, "Ошибка", f"Ошибка при печати: {str(e)}")
+        else:
+            QMessageBox.warning(self, "Ошибка", "Нет изображения для печати.")
 
     def load_hierarchy(self):
         """Загружает иерархию документов, добавляя кнопки с отступами для родительских и дочерних чертежей."""
-        self.scroll_layout.setAlignment(Qt.AlignTop)
-
-        self.scroll_layout.addWidget(QLabel("<b>Иерархия чертежей:</b>"))
+        self.scroll_layout_info.addWidget(QLabel("<b>Иерархия чертежей:</b>"))
 
         # 🔍 Получаем ВСЕ корневые чертежи (без родителя)
         root_drawings = Drawing.objects.filter(main_document=self.document, parent=None)
@@ -246,7 +266,7 @@ class DocumentViewer(QWidget):
         elif color == "red":
             button.setStyleSheet(f"background-color: #FFC0CB; color: black; padding-left: {level * 20}px;")
 
-        self.scroll_layout.addWidget(button)
+        self.scroll_layout_info.addWidget(button)
 
         # 🔽 Добавляем дочерние чертежи с увеличенным уровнем отступа
         child_drawings = Drawing.objects.filter(parent=drawing)
@@ -255,15 +275,15 @@ class DocumentViewer(QWidget):
 
     def load_new_drawing(self, drawing):
         """Загружает новый чертёж в левую часть экрана."""
-        self.label.setText(f"<b>Документ:</b> {drawing.doc_name}")
-
         drawing_sheet = DrawingSheet.objects.filter(drawing=drawing, is_actual=True).first()
         if drawing_sheet and drawing_sheet.file:
-            file_path = os.path.join("F:/AS_Folder/production_orders/windows/design_filling", drawing_sheet.file.name)
+            # Получаем корневую директорию проекта
+            base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+            file_path = os.path.join(base_dir, drawing_sheet.file.name)
             if os.path.exists(file_path):
                 self.pixmap = QPixmap(file_path)
                 if not self.pixmap.isNull():
-                    self.drawing_label.setPixmap(self.pixmap.scaled(600, 600, Qt.KeepAspectRatio))
+                    self.update_image()  # Обновляем изображение с новым pixmap
                 else:
                     self.drawing_label.setText("⚠️ Ошибка загрузки изображения")
             else:
@@ -271,61 +291,46 @@ class DocumentViewer(QWidget):
         else:
             self.drawing_label.setText("📂 Чертёж отсутствует")
 
-    def load_new_document(self, doc_id):
-        """Переключает текущий документ и загружает новый чертёж."""
-        print(f"🔄 Загружаем новый документ ID: {doc_id}")
+    # def open_edit_window(self):
+    #     self.edit_window = EditDocumentWindow(self.doc_id, self)
+    #     self.edit_window.show()
 
+    def update_document_data(self):
+        """Перезагружает данные документа после редактирования"""
+        self.document.refresh_from_db()
+        self.current_image_path = self.load_drawing_image()
+        self.pixmap = QPixmap(self.current_image_path) if self.current_image_path else QPixmap()
+        self.update_image()
+
+        # Очищаем и перезагружаем информацию
+        while self.scroll_layout_info.count():
+            item = self.scroll_layout_info.takeAt(0)
+            if item.widget():
+                item.widget().deleteLater()
+        self.load_document_data()
+
+    def save_document(self):
+        """Сохраняет изменения в документе."""
         try:
-            self.document = MainDocument.objects.get(id=doc_id)
-            self.label.setText(f"<b>Документ:</b> {self.document.main_name}")
+            self.document.comment = self.comment_edit.toPlainText()
+            self.document.save()
+            QMessageBox.information(self, "Успех", "Комментарий обновлён!")
+            self.go_back()
+        except Exception as e:
+            QMessageBox.critical(self, "Ошибка", f"Не удалось сохранить документ: {e}")
 
-            # ✅ Загружаем чертёж и обновляем иерархию
-            self.load_drawing_image()
-            self.load_hierarchy()
-
-            print(f"✅ Документ {self.document.main_name} загружен!")
-
-        except MainDocument.DoesNotExist:
-            QMessageBox.critical(self, "Ошибка", f"Документ с ID {doc_id} не найден!")
-            print(f"❌ Документ с ID {doc_id} не найден!")
-
-    def open_printer_window(self):
-        """Открывает окно печати чертежа."""
-        print(f"🔄 Текущий путь к изображению перед печатью: {self.current_image_path}")
-
-        if not self.current_image_path:
-            QMessageBox.warning(self, "Ошибка", "Нет изображения для печати.")
-            print("❌ Нет изображения для печати (путь не задан).")
-            return
-
-        # Дополнительная проверка существования файла
-        if not os.path.exists(self.current_image_path):
-            QMessageBox.warning(self, "Ошибка", "Файл не найден для печати.")
-            print(f"❌ Файл не найден для печати по пути: {self.current_image_path}")
-            return
-
-        # Если путь к файлу существует, то открываем окно печати
-        print(f"✅ Печать будет выполняться для файла: {self.current_image_path}")
-        self.printer_window = PrintDialog(self.current_image_path)
-        self.printer_window.exec_()
-
-    def open_edit_window(self,id):
-        pass
-
-    # def save_document(self):
-    #     """Сохраняет изменения в документе."""
-    #     try:
-    #         self.document.comment = self.comment_edit.toPlainText()
-    #         self.document.save()
-    #         QMessageBox.information(self, "Успех", "Комментарий обновлён!")
-    #         self.go_back()
-    #     except Exception as e:
-    #         QMessageBox.critical(self, "Ошибка", f"Не удалось сохранить документ: {e}")
+    def delete_document(self):
+        """Удаляет текущий документ из базы данных."""
+        reply = QMessageBox.question(self, "Подтверждение", "Вы уверены, что хотите удалить этот документ?",
+                                     QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+        if reply == QMessageBox.Yes:
+            try:
+                self.document.delete()
+                QMessageBox.information(self, "Успех", "Документ успешно удален!")
+                self.close()
+            except Exception as e:
+                QMessageBox.critical(self, "Ошибка", f"Ошибка при удалении документа: {str(e)}")
 
     def go_back(self):
         """🏳 Переключает `QStackedWidget` обратно на поиск документов."""
         self.parent.go_back_to_search()
-
-
-
-
