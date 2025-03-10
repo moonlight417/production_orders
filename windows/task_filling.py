@@ -373,6 +373,9 @@ class TaskFilling(QtWidgets.QMainWindow):
                 json=customer_and_task_data
             )
             if response.status_code == 201:
+                # # Обновляем счетчик новых заданий на интерфейсе инженера
+                # self.engineer_interface.update_new_tasks_count()  # Предположим, у вас есть ссылка на интерфейс инженера
+
                 task_id = response.json().get("task_id")
                 if not task_id:
                     QtWidgets.QMessageBox.warning(self, "Ошибка", "Не удалось получить ID задания.")
@@ -452,6 +455,8 @@ class TaskFilling(QtWidgets.QMainWindow):
         self.empty_placeholder = QtWidgets.QWidget()
         self.empty_placeholder.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
         self.ui.layoutProducts.addWidget(self.empty_placeholder)  # Добавляем заполнитель в конец layout
+
+
 
 
 if __name__ == "__main__":

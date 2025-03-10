@@ -114,18 +114,6 @@ class MainWindowManager(QtWidgets.QMainWindow):
         self.ui.stacked_widget.addWidget(self.search_design_doc_window)
         self.ui.stacked_widget.addWidget(self.view_orders_window)
 
-        # # Создание внутренних окон
-        # self.new_task_window = self.create_new_task_window()
-        # # self.search_design_doc_window = self.create_search_design_doc_window()
-        # self.check_orders_window = self.create_check_orders()
-        # self.view_orders_window = self.create_view_orders_window()
-        #
-        # # Добавление внутренних окон в QStackedWidget
-        # self.ui.stacked_widget.addWidget(self.new_task_window)
-        # # self.ui.stacked_widget.addWidget(self.search_design_doc_window)
-        # self.ui.stacked_widget.addWidget(self.check_orders_window)
-        # self.ui.stacked_widget.addWidget(self.view_orders_window)
-
         # Устанавливаем пустое окно как текущее
         self.ui.stacked_widget.setCurrentWidget(self.empty_window)
 

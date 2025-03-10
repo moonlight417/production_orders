@@ -39,13 +39,13 @@ class Ui_TasksList(object):
         self.BtnSearchCustomer.setIcon(icon)
         header_layout.addWidget(self.BtnSearchCustomer)
 
-        self.lineEditSearchProductName = QtWidgets.QLineEdit(self.frame_3)
-        self.lineEditSearchProductName.setPlaceholderText("Введите наименование изделия")
-        header_layout.addWidget(self.lineEditSearchProductName)
-
-        self.BtnSearchProductName = QtWidgets.QPushButton(self.frame_3)
-        self.BtnSearchProductName.setIcon(icon)
-        header_layout.addWidget(self.BtnSearchProductName)
+        # self.lineEditSearchProductName = QtWidgets.QLineEdit(self.frame_3)
+        # self.lineEditSearchProductName.setPlaceholderText("Введите наименование изделия")
+        # header_layout.addWidget(self.lineEditSearchProductName)
+        #
+        # self.BtnSearchProductName = QtWidgets.QPushButton(self.frame_3)
+        # self.BtnSearchProductName.setIcon(icon)
+        # header_layout.addWidget(self.BtnSearchProductName)
 
         self.checkBoxPeriodOn = QtWidgets.QCheckBox("В период от", self.frame_3)
         header_layout.addWidget(self.checkBoxPeriodOn)
@@ -121,9 +121,9 @@ class Ui_TasksList(object):
         _translate = QtCore.QCoreApplication.translate
         TasksList.setWindowTitle(_translate("TasksList", "Список заданий"))
         self.lineEditSearchCustomer.setPlaceholderText(_translate("TasksList", "Введите название фирмы заказчика"))
-        self.lineEditSearchProductName.setPlaceholderText(_translate("TasksList", "Введите наименование изделия"))
+        # self.lineEditSearchProductName.setPlaceholderText(_translate("TasksList", "Введите наименование изделия"))
         self.BtnSearchCustomer.setToolTip(_translate("TasksList", "Искать задания по названию фирмы заказчика"))
-        self.BtnSearchProductName.setToolTip(_translate("TasksList", "Искать задания по наименованию изделия"))
+        # self.BtnSearchProductName.setToolTip(_translate("TasksList", "Искать задания по наименованию изделия"))
         self.checkBoxPeriodOn.setText(_translate("TasksList", "В период от"))
         self.label_7.setText(_translate("TasksList", "по"))
 
@@ -165,7 +165,7 @@ class TasksList(QtWidgets.QMainWindow):
         completer.popup().setFont(font)  # Применяем шрифт к выпадающему списку
 
         # Устанавливаем completer для lineEditSearchProductName
-        self.ui.lineEditSearchProductName.setCompleter(completer)
+        # self.ui.lineEditSearchProductName.setCompleter(completer)
 
 
 

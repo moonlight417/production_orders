@@ -45,20 +45,9 @@ class NewTasks(QMainWindow):
         # Подключаем обработчик нажатия на кнопку
         self.ui.pushButton_new_task.clicked.connect(self.open_new_window)
 
-    # def open_new_window(self):
-    #     """Метод для открытия нового окна"""
-    #     self.parent.switch_window(self.parent.order_dev_window)  # Переключаемся на OrderDev
 
     def open_new_window(self):
         """Метод для открытия нового окна"""
-        # Пример данных о задании, которые можно получить из базы данных
-        task_data = {
-            'invoice_number': '143',
-            'customer_name': 'ООО "Белагро Бел"',
-            'order_invoice_date': '26.07.2024'
-        }
-        # self.new_window = OrderDev(task_data)  # Передаем данные о задании
-        # self.new_window.show()  # Показываем новое окно
         self.parent.switch_window(self.parent.order_dev_window)  # Переключаемся на OrderDev
 
 if __name__ == "__main__":
