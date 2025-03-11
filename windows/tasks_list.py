@@ -33,11 +33,14 @@ class Ui_TasksList(object):
         self.lineEditSearchCustomer.setPlaceholderText("Введите название фирмы заказчика")
         header_layout.addWidget(self.lineEditSearchCustomer)
 
-        self.BtnSearchCustomer = QtWidgets.QPushButton(self.frame_3)
-        icon = QtGui.QIcon()
-        icon.addPixmap(QtGui.QPixmap(":/utils/icons/search.svg"), QtGui.QIcon.Selected, QtGui.QIcon.On)
-        self.BtnSearchCustomer.setIcon(icon)
-        header_layout.addWidget(self.BtnSearchCustomer)
+        self.checkBoxFilter = QtWidgets.QCheckBox("Фильтровать по заказчику")
+        header_layout.addWidget(self.checkBoxFilter)
+
+        # self.BtnSearchCustomer = QtWidgets.QPushButton(self.frame_3)
+        # icon = QtGui.QIcon()
+        # icon.addPixmap(QtGui.QPixmap(":/utils/icons/search.svg"), QtGui.QIcon.Selected, QtGui.QIcon.On)
+        # self.BtnSearchCustomer.setIcon(icon)
+        # header_layout.addWidget(self.BtnSearchCustomer)
 
         # self.lineEditSearchProductName = QtWidgets.QLineEdit(self.frame_3)
         # self.lineEditSearchProductName.setPlaceholderText("Введите наименование изделия")
@@ -122,7 +125,7 @@ class Ui_TasksList(object):
         TasksList.setWindowTitle(_translate("TasksList", "Список заданий"))
         self.lineEditSearchCustomer.setPlaceholderText(_translate("TasksList", "Введите название фирмы заказчика"))
         # self.lineEditSearchProductName.setPlaceholderText(_translate("TasksList", "Введите наименование изделия"))
-        self.BtnSearchCustomer.setToolTip(_translate("TasksList", "Искать задания по названию фирмы заказчика"))
+        # self.BtnSearchCustomer.setToolTip(_translate("TasksList", "Искать задания по названию фирмы заказчика"))
         # self.BtnSearchProductName.setToolTip(_translate("TasksList", "Искать задания по наименованию изделия"))
         self.checkBoxPeriodOn.setText(_translate("TasksList", "В период от"))
         self.label_7.setText(_translate("TasksList", "по"))
@@ -135,8 +138,11 @@ class TasksList(QtWidgets.QMainWindow):
         self.ui.setupUi(self)
 
         # Обработчики для кнопок
-        self.ui.BtnSearchCustomer.clicked.connect(self.search_tasks_by_customer)
+        # self.ui.BtnSearchCustomer.clicked.connect(self.search_tasks_by_customer)
         # self.ui.BtnBack.clicked.connect(self.back_main_manager_window)
+
+        self.ui.checkBoxFilter.stateChanged.connect(self.handle_filter_change)
+        self.ui.lineEditSearchCustomer.textChanged.connect(self.handle_text_changed)
 
         # Получаем данные из базы данных для названий организаций-заказчиков
         customer = self.get_words_from_database("orders_customer", "organization_name")
@@ -168,6 +174,152 @@ class TasksList(QtWidgets.QMainWindow):
         # self.ui.lineEditSearchProductName.setCompleter(completer)
 
         self.load_initial_tasks()  # Загружаем задания при запуске
+        self.show_products = False  # Флаг отображения продуктов
+        self.current_loading_tasks = []  # Для отслеживания текущей загрузки
+        self.abort_loading = False  # Флаг прерывания загрузки
+
+
+
+    def handle_filter_change(self, state):
+        """Обработчик изменения фильтра"""
+        self.abort_loading = True  # Прерываем текущую загрузку
+        self.show_products = (state == QtCore.Qt.Checked)
+
+        # Очищаем текущий список
+        while self.ui.layoutTask.count() > 0:
+            item = self.ui.layoutTask.takeAt(0)
+            if item.widget():
+                item.widget().deleteLater()
+
+        # Запускаем новую загрузку
+        if state == QtCore.Qt.Checked:
+            self.apply_customer_filter()
+        else:
+            self.load_all_tasks()
+
+    async def load_products_for_task(self, task_id):
+        """Асинхронная загрузка продуктов для задания"""
+        try:
+            response = requests.get(
+                "http://127.0.0.1:8000/products/add_product/",
+                params={'task_id': task_id}
+            )
+            return response.json().get('products', []) if response.ok else []
+        except Exception:
+            return []
+
+    def handle_text_changed(self, text):
+        """Обработчик изменения текста в поле поиска"""
+        if self.ui.checkBoxFilter.isChecked():
+            self.apply_customer_filter()
+
+    def start_loading_tasks(self):
+        """Инициализация новой загрузки"""
+        self.abort_loading = False
+        self.current_loading_tasks = []
+
+        try:
+            response = requests.get("http://127.0.0.1:8000/orders/add_customer_and_task/")
+            if response.ok:
+                self.current_loading_tasks = response.json().get('tasks', [])
+                self.process_tasks_sequentially()
+        except Exception as e:
+            self.handle_error(str(e))
+
+    def process_tasks_sequentially(self, index=0):
+        """Рекурсивная обработка задач с задержкой"""
+        if self.abort_loading or index >= len(self.current_loading_tasks):
+            return
+
+        task = self.current_loading_tasks[index]
+        products = []
+
+        if self.show_products:
+            try:
+                response = requests.get(
+                    "http://127.0.0.1:8000/products/add_product/",
+                    params={'task_id': task['task_id']},
+                    timeout=3
+                )
+                if response.ok:
+                    products = response.json().get('products', [])
+            except Exception as e:
+                print(f"Ошибка загрузки продуктов: {e}")
+
+        # Создаем элемент интерфейса сразу
+        self.add_single_task_to_ui({
+            **task,
+            'products': products
+        })
+
+        # Планируем обработку следующей задачи
+        QtCore.QTimer.singleShot(50, lambda: self.process_tasks_sequentially(index + 1))
+
+    def add_single_task_to_ui(self, task):
+        """Добавление одной задачи в UI"""
+        try:
+            task_frame = QtWidgets.QFrame()
+            task_layout = QtWidgets.QVBoxLayout(task_frame)
+
+            # Заголовок
+            header = QtWidgets.QLabel(
+                f"Счёт: {task.get('invoice_number', 'N/A')} | "
+                f"Дата: {task.get('order_invoice_date', 'N/A')} | "
+                f"Заказчик: {task.get('customer_name', 'N/A')}"
+            )
+            task_layout.addWidget(header)
+
+            # Продукты (только если разрешено)
+            if self.show_products:
+                for product in task.get('products', []):
+                    product_label = QtWidgets.QLabel(
+                        f"→ {product.get('name', 'Неизвестно')} "
+                        f"({product.get('quantity', 0)} шт.)"
+                    )
+                    task_layout.addWidget(product_label)
+
+            # Кнопка редактирования
+            edit_button = QtWidgets.QPushButton("Открыть")
+            edit_button.clicked.connect(lambda _, t_id=task.get('task_id'): self.open_task_editor(t_id))
+            task_layout.addWidget(edit_button)
+
+            self.ui.layoutTask.insertWidget(self.ui.layoutTask.count() - 1, task_frame)
+            QtWidgets.QApplication.processEvents()  # Принудительное обновление UI
+
+        except Exception as e:
+            print(f"Ошибка создания элемента: {e}")
+
+    def apply_customer_filter(self):
+        """Применяет фильтр по текущему значению в поле поиска"""
+        customer_name = self.ui.lineEditSearchCustomer.text().strip()
+        if customer_name:
+            self.search_tasks_by_customer(customer_name)
+        else:
+            self.load_all_tasks()
+
+    def search_tasks_by_customer(self, name):
+        """Модифицированный метод для фильтрации (убираем QMessageBox)"""
+        try:
+            response = requests.get(
+                "http://127.0.0.1:8000/orders/customer_data/",
+                params={"name": name}
+            )
+            if response.status_code == 200:
+                self.update_task_list(response.json())
+        except Exception as e:
+            print(f"Ошибка фильтрации: {e}")
+
+    def load_all_tasks(self):
+        """Загрузка задач с поэтапной обработкой"""
+        try:
+            # Отмена предыдущей загрузки
+            self.abort_loading = True
+            QtCore.QTimer.singleShot(100, self.start_loading_tasks)
+        except Exception as e:
+            self.handle_error(str(e))
+
+        except Exception as e:
+            print(f"Ошибка: {e}")
 
     def load_initial_tasks(self):
         try:
@@ -221,15 +373,18 @@ class TasksList(QtWidgets.QMainWindow):
             QMessageBox.critical(self, "Ошибка", f"Не удалось подключиться к серверу: {e}")
 
     def update_task_list(self, tasks):
-        """
-        Обновление списка заданий в прокручиваемой области.
-        :param tasks: Список заданий, полученных с сервера.
-        """
         # Очистка текущего списка
         for i in reversed(range(self.ui.layoutTask.count())):
             widget = self.ui.layoutTask.itemAt(i).widget()
             if widget:
                 widget.deleteLater()
+
+        # Добавление заглушки при отсутствии задач
+        if not tasks:
+            no_data_label = QtWidgets.QLabel("Нет заданий для отображения")
+            no_data_label.setAlignment(QtCore.Qt.AlignCenter)
+            self.ui.layoutTask.addWidget(no_data_label)
+            return
 
 
         # Добавление новых заданий
