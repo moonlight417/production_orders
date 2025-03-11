@@ -144,6 +144,10 @@ class TasksList(QtWidgets.QMainWindow):
         self.ui = Ui_TasksList()
         self.ui.setupUi(self)
 
+        self.timer = QtCore.QTimer(self)
+        self.timer.timeout.connect(self.reload_tasks)
+        self.timer.start(5000)  # 5000 мс = 5 секунд
+
         # Обработчики для кнопок
         # self.ui.BtnSearchCustomer.clicked.connect(self.search_tasks_by_customer)
         # self.ui.BtnBack.clicked.connect(self.back_main_manager_window)
