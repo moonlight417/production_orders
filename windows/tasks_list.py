@@ -185,6 +185,8 @@ class TasksList(QtWidgets.QMainWindow):
         # self.ui.comboBoxSort.addItem("Номер счёта ↑")
         # self.ui.comboBoxSort.addItem("Номер счёта ↓")
 
+        self.ui.checkBoxPeriodOn.stateChanged.connect(self.handle_period_filter_change)
+
         self.current_sorting = 'date_desc'
 
         # self.ui.comboBoxSort.currentIndexChanged.connect(self.handle_sort_change)
@@ -197,6 +199,26 @@ class TasksList(QtWidgets.QMainWindow):
 
         # Загрузка данных
         self.load_initial_tasks()
+
+    def handle_period_filter_change(self, state):
+        """Обработчик изменения состояния чекбокса фильтрации по датам"""
+        if state == QtCore.Qt.Checked:
+            self.apply_date_filter()
+        else:
+            self.load_all_tasks()
+
+    def apply_date_filter(self):
+        """Применяет фильтр по датам"""
+        start_date = self.ui.dateEditStartPeriod.date().toPyDate()
+        end_date = self.ui.dateEditEndPeriod.date().toPyDate()
+
+        filtered_tasks = []
+        for task in self.original_tasks:
+            task_date = datetime.strptime(task['order_invoice_date'], '%Y-%m-%d').date()
+            if start_date <= task_date <= end_date:
+                filtered_tasks.append(task)
+
+        self.process_and_display_tasks(filtered_tasks)
 
     # def handle_sort_change(self, index):
     #     """Обработчик изменения сортировки"""
@@ -211,6 +233,8 @@ class TasksList(QtWidgets.QMainWindow):
         """Перезагружает задачи с учетом текущих настроек"""
         if self.ui.checkBoxFilter.isChecked():
             self.apply_customer_filter()
+        elif self.ui.checkBoxPeriodOn.isChecked():
+            self.apply_date_filter()
         else:
             self.load_initial_tasks()
 
