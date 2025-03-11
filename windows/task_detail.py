@@ -1,18 +1,17 @@
 from PyQt5 import QtWidgets
 
-class TaskDetail(QtWidgets.QDialog):
-    def __init__(self, task_data):
-        super().__init__()
-        self.setWindowTitle("Детали задания")
-        self.setGeometry(100, 100, 400, 300)
+class Ui_TaskDetail:
+    def setupUi(self, Dialog):
+        Dialog.setWindowTitle("Детали задания")
+        Dialog.setGeometry(100, 100, 400, 300)
 
         # Создаем layout для окна
-        self.layout = QtWidgets.QVBoxLayout(self)
+        self.layout = QtWidgets.QVBoxLayout(Dialog)
 
         # Добавляем информацию о задании
-        self.label_invoice_number = QtWidgets.QLabel(f"Номер счета: {task_data['invoice_number']}")
-        self.label_customer_name = QtWidgets.QLabel(f"Имя заказчика: {task_data.get('customer_name', 'Неизвестно')}")
-        self.label_order_date = QtWidgets.QLabel(f"Дата заказа: {task_data['order_invoice_date']}")
+        self.label_invoice_number = QtWidgets.QLabel()
+        self.label_customer_name = QtWidgets.QLabel()
+        self.label_order_date = QtWidgets.QLabel()
 
         # Добавляем лейблы в layout
         self.layout.addWidget(self.label_invoice_number)
@@ -25,13 +24,29 @@ class TaskDetail(QtWidgets.QDialog):
 
         # Создаем список для изделий
         self.products_list = QtWidgets.QVBoxLayout()
-        for product in task_data.get('products', []):
-            product_label = QtWidgets.QLabel(f"{product['name']} - Количество: {product['quantity']}")
-            self.products_list.addWidget(product_label)
-
         self.layout.addLayout(self.products_list)
 
         # Кнопка закрытия окна
         self.btn_close = QtWidgets.QPushButton("Закрыть")
-        self.btn_close.clicked.connect(self.close)
         self.layout.addWidget(self.btn_close)
+
+class TaskDetail(QtWidgets.QDialog):
+    def __init__(self, task_data):
+        super().__init__()
+
+        # Создаем экземпляр Ui_TaskDetail и настраиваем интерфейс
+        self.ui = Ui_TaskDetail()
+        self.ui.setupUi(self)
+
+        # Заполняем интерфейс данными
+        self.ui.label_invoice_number.setText(f"Номер счета: {task_data['invoice_number']}")
+        self.ui.label_customer_name.setText(f"Имя заказчика: {task_data.get('customer_name', 'Неизвестно')}")
+        self.ui.label_order_date.setText(f"Дата заказа: {task_data['order_invoice_date']}")
+
+        # Добавляем информацию о продуктах
+        for product in task_data.get('products', []):
+            product_label = QtWidgets.QLabel(f"{product['name']} - Количество: {product['quantity']}")
+            self.ui.products_list.addWidget(product_label)
+
+        # Подключаем кнопку закрытия
+        self.ui.btn_close.clicked.connect(self.close)

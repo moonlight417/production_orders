@@ -39,13 +39,13 @@ class Ui_TasksList(object):
         self.BtnSearchCustomer.setIcon(icon)
         header_layout.addWidget(self.BtnSearchCustomer)
 
-        self.lineEditSearchProductName = QtWidgets.QLineEdit(self.frame_3)
-        self.lineEditSearchProductName.setPlaceholderText("Введите наименование изделия")
-        header_layout.addWidget(self.lineEditSearchProductName)
-
-        self.BtnSearchProductName = QtWidgets.QPushButton(self.frame_3)
-        self.BtnSearchProductName.setIcon(icon)
-        header_layout.addWidget(self.BtnSearchProductName)
+        # self.lineEditSearchProductName = QtWidgets.QLineEdit(self.frame_3)
+        # self.lineEditSearchProductName.setPlaceholderText("Введите наименование изделия")
+        # header_layout.addWidget(self.lineEditSearchProductName)
+        #
+        # self.BtnSearchProductName = QtWidgets.QPushButton(self.frame_3)
+        # self.BtnSearchProductName.setIcon(icon)
+        # header_layout.addWidget(self.BtnSearchProductName)
 
         self.checkBoxPeriodOn = QtWidgets.QCheckBox("В период от", self.frame_3)
         header_layout.addWidget(self.checkBoxPeriodOn)
@@ -121,9 +121,9 @@ class Ui_TasksList(object):
         _translate = QtCore.QCoreApplication.translate
         TasksList.setWindowTitle(_translate("TasksList", "Список заданий"))
         self.lineEditSearchCustomer.setPlaceholderText(_translate("TasksList", "Введите название фирмы заказчика"))
-        self.lineEditSearchProductName.setPlaceholderText(_translate("TasksList", "Введите наименование изделия"))
+        # self.lineEditSearchProductName.setPlaceholderText(_translate("TasksList", "Введите наименование изделия"))
         self.BtnSearchCustomer.setToolTip(_translate("TasksList", "Искать задания по названию фирмы заказчика"))
-        self.BtnSearchProductName.setToolTip(_translate("TasksList", "Искать задания по наименованию изделия"))
+        # self.BtnSearchProductName.setToolTip(_translate("TasksList", "Искать задания по наименованию изделия"))
         self.checkBoxPeriodOn.setText(_translate("TasksList", "В период от"))
         self.label_7.setText(_translate("TasksList", "по"))
 
@@ -165,7 +165,42 @@ class TasksList(QtWidgets.QMainWindow):
         completer.popup().setFont(font)  # Применяем шрифт к выпадающему списку
 
         # Устанавливаем completer для lineEditSearchProductName
-        self.ui.lineEditSearchProductName.setCompleter(completer)
+        # self.ui.lineEditSearchProductName.setCompleter(completer)
+
+        self.load_initial_tasks()  # Загружаем задания при запуске
+
+    def load_initial_tasks(self):
+        try:
+            # Шаг 1: Получаем все задания
+            response = requests.get("http://127.0.0.1:8000/orders/add_customer_and_task/")
+            if response.status_code == 200:
+                tasks = response.json().get("tasks", [])
+
+                # Шаг 2: Для каждого задания получаем продукты через customer_data
+                all_tasks_with_products = []
+                for task in tasks:
+                    customer_name = task["customer_name"]
+                    try:
+                        response = requests.get(
+                            "http://127.0.0.1:8000/orders/customer_data/",
+                            params={"name": customer_name}
+                        )
+                        if response.status_code == 200:
+                            customer_tasks = response.json()
+                            # Находим задание с совпадающим invoice_number
+                            for customer_task in customer_tasks:
+                                if customer_task["invoice_number"] == task["invoice_number"]:
+                                    all_tasks_with_products.append(customer_task)
+                                    break
+                    except Exception as e:
+                        print(f"Ошибка при получении данных для {customer_name}: {e}")
+
+                # Шаг 3: Обновляем интерфейс
+                self.update_task_list(all_tasks_with_products)
+            else:
+                QMessageBox.warning(self, "Ошибка", f"Ошибка сервера: {response.text}")
+        except Exception as e:
+            QMessageBox.critical(self, "Ошибка", f"Не удалось подключиться к серверу: {e}")
 
 
 

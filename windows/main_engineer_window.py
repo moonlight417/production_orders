@@ -10,7 +10,7 @@ import sys
 import os
 
 from windows.customizing_materials import Materials
-from windows.order_dev.order_dev_main import OrderDev
+# from windows.order_dev.order_dev_main import OrderDev
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "e:/Programming/production_orders/")))
 from windows.design_filling.design_document_filling_form import DesignDocumentFillingForm
@@ -105,7 +105,7 @@ class MainWindowEngineer(QtWidgets.QMainWindow):
         # self.new_tasks_list_window = NewTasks(parent=self)  # Передаем ссылку на родительское окно
         self.view_orders_window = OrdersArchive()
         self.materials_window = Materials()
-        self.order_dev_window = OrderDev()  # Создаем экземпляр OrderDev
+        # self.order_dev_window = OrderDev()  # Создаем экземпляр OrderDev
 
         self.new_tasks_list_window = NewTasks()  # Создаем экземпляр NewTasks
         # self.ui.stacked_widget.addWidget(self.new_tasks_list_window)  # Добавляем NewTasks в стек
@@ -115,10 +115,10 @@ class MainWindowEngineer(QtWidgets.QMainWindow):
         self.ui.stacked_widget.addWidget(self.design_document_filling_window)
         self.ui.stacked_widget.addWidget(self.tasks_list_window)
         self.ui.stacked_widget.addWidget(self.search_design_doc_window)
-        self.ui.stacked_widget.addWidget(self.view_orders_window)
+        # self.ui.stacked_widget.addWidget(self.view_orders_window)
         self.ui.stacked_widget.addWidget(self.materials_window)
         # self.ui.stacked_widget.addWidget(self.new_tasks_list_window)
-        self.ui.stacked_widget.addWidget(self.order_dev_window)  # Добавляем OrderDev в стек
+        # self.ui.stacked_widget.addWidget(self.order_dev_window)  # Добавляем OrderDev в стек
 
         # Устанавливаем пустое окно как текущее
         self.ui.stacked_widget.setCurrentWidget(self.empty_window)

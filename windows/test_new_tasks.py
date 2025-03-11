@@ -2,6 +2,7 @@ from PyQt5 import QtWidgets, QtCore
 import requests
 from task_detail import TaskDetail  # Импортируем класс для дочернего окна
 
+
 class NewTasks(QtWidgets.QMainWindow):
     def __init__(self):
         super().__init__()
@@ -26,8 +27,13 @@ class NewTasks(QtWidgets.QMainWindow):
 
         self.scroll_area.setWidget(self.task_widget)  # Устанавливаем виджет в QScrollArea
 
-        # Загружаем новые задания
-        self.load_new_tasks()
+        # # Загружаем новые задания
+        # self.load_new_tasks()
+
+        # Атрибут для хранения выбранного ID задания
+        self.selected_task_id = None
+
+
 
     def load_new_tasks(self):
         """Метод для загрузки и отображения новых заданий"""
@@ -51,24 +57,38 @@ class NewTasks(QtWidgets.QMainWindow):
         """Метод для заполнения списка заданий в контейнере"""
         # Очищаем предыдущие элементы в контейнере
         for i in reversed(range(self.task_container.count())):
-            widget = self.task_container.itemAt(i).widget()
-            if widget is not None:
-                widget.deleteLater()
+            item = self.task_container.itemAt(i)
+            if item.widget():  # Удаляем виджеты
+                item.widget().deleteLater()
+            elif item.spacerItem():  # Удаляем QSpacerItem
+                self.task_container.removeItem(item)
 
         # Добавляем новые задания в контейнер
         for task in tasks:
             task_widget = QtWidgets.QWidget()
             task_layout = QtWidgets.QHBoxLayout(task_widget)
 
-            task_label = QtWidgets.QLabel(
-                f"Задание: {task.get('invoice_number', 'Неизвестно')} - Дата: {task.get('order_invoice_date', 'Неизвестно')}")
+            # Формируем текст для задания
+            task_text = (
+                f"Задание: {task.get('invoice_number', 'Неизвестно')} - "
+                f"Дата: {task.get('order_invoice_date', 'Неизвестно')} - "
+                f"Заказчик: {task.get('customer_name', 'Неизвестно')}"
+            )
+
+            task_label = QtWidgets.QLabel(task_text)
             open_button = QtWidgets.QPushButton("Открыть")
+            open_button.setFixedWidth(80)
             open_button.clicked.connect(
                 lambda checked, task_data=task: self.open_task(task_data))  # Передаем данные задания в метод
 
-            task_layout.addWidget(task_label)
             task_layout.addWidget(open_button)
+            task_layout.addWidget(task_label)
             self.task_container.addWidget(task_widget)
+
+        # Добавляем пустой заполнитель в конец контейнера
+        spacer = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
+        self.task_container.addSpacerItem(spacer)
+
 
     def open_task(self, task_data):
         """Метод для открытия задания"""
@@ -89,6 +109,11 @@ class NewTasks(QtWidgets.QMainWindow):
             self.task_detail_window.exec_()  # Используем exec_() для модального окна
         else:
             QtWidgets.QMessageBox.critical(self, "Ошибка", "Не удалось обновить статус задания.")
+
+    def get_selected_task_id(self):
+        """Возвращает ID выбранного задания"""
+        return self.selected_task_id
+
 
 if __name__ == "__main__":
     app = QtWidgets.QApplication([])
